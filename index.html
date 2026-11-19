@@ -498,6 +498,14 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .toast.success{background:#1F4B3B;border-color:rgba(255,255,255,.22);box-shadow:0 8px 26px rgba(0,0,0,.3)}
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast button{color:#CDEBDD;font-size:12px;font-weight:700}
+html[data-mode="dark"] .toast{background:#F6F1E8;color:#111111;border-color:rgba(17,17,17,.14);box-shadow:0 8px 26px rgba(0,0,0,.42)}
+html[data-mode="dark"] .toast.success{background:#D9EAD8;border-color:rgba(17,17,17,.18)}
+html[data-mode="dark"] .toast button{color:#245740}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"] .toast{background:#F6F1E8;color:#111111;border-color:rgba(17,17,17,.14);box-shadow:0 8px 26px rgba(0,0,0,.42)}
+  html[data-mode="auto"] .toast.success{background:#D9EAD8;border-color:rgba(17,17,17,.18)}
+  html[data-mode="auto"] .toast button{color:#245740}
+}
 </style>
 </head>
 <body>
