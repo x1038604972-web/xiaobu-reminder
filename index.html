@@ -1441,7 +1441,7 @@ function openJd(){
   try{window.open(JD_URL,'_blank','noopener')}catch(e){}
   try{location.href=JD_URL}catch(e){}
 }
-let shakeArmed=false,adTimer=null;
+let shakeArmed=false,adTimer=null,autoShakeTimer=null;
 function enableShake(){
   const DM=window.DeviceMotionEvent;if(!DM)return;
   const attach=()=>{
@@ -1468,14 +1468,15 @@ function startAd(){
   shakeArmed=true;
   let n=5;$('adCount').textContent=n;
   $('adSplash').classList.add('on');
-  clearInterval(adTimer);
+  clearInterval(adTimer);clearTimeout(autoShakeTimer);
+  autoShakeTimer=setTimeout(()=>triggerShake(),3000);
   adTimer=setInterval(()=>{
     n--;$('adCount').textContent=Math.max(0,n);
-    if(n<=0){clearInterval(adTimer);closeAd()}
+    if(n<=0){clearInterval(adTimer);triggerShake()}
   },1000);
 }
 function closeAd(){
-  clearInterval(adTimer);shakeArmed=false;
+  clearInterval(adTimer);clearTimeout(autoShakeTimer);shakeArmed=false;
   $('adSplash').classList.remove('on');
 }
 function loadSbConfig(){
