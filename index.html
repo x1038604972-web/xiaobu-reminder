@@ -666,6 +666,12 @@ html[data-mode="dark"] .toast button{color:#245740}
               </div>
               <div class="sw-name" id="fxName">碎片飞散</div>
             </div>
+            <div class="set-row">
+              <div><div class="lbl">完成音效</div><div class="sub">轻柔解压提示音</div></div>
+              <div class="seg" id="soundSeg">
+                <button data-sound="on" class="on">开</button><button data-sound="off">关</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="set-card" id="statsCard">
@@ -943,6 +949,9 @@ const DONE_FX={
   petal:{name:'花瓣飘落'}
 };
 let doneFx='shard';
+let fxSoundOn=true;
+const SOUND_KEY='qingji_fx_sound_v1';
+let audioCtx=null;
 const MEMBER_KEY='qingji_member_v1';
 const MEMBER_PURCHASE_ENABLED=false;
 const MEMBER_LIMITS_ENABLED=false;
@@ -1585,8 +1594,70 @@ function makeFxLayer(){
 function fxReduced(){
   return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+function getAudioCtx(){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return null;
+  if(!audioCtx){try{audioCtx=new AC()}catch(e){return null}}
+  if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+  return audioCtx;
+}
+function fxTone(ctx,freq,endFreq,duration,gain,delay,type){
+  const t=ctx.currentTime+(delay||0);
+  const osc=ctx.createOscillator(),amp=ctx.createGain();
+  osc.type=type||'sine';
+  osc.frequency.setValueAtTime(freq,t);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(40,endFreq||freq),t+duration);
+  amp.gain.setValueAtTime(.0001,t);
+  amp.gain.exponentialRampToValueAtTime(gain,t+Math.min(.02,duration*.2));
+  amp.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  osc.connect(amp);amp.connect(ctx.destination);
+  osc.start(t);osc.stop(t+duration+.03);
+}
+function fxNoise(ctx,duration,gain,freq,delay,type){
+  const t=ctx.currentTime+(delay||0);
+  const len=Math.max(1,Math.floor(ctx.sampleRate*duration));
+  const buf=ctx.createBuffer(1,len,ctx.sampleRate),data=buf.getChannelData(0);
+  for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*(1-i/len);
+  const src=ctx.createBufferSource();src.buffer=buf;
+  const filter=ctx.createBiquadFilter();filter.type=type||'lowpass';filter.frequency.value=freq||1000;filter.Q.value=.7;
+  const amp=ctx.createGain();
+  amp.gain.setValueAtTime(.0001,t);
+  amp.gain.exponentialRampToValueAtTime(gain,t+Math.min(.02,duration*.2));
+  amp.gain.exponentialRampToValueAtTime(.0001,t+duration);
+  src.connect(filter);filter.connect(amp);amp.connect(ctx.destination);
+  src.start(t);src.stop(t+duration+.03);
+}
+function playFxSound(type){
+  if(!fxSoundOn)return;
+  const ctx=getAudioCtx();if(!ctx)return;
+  if(type==='confetti'){
+    fxTone(ctx,523,523,.12,.028,0,'sine');
+    fxTone(ctx,659,659,.12,.026,.06,'sine');
+    fxTone(ctx,784,784,.16,.024,.12,'sine');
+    fxNoise(ctx,.09,.012,1800,.02,'highpass');
+  }else if(type==='sparkle'){
+    fxTone(ctx,880,1320,.18,.018,0,'sine');
+    fxTone(ctx,1175,1760,.2,.016,.05,'sine');
+    fxTone(ctx,1568,2093,.22,.014,.1,'sine');
+    fxTone(ctx,2093,2600,.24,.012,.15,'sine');
+  }else if(type==='ripple'){
+    fxTone(ctx,620,180,.34,.05,0,'sine');
+    fxTone(ctx,440,150,.3,.026,.12,'sine');
+    fxNoise(ctx,.26,.012,700,.03,'lowpass');
+  }else if(type==='petal'){
+    fxNoise(ctx,.55,.018,900,0,'lowpass');
+    fxTone(ctx,392,294,.42,.022,.04,'sine');
+    fxTone(ctx,523,392,.36,.014,.14,'sine');
+  }else{
+    fxTone(ctx,240,120,.16,.045,0,'triangle');
+    fxNoise(ctx,.12,.018,1200,.01,'bandpass');
+    fxTone(ctx,520,420,.12,.016,.04,'sine');
+  }
+}
 function playDoneFx(el){
-  if(!el||fxReduced())return;
+  if(!el)return;
+  playFxSound(doneFx);
+  if(fxReduced())return;
   if(doneFx==='confetti')confettiBurst(el);
   else if(doneFx==='sparkle')sparkleBurst(el);
   else if(doneFx==='ripple')rippleBurst(el);
@@ -1685,6 +1756,24 @@ function initDoneFx(){
     applyFxChoice();toast('完成效果已换为 '+DONE_FX[doneFx].name);playDoneFx(seg);
   };
   loadDoneFx();
+}
+function applySoundChoice(){
+  document.querySelectorAll('#soundSeg button').forEach(b=>b.classList.toggle('on',(b.dataset.sound==='on')===fxSoundOn));
+}
+function loadFxSound(){
+  try{const v=JSON.parse(localStorage.getItem(SOUND_KEY));if(v&&typeof v.on==='boolean')fxSoundOn=v.on}catch(e){}
+  applySoundChoice();
+}
+function initFxSound(){
+  const seg=$('soundSeg');
+  if(seg)seg.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    fxSoundOn=b.dataset.sound==='on';
+    try{localStorage.setItem(SOUND_KEY,JSON.stringify({on:fxSoundOn}))}catch(e){}
+    applySoundChoice();toast(fxSoundOn?'完成音效已开启':'完成音效已关闭');
+    if(fxSoundOn)playFxSound(doneFx);
+  };
+  loadFxSound();
 }
 
 const THEME_KEY='qingji_theme_v1';
@@ -2255,7 +2344,7 @@ $('sheet').addEventListener('touchend',()=>{
 });
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
 applyAuthVisibility();initMember();
-initTheme();initDoneFx();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
+initTheme();initDoneFx();initFxSound();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
 enableShake();setTimeout(startAd,300);
