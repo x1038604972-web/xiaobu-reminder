@@ -19,8 +19,8 @@
   --safe:var(--brand);--safe-soft:#DCEAE3;
   --alert:#B5453C;--alert-soft:#F6E4E0;
   --r:16px;--shadow:0 2px 14px rgba(35,32,28,.06);
-  --glass-bg:rgba(255,252,246,.78);--glass-bg-2:rgba(246,241,232,.62);
-  --glass-line:rgba(255,255,255,.72);--glass-sheen:rgba(255,255,255,.42);
+  --glass-bg:rgba(255,252,246,.62);--glass-bg-2:rgba(246,241,232,.48);
+  --glass-line:rgba(255,255,255,.88);--glass-sheen:rgba(255,255,255,.6);
   --glass-shadow:0 24px 70px rgba(35,32,28,.22),inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(35,32,28,.06);
   --ease:cubic-bezier(.22,1,.36,1);--ease-back:cubic-bezier(.2,1.4,.4,1);--spring:cubic-bezier(.34,1.56,.64,1);--grav:cubic-bezier(.38,.02,.62,1);
 }
@@ -31,8 +31,8 @@ html[data-mode="dark"]{
   --safe:var(--brand);--safe-soft:#203A32;
   --alert:#E8837A;--alert-soft:#3A2624;
   --shadow:0 2px 14px rgba(0,0,0,.24);
-  --glass-bg:rgba(36,34,32,.76);--glass-bg-2:rgba(27,26,24,.62);
-  --glass-line:rgba(255,255,255,.14);--glass-sheen:rgba(255,255,255,.1);
+  --glass-bg:rgba(36,34,32,.62);--glass-bg-2:rgba(27,26,24,.5);
+  --glass-line:rgba(255,255,255,.22);--glass-sheen:rgba(255,255,255,.16);
   --glass-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.36);
 }
 @media(prefers-color-scheme:dark){html[data-mode="auto"]{
@@ -42,8 +42,8 @@ html[data-mode="dark"]{
   --safe:var(--brand);--safe-soft:#203A32;
   --alert:#E8837A;--alert-soft:#3A2624;
   --shadow:0 2px 14px rgba(0,0,0,.24);
-  --glass-bg:rgba(36,34,32,.76);--glass-bg-2:rgba(27,26,24,.62);
-  --glass-line:rgba(255,255,255,.14);--glass-sheen:rgba(255,255,255,.1);
+  --glass-bg:rgba(36,34,32,.62);--glass-bg-2:rgba(27,26,24,.5);
+  --glass-line:rgba(255,255,255,.22);--glass-sheen:rgba(255,255,255,.16);
   --glass-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.36);
 }}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -68,6 +68,16 @@ html[data-mode="dark"] body,html[data-mode="auto"] body{background:var(--bg)}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] body{background:var(--bg)}}
 html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #0D0C0B,0 0 0 11px #262320}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #0D0C0B,0 0 0 11px #262320}}
+@media(min-width:521px){
+  body{background:radial-gradient(circle at 15% 12%,rgba(47,110,82,.18),transparent 36%),radial-gradient(circle at 85% 88%,rgba(231,195,107,.2),transparent 42%),#E8E1D5}
+  .phone{background:rgba(246,241,232,.72);border:1px solid rgba(255,255,255,.66);backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);box-shadow:0 30px 90px rgba(35,32,28,.28),0 0 0 10px rgba(28,30,32,.94),0 0 0 11px rgba(255,255,255,.32),inset 0 1px 0 rgba(255,255,255,.75)}
+  html[data-mode="dark"] body{background:radial-gradient(circle at 15% 12%,rgba(95,174,134,.16),transparent 36%),radial-gradient(circle at 85% 88%,rgba(231,195,107,.12),transparent 42%),#11100F}
+  html[data-mode="dark"] .phone{background:rgba(27,26,24,.72);border-color:rgba(255,255,255,.18);box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 0 10px rgba(13,12,11,.96),0 0 0 11px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.16)}
+}
+@media(min-width:521px) and (prefers-color-scheme:dark){
+  html[data-mode="auto"] body{background:radial-gradient(circle at 15% 12%,rgba(95,174,134,.16),transparent 36%),radial-gradient(circle at 85% 88%,rgba(231,195,107,.12),transparent 42%),#11100F}
+  html[data-mode="auto"] .phone{background:rgba(27,26,24,.72);border-color:rgba(255,255,255,.18);box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 0 10px rgba(13,12,11,.96),0 0 0 11px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.16)}
+}
 
 .app{display:flex;flex-direction:column;height:100%;position:relative}
 
@@ -199,6 +209,12 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .petal{position:absolute;width:11px;height:15px;border-radius:70% 0 70% 0;opacity:0;animation:petalFloat var(--dur) var(--grav) var(--delay) forwards;will-change:transform,opacity}
 .fx-seg{flex-wrap:wrap}
 .fx-seg button{padding:5px 8px}
+.vibe-slider{display:flex;align-items:center;gap:10px;margin-top:10px}
+.vibe-label{font-size:12px;font-weight:700;color:var(--ink2);flex:none}
+.vibe-slider input[type=range]{flex:1;height:24px;accent-color:var(--brand);cursor:pointer}
+.vibe-value{min-width:48px;text-align:right;font-size:12px;font-weight:750;color:var(--brand);flex:none}
+.vibe-test{height:30px;padding:0 10px;border-radius:9px;background:var(--brand-soft);color:var(--brand-ink);font-size:11.5px;font-weight:750;flex:none}
+.vibe-test:active{transform:scale(.95)}
 
 .acc-head{display:flex;align-items:center;gap:12px}
 .acc-avatar{width:44px;height:44px;border-radius:14px;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex:none}
@@ -516,15 +532,15 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .member-benefit-row.head{font-weight:800;color:var(--ink3);font-size:10px;background:var(--bg);border-radius:8px}
 .member-note{font-size:10px;color:var(--ink3);line-height:1.6;margin-top:12px;background:var(--bg);border-radius:9px;padding:9px 10px}
 
-.sheet-mask,.modal-mask,.sum-mask{background:rgba(35,32,28,.26);backdrop-filter:blur(8px) saturate(140%);-webkit-backdrop-filter:blur(8px) saturate(140%)}
+.sheet-mask,.modal-mask,.sum-mask{background:rgba(35,32,28,.22);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%)}
 html[data-mode="dark"] .sheet-mask,html[data-mode="dark"] .modal-mask,html[data-mode="dark"] .sum-mask{background:rgba(0,0,0,.42)}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] .sheet-mask,html[data-mode="auto"] .modal-mask,html[data-mode="auto"] .sum-mask{background:rgba(0,0,0,.42)}}
 .sheet,.modal,.voice-panel{
   background:linear-gradient(145deg,var(--glass-sheen),rgba(255,255,255,0) 42%),linear-gradient(160deg,var(--glass-bg),var(--glass-bg-2));
   border:1px solid var(--glass-line);
   box-shadow:var(--glass-shadow);
-  backdrop-filter:blur(28px) saturate(180%);
-  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  backdrop-filter:blur(36px) saturate(200%);
+  -webkit-backdrop-filter:blur(36px) saturate(200%);
 }
 .sheet,.voice-panel{border-bottom:none}
 
@@ -701,11 +717,17 @@ html[data-mode="dark"] .toast button{color:#245740}
               </div>
             </div>
             <div class="set-row" style="display:block">
-              <div><div class="lbl">完成震动</div><div class="sub">需要设备支持震动</div></div>
+              <div><div class="lbl">完成震动</div><div class="sub">需要设备支持震动 · 强度通过时长模拟</div></div>
               <div class="seg fx-seg" id="vibeSeg">
                 <button data-vibe="off">关闭</button><button data-vibe="tap" class="on">轻触</button><button data-vibe="double">双击</button><button data-vibe="heart">心跳</button><button data-vibe="long">长震</button><button data-vibe="wave">波纹</button>
               </div>
               <div class="sw-name" id="vibeName">轻触</div>
+              <div class="vibe-slider">
+                <span class="vibe-label">强度</span>
+                <input type="range" id="vibeStrength" min="0" max="100" value="60" aria-label="震动强度">
+                <span class="vibe-value" id="vibeStrengthVal">60%</span>
+                <button class="vibe-test" id="vibeTestBtn">测试</button>
+              </div>
             </div>
           </div>
         </div>
@@ -985,6 +1007,7 @@ const DONE_FX={
 };
 let doneFx='shard';
 const VIBE_KEY='qingji_done_vibe_v1';
+const VIBE_STRENGTH_KEY='qingji_vibe_strength_v1';
 const DONE_VIBES={
   off:{name:'关闭',pattern:[]},
   tap:{name:'轻触',pattern:[18]},
@@ -994,6 +1017,7 @@ const DONE_VIBES={
   wave:{name:'波纹',pattern:[15,35,25,35,35,35,55]}
 };
 let doneVibe='tap';
+let vibeStrength=60;
 let fxSoundOn=true;
 const SOUND_KEY='qingji_fx_sound_v1';
 let audioCtx=null;
@@ -1816,10 +1840,23 @@ function initDoneFx(){
   };
   loadDoneFx();
 }
+function scaledVibePattern(pattern){
+  if(!pattern||!pattern.length||vibeStrength<=0)return [];
+  const onF=0.35+vibeStrength/100*1.25;
+  const offF=1.35-vibeStrength/100*0.7;
+  return pattern.map((v,i)=>Math.max(i%2?20:8,Math.round(v*(i%2?offF:onF))));
+}
 function playDoneVibe(type){
   if(type==='off'||!navigator.vibrate)return;
   const v=DONE_VIBES[type]||DONE_VIBES.tap;
-  try{navigator.vibrate(v.pattern)}catch(e){}
+  const pattern=scaledVibePattern(v.pattern);
+  if(!pattern.length)return;
+  try{navigator.vibrate(pattern)}catch(e){}
+}
+function updateVibeStrengthUI(){
+  const slider=$('vibeStrength'),val=$('vibeStrengthVal');
+  if(slider)slider.value=vibeStrength;
+  if(val)val.textContent=(vibeStrength===0?'0% · 关':vibeStrength+'%');
 }
 function applyVibeChoice(){
   document.querySelectorAll('#vibeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.vibe===doneVibe));
@@ -1827,7 +1864,8 @@ function applyVibeChoice(){
 }
 function loadDoneVibe(){
   try{const v=JSON.parse(localStorage.getItem(VIBE_KEY));if(v&&DONE_VIBES[v.vibe])doneVibe=v.vibe}catch(e){}
-  applyVibeChoice();
+  try{const s=JSON.parse(localStorage.getItem(VIBE_STRENGTH_KEY));if(s&&typeof s.value==='number')vibeStrength=Math.max(0,Math.min(100,s.value))}catch(e){}
+  updateVibeStrengthUI();applyVibeChoice();
 }
 function initDoneVibe(){
   const seg=$('vibeSeg');
@@ -1837,6 +1875,15 @@ function initDoneVibe(){
     try{localStorage.setItem(VIBE_KEY,JSON.stringify({vibe:doneVibe}))}catch(e){}
     applyVibeChoice();toast('完成震动已换为 '+DONE_VIBES[doneVibe].name);playDoneVibe(doneVibe);
   };
+  const slider=$('vibeStrength');
+  if(slider){
+    slider.oninput=e=>{vibeStrength=+e.target.value;updateVibeStrengthUI()};
+    slider.onchange=()=>{
+      try{localStorage.setItem(VIBE_STRENGTH_KEY,JSON.stringify({value:vibeStrength}))}catch(e){}
+      playDoneVibe(doneVibe);
+    };
+  }
+  const test=$('vibeTestBtn');if(test)test.onclick=()=>playDoneVibe(doneVibe);
   loadDoneVibe();
 }
 function applySoundChoice(){
