@@ -353,6 +353,26 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .wskip{background:none;color:var(--ink3);font-size:13px;font-weight:600;margin-top:10px;padding:10px}
 .wtip{font-size:11px;color:var(--ink3);line-height:1.6;margin-top:20px;max-width:280px}
 .wcfg{font-size:11px;color:var(--brand);font-weight:700;margin-top:12px;padding:8px 12px}
+.hidden{display:none!important}
+
+.ad-splash{position:absolute;inset:0;z-index:95;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.ad-splash.on{display:flex;animation:fade .35s var(--ease)}
+.ad-badge{position:absolute;top:56px;right:22px;font-size:11px;color:var(--ink3);border:1px solid var(--line);border-radius:8px;padding:4px 9px}
+.ad-logo{width:82px;height:82px;border-radius:22px;background:#E1251B;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 10px 30px rgba(225,37,27,.25);animation:pop .6s var(--spring)}
+.ad-splash h1{font-size:21px;font-weight:800;margin-bottom:6px}
+.ad-splash .ad-sub{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:36px}
+.shake-phone{width:96px;height:150px;border:3px solid var(--brand);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 26px;position:relative;animation:shakeIdle 1.6s ease-in-out infinite}
+.shake-phone::before{content:'';width:40px;height:40px;border-radius:50%;background:var(--brand-soft)}
+.shake-phone::after{content:'';position:absolute;width:8px;height:8px;border-radius:50%;background:var(--brand);top:9px;left:50%;transform:translateX(-50%)}
+@keyframes shakeIdle{0%,100%{transform:rotate(0)}20%{transform:rotate(-11deg)}40%{transform:rotate(11deg)}60%{transform:rotate(-7deg)}80%{transform:rotate(7deg)}}
+.shake-phone.shaking{animation:shakeHard .35s ease-in-out 3}
+@keyframes shakeHard{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-16px) rotate(-18deg)}75%{transform:translateX(16px) rotate(18deg)}}
+.ad-splash .ad-hint{font-size:13px;color:var(--ink);font-weight:700;margin-bottom:8px}
+.ad-splash .ad-tip{font-size:11px;color:var(--ink3);line-height:1.6;margin-bottom:32px;max-width:260px}
+.ad-go{width:100%;height:48px;border-radius:14px;background:#E1251B;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s var(--ease)}
+.ad-go:active{transform:scale(.97)}
+.ad-skip{margin-top:16px;font-size:12.5px;color:var(--ink3);font-weight:600;padding:10px 20px}
+.ad-count{color:var(--brand);font-weight:800}
 
 .acc-avatar img{width:100%;height:100%;border-radius:14px;object-fit:cover}
 .cfg-field{margin-top:12px}
@@ -444,6 +464,18 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 <div class="phone">
 <div class="app">
 
+  <div class="ad-splash" id="adSplash">
+    <div class="ad-badge">广告</div>
+    <div class="ad-logo"><svg width="46" height="46" viewBox="0 0 24 24" fill="#fff"><path d="M7 4h10l-1 3H8l-1 5h9l-2 8H4l2-8H3l1-5h3V4z"/></svg></div>
+    <h1>逛京东，好事发生</h1>
+    <div class="ad-sub">摇一摇，发现今天的好物</div>
+    <div class="shake-phone" id="shakePhone"></div>
+    <div class="ad-hint" id="shakeHint">摇一摇手机，跳转到京东</div>
+    <div class="ad-tip">也可以点下方按钮直接前往；不支持摇一摇的设备请用按钮。</div>
+    <button class="ad-go" id="adGo">立即前往京东 <span style="font-size:17px">→</span></button>
+    <button class="ad-skip" id="adSkip">跳过广告 <span class="ad-count" id="adCount">5</span>s</button>
+  </div>
+
   <div class="welcome" id="welcome">
     <svg class="welcome-mark" viewBox="0 0 1024 1024" aria-label="小步">
       <rect width="1024" height="1024" rx="232" fill="var(--brand)"/>
@@ -451,11 +483,11 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
     </svg>
     <h1>小步</h1>
     <div class="ws">说出来，就有人替你记住<br>登录后，你的事项会在这台设备上按账号保存</div>
-    <button class="wbtn" style="background:#24292F;color:#fff" id="loginGithub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.8.1-.8 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6a4.7 4.7 0 011.3-3.3 4.3 4.3 0 01.1-3.2s1-.3 3.4 1.3a11.4 11.4 0 016.1 0c2.3-1.6 3.3-1.3 3.3-1.3a4.3 4.3 0 01.1 3.2 4.7 4.7 0 011.3 3.3c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z"/></svg>GitHub 登录</button>
-    <button class="wbtn" style="background:var(--brand);color:#FFFBF2" id="loginEmail"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></svg>邮箱注册 / 登录</button>
+    <button class="wbtn auth-only" style="background:#24292F;color:#fff" id="loginGithub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.8.1-.8 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6a4.7 4.7 0 011.3-3.3 4.3 4.3 0 01.1-3.2s1-.3 3.4 1.3a11.4 11.4 0 016.1 0c2.3-1.6 3.3-1.3 3.3-1.3a4.3 4.3 0 01.1 3.2 4.7 4.7 0 011.3 3.3c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z"/></svg>GitHub 登录</button>
+    <button class="wbtn auth-only" style="background:var(--brand);color:#FFFBF2" id="loginEmail"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></svg>邮箱注册 / 登录</button>
     <button class="wskip" id="loginSkip">先看看，以本地模式使用</button>
-    <div class="wtip" id="welcomeTip">真实登录需先配置 Supabase（免费），在「我的 → 系统设置」里填写。</div>
-    <button class="wcfg" id="welcomeCfg">去配置真实登录 →</button>
+    <div class="wtip auth-only" id="welcomeTip">真实登录需先配置 Supabase（免费），在「我的 → 系统设置」里填写。</div>
+    <button class="wcfg auth-only" id="welcomeCfg">去配置真实登录 →</button>
   </div>
 
   <div class="top">
@@ -539,7 +571,7 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
             <div class="slogan">说出来，就有人替你记住</div>
           </div>
         </div>
-        <div class="set-card" id="accountCard">
+        <div class="set-card auth-only" id="accountCard">
           <div class="acc-head">
             <div class="acc-avatar" id="accAvatar">游</div>
             <div style="flex:1"><div class="acc-name" id="accName">本地模式</div><div class="acc-sub" id="accSub">数据只存在这台设备</div></div>
@@ -779,6 +811,8 @@ const THEMES={
 let themeKey='pine',modePref='auto';
 let sb=null,sbConfig=null,sbUser=null,emailMode='login';
 const SB_KEY='qingji_supabase_v1';
+const AUTH_VISIBLE=false;
+const JD_URL='https://www.jd.com/';
 
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
@@ -1400,6 +1434,50 @@ function initTheme(){
 }
 
 const WELCOME_KEY='qingji_welcomed_v1';
+function applyAuthVisibility(){
+  document.querySelectorAll('.auth-only').forEach(el=>el.classList.toggle('hidden',!AUTH_VISIBLE));
+}
+function openJd(){
+  try{window.open(JD_URL,'_blank','noopener')}catch(e){}
+  try{location.href=JD_URL}catch(e){}
+}
+let shakeArmed=false,adTimer=null;
+function enableShake(){
+  const DM=window.DeviceMotionEvent;if(!DM)return;
+  const attach=()=>{
+    let last=0;
+    window.addEventListener('devicemotion',e=>{
+      if(!shakeArmed)return;
+      const a=e.accelerationIncludingGravity||e.acceleration;if(!a)return;
+      const now=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
+      const delta=Math.abs(now-last);last=now;
+      if(delta>18)triggerShake();
+    });
+  };
+  if(typeof DM.requestPermission==='function'){
+    DM.requestPermission().then(p=>{if(p==='granted')attach()}).catch(()=>{});
+  }else attach();
+}
+function triggerShake(){
+  if(!shakeArmed)return;shakeArmed=false;
+  const p=$('shakePhone');p.classList.remove('shaking');void p.offsetWidth;p.classList.add('shaking');
+  $('shakeHint').textContent='已识别摇晃，正在前往京东…';
+  setTimeout(()=>{closeAd();openJd()},520);
+}
+function startAd(){
+  shakeArmed=true;
+  let n=5;$('adCount').textContent=n;
+  $('adSplash').classList.add('on');
+  clearInterval(adTimer);
+  adTimer=setInterval(()=>{
+    n--;$('adCount').textContent=Math.max(0,n);
+    if(n<=0){clearInterval(adTimer);closeAd()}
+  },1000);
+}
+function closeAd(){
+  clearInterval(adTimer);shakeArmed=false;
+  $('adSplash').classList.remove('on');
+}
 function loadSbConfig(){
   try{const v=JSON.parse(localStorage.getItem(SB_KEY));if(v&&v.url&&v.key)sbConfig=v}catch(e){sbConfig=null}
   if(sbConfig&&window.supabase){
@@ -1731,6 +1809,9 @@ $('exportBtn').onclick=exportData;
 $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value=''};
 $('clearBtn').onclick=clearAll;
+$('adGo').onclick=()=>{closeAd();openJd()};
+$('adSkip').onclick=closeAd;
+$('shakePhone').onclick=triggerShake;
 $('loginGithub').onclick=githubLogin;
 $('loginEmail').onclick=openEmail;
 $('welcomeCfg').onclick=()=>{finishWelcome();openCfg()};
@@ -1804,8 +1885,11 @@ $('sheet').addEventListener('touchend',()=>{
   if(dy>110)closeSheet();
 });
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
-initTheme();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();showWelcome();
-if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录';
+applyAuthVisibility();
+initTheme();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
+if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
+else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
+enableShake();setTimeout(startAd,300);
 setInterval(()=>{renderTop();checkReminders()},60000);
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
