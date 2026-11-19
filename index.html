@@ -451,6 +451,45 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 }
 .demo-btn:active{transform:scale(.98);background:var(--brand-press)}
 
+.member-card{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--brand),var(--brand-press));color:#FFFBF2;border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 8px 24px rgba(35,32,28,.13);cursor:pointer;transition:transform .14s var(--ease)}
+.member-card:active{transform:scale(.99)}
+.member-card::after{content:'';position:absolute;right:-30px;top:-40px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.1)}
+.member-card::before{content:'';position:absolute;right:18px;bottom:-42px;width:86px;height:86px;border-radius:50%;border:16px solid rgba(255,255,255,.08)}
+.member-top{position:relative;z-index:1;display:flex;align-items:center;gap:9px}
+.member-title{font-size:16px;font-weight:800;letter-spacing:.2px}
+.member-badge{font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.2);letter-spacing:.06em}
+.member-badge.basic{background:rgba(255,255,255,.28)}
+.member-badge.super{background:#E7C36B;color:#3A2A08}
+.member-desc{position:relative;z-index:1;font-size:11.5px;opacity:.88;line-height:1.6;margin-top:10px;max-width:230px}
+.member-link{position:relative;z-index:1;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:800;margin-top:12px}
+.member-modal{padding:20px 18px 18px;max-height:90%}
+.member-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.member-eyebrow{font-size:9.5px;font-weight:900;letter-spacing:.18em;color:var(--brand);margin-bottom:5px}
+.member-head h2{font-size:22px;font-weight:850;line-height:1.2}
+.member-head p{font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:6px}
+.member-close{width:30px;height:30px;flex:none;border-radius:50%;background:var(--line2);color:var(--ink2);font-size:20px;line-height:1}
+.member-current{font-size:11.5px;color:var(--ink2);background:var(--bg);border-radius:10px;padding:9px 11px;margin-bottom:12px}
+.member-current b{color:var(--brand)}
+.member-current span{float:right;color:var(--ink3)}
+.member-plans{display:grid;gap:9px}
+.member-plan{position:relative;border:1.5px solid var(--line);background:var(--surface);border-radius:14px;padding:13px 14px}
+.member-plan.rec{border-color:var(--brand);background:var(--brand-soft)}
+.member-plan.current{box-shadow:0 0 0 2px var(--brand) inset}
+.member-plan-tag{position:absolute;right:12px;top:-9px;background:var(--brand);color:#FFFBF2;font-size:9px;font-weight:900;padding:3px 8px;border-radius:999px;letter-spacing:.05em}
+.member-plan-name{font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px}
+.member-plan-desc{font-size:10.5px;color:var(--ink2);line-height:1.55;margin-top:5px;min-height:32px}
+.member-price{display:flex;align-items:baseline;gap:5px;margin-top:9px}
+.member-price b{font-size:22px;font-weight:850;color:var(--ink);letter-spacing:-.5px}
+.member-price span{font-size:11px;color:var(--ink3)}
+.member-year{font-size:10.5px;color:var(--brand);font-weight:700;margin-top:4px}
+.member-plan-btn{width:100%;height:34px;border-radius:10px;background:var(--brand);color:#FFFBF2;font-size:11.5px;font-weight:800;margin-top:10px}
+.member-plan-btn.current{background:var(--line2);color:var(--ink3)}
+.member-section-title{font-size:12px;font-weight:850;margin:16px 0 7px}
+.member-benefit-row{display:grid;grid-template-columns:1.35fr .72fr .72fr .72fr;align-items:center;gap:4px;font-size:10.5px;color:var(--ink2);padding:7px 2px;border-bottom:1px solid var(--line2);text-align:center}
+.member-benefit-row span:first-child{text-align:left;color:var(--ink)}
+.member-benefit-row.head{font-weight:800;color:var(--ink3);font-size:10px;background:var(--bg);border-radius:8px}
+.member-note{font-size:10px;color:var(--ink3);line-height:1.6;margin-top:12px;background:var(--bg);border-radius:9px;padding:9px 10px}
+
 .toast{
   position:absolute;left:50%;bottom:148px;transform:translate(-50%,16px);background:var(--ink);color:#FFFBF2;
   border-radius:12px;padding:11px 18px;font-size:12.5px;font-weight:600;z-index:60;opacity:0;pointer-events:none;
@@ -570,6 +609,14 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
             <div class="wordmark">小步</div>
             <div class="slogan">说出来，就有人替你记住</div>
           </div>
+        </div>
+        <div class="member-card" id="memberCard">
+          <div class="member-top">
+            <div class="member-title">小步会员</div>
+            <span class="member-badge" id="memberBadge">免费版</span>
+          </div>
+          <div class="member-desc" id="memberCardDesc">会员功能暂未开通，现在所有人都可以免费使用现有功能。</div>
+          <div class="member-link" id="memberCardLink">查看会员方案 →</div>
         </div>
         <div class="set-card auth-only" id="accountCard">
           <div class="acc-head">
@@ -790,6 +837,59 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
     <div class="voice-actions"><button class="voice-cancel" id="voiceCancel">取消</button><button class="voice-go" id="voiceGo" disabled>记下</button></div>
   </div>
 
+  <div class="modal-mask" id="memberMask"></div>
+  <div class="modal-wrap"><div class="modal member-modal" id="memberModal">
+    <div class="member-head">
+      <div>
+        <div class="member-eyebrow">XIAOBU MEMBER</div>
+        <h2>小步会员</h2>
+        <p>让每一个提醒都更安心，让每一个灵感都被好好保存。</p>
+      </div>
+      <button class="member-close" id="memberClose" aria-label="关闭">×</button>
+    </div>
+    <div class="member-current" id="memberCurrent"></div>
+    <div class="member-plans">
+      <div class="member-plan" data-plan-card="free">
+        <div class="member-plan-name">免费用户</div>
+        <div class="member-plan-desc">先体验，满足日常记录和提醒。</div>
+        <div class="member-price"><b>$0</b><span>/ 永久免费</span></div>
+        <div class="member-year">30 条未完成事项 · 1 台设备</div>
+        <button class="member-plan-btn" data-plan="free">当前身份</button>
+      </div>
+      <div class="member-plan" data-plan-card="basic">
+        <div class="member-plan-tag">适合日常</div>
+        <div class="member-plan-name">基础会员</div>
+        <div class="member-plan-desc">更大容量与多设备同步，记录更从容。</div>
+        <div class="member-price"><b>$9</b><span>/ 月</span></div>
+        <div class="member-year">年付 $79 / 年 · 省 $29</div>
+        <button class="member-plan-btn" data-plan="basic">暂未开通</button>
+      </div>
+      <div class="member-plan rec" data-plan-card="super">
+        <div class="member-plan-tag">推荐</div>
+        <div class="member-plan-name">超级会员</div>
+        <div class="member-plan-desc">无限记录、免广告与完整高级体验。</div>
+        <div class="member-price"><b>$19</b><span>/ 月</span></div>
+        <div class="member-year">年付 $159 / 年 · 省 $69</div>
+        <button class="member-plan-btn" data-plan="super">暂未开通</button>
+      </div>
+    </div>
+    <div class="member-section-title">权益对比</div>
+    <div class="member-table">
+      <div class="member-benefit-row head"><span>权益</span><span>免费</span><span>基础</span><span>超级</span></div>
+      <div class="member-benefit-row"><span>未完成事项</span><span>30 条</span><span>300 条</span><span>无限</span></div>
+      <div class="member-benefit-row"><span>清单 / 标签</span><span>3 / 10</span><span>30 / 100</span><span>无限</span></div>
+      <div class="member-benefit-row"><span>云端同步</span><span>1 台</span><span>3 台</span><span>10 台</span></div>
+      <div class="member-benefit-row"><span>历史记录</span><span>7 天</span><span>1 年</span><span>永久</span></div>
+      <div class="member-benefit-row"><span>内置主题</span><span>支持</span><span>支持</span><span>支持</span></div>
+      <div class="member-benefit-row"><span>自定义主题</span><span>—</span><span>支持</span><span>支持</span></div>
+      <div class="member-benefit-row"><span>AI 智能整理</span><span>3 次/月</span><span>30 次/月</span><span>300 次/月</span></div>
+      <div class="member-benefit-row"><span>数据导出</span><span>JSON</span><span>CSV+JSON</span><span>自动备份</span></div>
+      <div class="member-benefit-row"><span>开屏广告</span><span>有</span><span>有</span><span>免广告</span></div>
+      <div class="member-benefit-row"><span>客服支持</span><span>帮助中心</span><span>邮件</span><span>优先</span></div>
+    </div>
+    <div class="member-note">会员购买功能暂未开通，当前仅展示方案。后续接入支付与账号体系后，会在这里开放购买和管理。</div>
+  </div></div>
+
   <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo" style="display:none">撤销</button><button id="toastEdit" style="display:none">改时间</button></div>
 </div>
 </div>
@@ -813,6 +913,20 @@ let sb=null,sbConfig=null,sbUser=null,emailMode='login';
 const SB_KEY='qingji_supabase_v1';
 const AUTH_VISIBLE=false;
 const JD_URL='https://www.jd.com/';
+const MEMBER_KEY='qingji_member_v1';
+const MEMBER_PURCHASE_ENABLED=false;
+const MEMBER_LIMITS_ENABLED=false;
+const MEMBER_PLANS={
+  free:{name:'免费用户',badge:'免费版',month:'$0',year:'$0'},
+  basic:{name:'基础会员',badge:'基础',month:'$9',year:'$79'},
+  super:{name:'超级会员',badge:'超级',month:'$19',year:'$159'}
+};
+const MEMBER_LIMITS={
+  free:{tasks:30},
+  basic:{tasks:300},
+  super:{tasks:999999}
+};
+let memberPlan='free';
 
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
@@ -1087,6 +1201,7 @@ function openEdit(id){
 function addTask(){
   const title=$('titleInput').value.trim();
   if(!title){$('titleInput').focus();toast('先说出来要做什么');return}
+  if(!editingId&&!ensureTaskQuota())return;
   const parsed=parseWhen(title);
   const ts=parsed||pendingTime;
   if(editingId){
@@ -1437,6 +1552,82 @@ const WELCOME_KEY='qingji_welcomed_v1';
 function applyAuthVisibility(){
   document.querySelectorAll('.auth-only').forEach(el=>el.classList.toggle('hidden',!AUTH_VISIBLE));
 }
+function memberQuotaLabel(plan){
+  const n=(MEMBER_LIMITS[plan]||MEMBER_LIMITS.free).tasks;
+  return n>=999999?'无限条':(n+' 条');
+}
+function activeTaskCount(){
+  return tasks.filter(t=>!t.done).length;
+}
+function canAddTask(){
+  if(!MEMBER_LIMITS_ENABLED)return true;
+  return activeTaskCount()<(MEMBER_LIMITS[memberPlan]||MEMBER_LIMITS.free).tasks;
+}
+function ensureTaskQuota(){
+  if(canAddTask())return true;
+  openMemberModal();
+  toast('当前套餐最多保留 '+memberQuotaLabel(memberPlan)+'未完成事项，升级后可继续添加');
+  return false;
+}
+function renderMember(){
+  const p=MEMBER_PLANS[memberPlan]||MEMBER_PLANS.free;
+  const card=$('memberCard');
+  if(card){
+    card.querySelector('.member-badge').className='member-badge '+(memberPlan==='free'?'':memberPlan);
+    card.querySelector('.member-badge').textContent=p.badge;
+    $('memberCardDesc').textContent=MEMBER_PURCHASE_ENABLED
+      ? (memberPlan==='super'
+        ? '超级会员已生效：免开屏广告，未完成事项不限条数。'
+        : ('当前可保留 '+memberQuotaLabel(memberPlan)+'未完成事项。升级后解锁更大容量与完整权益。'))
+      : '会员功能暂未开通，现在所有人都可以免费使用现有功能。';
+    $('memberCardLink').textContent=memberPlan==='free'||!MEMBER_PURCHASE_ENABLED?'查看会员方案 →':'管理我的会员 →';
+  }
+  const cur=$('memberCurrent');
+  if(cur)cur.innerHTML='当前身份：<b>'+p.name+'</b><span>'+(MEMBER_PURCHASE_ENABLED?(p.month+(memberPlan==='free'?'':' / 月')+' · '+p.year+(memberPlan==='free'?'':' / 年')):'购买暂未开通 · 可先免费使用')+'</span>';
+  document.querySelectorAll('[data-plan-card]').forEach(el=>el.classList.toggle('current',el.dataset.planCard===memberPlan));
+  document.querySelectorAll('[data-plan]').forEach(btn=>{
+    const plan=btn.dataset.plan;
+    btn.classList.toggle('current',plan===memberPlan);
+    btn.textContent=plan===memberPlan
+      ? (plan==='free'?'当前身份':'当前套餐')
+      : (plan==='free'?'恢复免费版':(!MEMBER_PURCHASE_ENABLED?'暂未开通':plan==='basic'?'立即开通基础':'立即开通超级'));
+  });
+}
+function loadMember(){
+  if(!MEMBER_PURCHASE_ENABLED){memberPlan='free';renderMember();return}
+  try{
+    const v=JSON.parse(localStorage.getItem(MEMBER_KEY));
+    if(v&&MEMBER_PLANS[v.plan])memberPlan=v.plan;
+  }catch(e){}
+  renderMember();
+}
+function activateMember(plan){
+  if(!MEMBER_PLANS[plan])return;
+  if(plan!=='free'&&!MEMBER_PURCHASE_ENABLED){
+    toast('会员功能未开通，敬请期待');
+    return;
+  }
+  memberPlan=plan;
+  try{localStorage.setItem(MEMBER_KEY,JSON.stringify({plan:memberPlan,updatedAt:Date.now()}))}catch(e){}
+  if(plan==='super')closeAd();
+  renderMember();closeMemberModal();
+  toast(plan==='free'?'已恢复为免费用户':('已开通 '+MEMBER_PLANS[plan].name));
+}
+function openMemberModal(){
+  renderMember();
+  $('memberMask').classList.add('on');$('memberModal').classList.add('on');
+}
+function closeMemberModal(){
+  $('memberMask').classList.remove('on');$('memberModal').classList.remove('on');
+}
+function initMember(){
+  const card=$('memberCard');if(card)card.onclick=openMemberModal;
+  const close=$('memberClose');if(close)close.onclick=closeMemberModal;
+  const mask=$('memberMask');if(mask)mask.onclick=closeMemberModal;
+  const modal=$('memberModal');
+  if(modal)modal.onclick=e=>{const b=e.target.closest('[data-plan]');if(b)activateMember(b.dataset.plan)};
+  loadMember();
+}
 function openJd(){
   try{window.open(JD_URL,'_blank','noopener')}catch(e){}
   try{location.href=JD_URL}catch(e){}
@@ -1465,6 +1656,7 @@ function triggerShake(){
   setTimeout(()=>{closeAd();openJd()},520);
 }
 function startAd(){
+  if(memberPlan==='super'){closeAd();return}
   shakeArmed=true;
   let n=5;$('adCount').textContent=n;
   $('adSplash').classList.add('on');
@@ -1619,6 +1811,7 @@ function startVoice(){
 }
 function commitVoice(){
   const title=voiceFinal.trim();if(!title)return;
+  if(!ensureTaskQuota())return;
   const parsed=parseWhen(title),ts=parsed||presetTime(1);
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
   tasks.unshift({id:id,title:title,ts:ts,lv:1,done:false,note:'',repeat:'none',completedCount:0,escalateCount:0,notified:false,created:Date.now()});
@@ -1640,6 +1833,7 @@ $('tplRow').onclick=e=>{
 };
 $('quickAdd').onclick=()=>{
   const v=$('quickInput').value.trim();if(!v){$('quickInput').focus();return}
+  if(!ensureTaskQuota())return;
   const parsed=parseWhen(v),ts=parsed||presetTime(1);
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
   tasks.unshift({id:id,title:v,ts:ts,lv:1,done:false,note:'',repeat:'none',completedCount:0,escalateCount:0,notified:false,created:Date.now()});
@@ -1886,7 +2080,7 @@ $('sheet').addEventListener('touchend',()=>{
   if(dy>110)closeSheet();
 });
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
-applyAuthVisibility();
+applyAuthVisibility();initMember();
 initTheme();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
