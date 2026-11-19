@@ -679,6 +679,13 @@ html[data-mode="dark"] .toast button{color:#245740}
                 <button data-sound="on" class="on">开</button><button data-sound="off">关</button>
               </div>
             </div>
+            <div class="set-row" style="display:block">
+              <div><div class="lbl">完成震动</div><div class="sub">需要设备支持震动</div></div>
+              <div class="seg fx-seg" id="vibeSeg">
+                <button data-vibe="off">关闭</button><button data-vibe="tap" class="on">轻触</button><button data-vibe="double">双击</button><button data-vibe="heart">心跳</button><button data-vibe="long">长震</button><button data-vibe="wave">波纹</button>
+              </div>
+              <div class="sw-name" id="vibeName">轻触</div>
+            </div>
           </div>
         </div>
         <div class="set-card" id="statsCard">
@@ -956,6 +963,16 @@ const DONE_FX={
   petal:{name:'花瓣飘落'}
 };
 let doneFx='shard';
+const VIBE_KEY='qingji_done_vibe_v1';
+const DONE_VIBES={
+  off:{name:'关闭',pattern:[]},
+  tap:{name:'轻触',pattern:[18]},
+  double:{name:'双击',pattern:[20,70,20]},
+  heart:{name:'心跳',pattern:[14,55,22,55,36]},
+  long:{name:'长震',pattern:[90]},
+  wave:{name:'波纹',pattern:[15,35,25,35,35,35,55]}
+};
+let doneVibe='tap';
 let fxSoundOn=true;
 const SOUND_KEY='qingji_fx_sound_v1';
 let audioCtx=null;
@@ -1297,13 +1314,13 @@ function toggleDone(id,skipFx){
     if(!t.done&&t.repeat&&t.repeat!=='none'){
       t.completedCount=(t.completedCount||0)+1;recordHistory(t,true);
       const nx=nextTs(t);t.ts=nx;t.notified=false;t.escalateCount=0;t.lastShownAt=0;
-      save();render();if(navigator.vibrate)navigator.vibrate(18);
+      save();render();playDoneVibe(doneVibe);
       toast('已完成这次，下次：'+fullTime(nx),'success');return;
     }
     t.done=!t.done;
     if(t.done)recordHistory(t,false);
     save();render();
-    if(t.done){if(navigator.vibrate)navigator.vibrate(18);toast('走了一小步 ✓','success')}
+    if(t.done){playDoneVibe(doneVibe);toast('走了一小步 ✓','success')}
   };
   if(goingDone&&!skipFx&&card){
     burst();setTimeout(commit,420);
@@ -1777,6 +1794,29 @@ function initDoneFx(){
     applyFxChoice();toast('完成效果已换为 '+DONE_FX[doneFx].name);playDoneFx(seg);
   };
   loadDoneFx();
+}
+function playDoneVibe(type){
+  if(type==='off'||!navigator.vibrate)return;
+  const v=DONE_VIBES[type]||DONE_VIBES.tap;
+  try{navigator.vibrate(v.pattern)}catch(e){}
+}
+function applyVibeChoice(){
+  document.querySelectorAll('#vibeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.vibe===doneVibe));
+  const nm=$('vibeName');if(nm)nm.textContent=(DONE_VIBES[doneVibe]||DONE_VIBES.tap).name;
+}
+function loadDoneVibe(){
+  try{const v=JSON.parse(localStorage.getItem(VIBE_KEY));if(v&&DONE_VIBES[v.vibe])doneVibe=v.vibe}catch(e){}
+  applyVibeChoice();
+}
+function initDoneVibe(){
+  const seg=$('vibeSeg');
+  if(seg)seg.onclick=e=>{
+    const b=e.target.closest('button');if(!b||!DONE_VIBES[b.dataset.vibe])return;
+    doneVibe=b.dataset.vibe;
+    try{localStorage.setItem(VIBE_KEY,JSON.stringify({vibe:doneVibe}))}catch(e){}
+    applyVibeChoice();toast('完成震动已换为 '+DONE_VIBES[doneVibe].name);playDoneVibe(doneVibe);
+  };
+  loadDoneVibe();
 }
 function applySoundChoice(){
   document.querySelectorAll('#soundSeg button').forEach(b=>b.classList.toggle('on',(b.dataset.sound==='on')===fxSoundOn));
@@ -2366,7 +2406,7 @@ $('sheet').addEventListener('touchend',()=>{
 });
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
 applyAuthVisibility();initMember();
-initTheme();initDoneFx();initFxSound();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
+initTheme();initDoneFx();initFxSound();initDoneVibe();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
 enableShake();setTimeout(startAd,300);
