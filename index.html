@@ -180,6 +180,16 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .shard{position:absolute;border-radius:50%;background:var(--surface);animation:shard var(--dur) var(--grav) var(--delay) forwards;will-change:transform,opacity}
 .card.shattering{animation:shatterOut .28s var(--ease) forwards}
 @keyframes shatterOut{0%{opacity:1;transform:scale(1);filter:blur(0)}30%{opacity:.85;transform:scale(1.04)}100%{opacity:0;transform:scale(.9);filter:blur(2px)}}
+@keyframes confettiFly{0%{transform:translate3d(0,0,0) rotate(0);opacity:1}70%{opacity:1}100%{transform:translate3d(var(--fx),var(--fy),0) rotate(var(--rot));opacity:0}}
+.confetti{position:absolute;width:8px;height:13px;border-radius:2px;opacity:0;animation:confettiFly var(--dur) var(--grav) var(--delay) forwards;will-change:transform,opacity}
+@keyframes sparkleFly{0%{transform:scale(.15) rotate(0);opacity:0}18%{opacity:1}100%{transform:translate3d(var(--fx),var(--fy),0) scale(var(--sc)) rotate(var(--rot));opacity:0}}
+.sparkle{position:absolute;background:currentColor;clip-path:polygon(50% 0,61% 34%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 34%);opacity:0;filter:drop-shadow(0 0 6px currentColor);animation:sparkleFly var(--dur) var(--ease) var(--delay) forwards;will-change:transform,opacity}
+@keyframes rippleOut{0%{transform:scale(.18);opacity:.78}100%{transform:scale(1);opacity:0}}
+.ripple-ring{position:absolute;border:2px solid var(--brand);border-radius:50%;opacity:0;animation:rippleOut var(--dur) ease-out var(--delay) forwards;will-change:transform,opacity}
+@keyframes petalFloat{0%{transform:translate3d(0,0,0) rotate(0);opacity:0}12%{opacity:.95}100%{transform:translate3d(var(--fx),var(--fy),0) rotate(var(--rot));opacity:0}}
+.petal{position:absolute;width:11px;height:15px;border-radius:70% 0 70% 0;opacity:0;animation:petalFloat var(--dur) var(--grav) var(--delay) forwards;will-change:transform,opacity}
+.fx-seg{flex-wrap:wrap}
+.fx-seg button{padding:5px 8px}
 
 .acc-head{display:flex;align-items:center;gap:12px}
 .acc-avatar{width:44px;height:44px;border-radius:14px;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex:none}
@@ -649,6 +659,13 @@ html[data-mode="dark"] .toast button{color:#245740}
               <div class="swatches" id="swatches"></div>
               <div class="sw-name" id="swName">松绿</div>
             </div>
+            <div class="set-row" style="display:block">
+              <div><div class="lbl">完成粒子效果</div><div class="sub">完成任务时的动画</div></div>
+              <div class="seg fx-seg" id="fxSeg">
+                <button data-fx="shard" class="on">碎片</button><button data-fx="confetti">彩纸</button><button data-fx="sparkle">星光</button><button data-fx="ripple">涟漪</button><button data-fx="petal">花瓣</button>
+              </div>
+              <div class="sw-name" id="fxName">碎片飞散</div>
+            </div>
           </div>
         </div>
         <div class="set-card" id="statsCard">
@@ -917,6 +934,15 @@ let sb=null,sbConfig=null,sbUser=null,emailMode='login';
 const SB_KEY='qingji_supabase_v1';
 const AUTH_VISIBLE=false;
 const JD_URL='https://www.jd.com/';
+const FX_KEY='qingji_done_fx_v1';
+const DONE_FX={
+  shard:{name:'碎片飞散'},
+  confetti:{name:'彩纸庆祝'},
+  sparkle:{name:'星光绽放'},
+  ripple:{name:'涟漪扩散'},
+  petal:{name:'花瓣飘落'}
+};
+let doneFx='shard';
 const MEMBER_KEY='qingji_member_v1';
 const MEMBER_PURCHASE_ENABLED=false;
 const MEMBER_LIMITS_ENABLED=false;
@@ -1234,7 +1260,7 @@ function toggleDone(id,skipFx){
   const goingDone=!t.done;
   const burst=()=>{
     if(!goingDone||skipFx||!card)return;
-    shatterCard(card);
+    playDoneFx(card);
     card.classList.add('shattering');
   };
   const commit=()=>{
@@ -1516,6 +1542,111 @@ function shatterCard(el){
   }
   layer.appendChild(frag);document.body.appendChild(layer);
   setTimeout(()=>layer.remove(),1900);
+}
+function makeFxLayer(){
+  const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);return layer;
+}
+function fxReduced(){
+  return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function playDoneFx(el){
+  if(!el||fxReduced())return;
+  if(doneFx==='confetti')confettiBurst(el);
+  else if(doneFx==='sparkle')sparkleBurst(el);
+  else if(doneFx==='ripple')rippleBurst(el);
+  else if(doneFx==='petal')petalBurst(el);
+  else shatterCard(el);
+}
+function confettiBurst(el){
+  const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
+  const colors=['var(--brand)','var(--safe)','#E7C36B','#E9A6B4','#6BB2E8','#FFFBF2'];
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<36;i++){
+    const s=document.createElement('div');s.className='confetti';
+    s.style.width=(6+Math.random()*5)+'px';s.style.height=(9+Math.random()*8)+'px';
+    s.style.left=(cx+(Math.random()-.5)*r.width*.75)+'px';
+    s.style.top=(cy+(Math.random()-.5)*r.height*.6)+'px';
+    s.style.background=colors[i%colors.length];
+    const ang=Math.random()*Math.PI*2,force=70+Math.random()*140;
+    s.style.setProperty('--fx',(Math.cos(ang)*force)+'px');
+    s.style.setProperty('--fy',(Math.sin(ang)*force+260+Math.random()*220)+'px');
+    s.style.setProperty('--rot',((Math.random()-.5)*900)+'deg');
+    s.style.setProperty('--dur',(1.1+Math.random()*.8).toFixed(2)+'s');
+    s.style.setProperty('--delay',(Math.random()*.12).toFixed(2)+'s');
+    frag.appendChild(s);
+  }
+  layer.appendChild(frag);setTimeout(()=>layer.remove(),2200);
+}
+function sparkleBurst(el){
+  const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
+  const colors=['#F5D06F','#FFF3B0','var(--brand)','#FFFFFF'];
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<24;i++){
+    const s=document.createElement('div');s.className='sparkle';
+    const sz=8+Math.random()*12;
+    s.style.width=sz+'px';s.style.height=sz+'px';
+    s.style.left=(cx-sz/2)+'px';s.style.top=(cy-sz/2)+'px';
+    s.style.color=colors[i%colors.length];
+    const ang=Math.PI*2*i/24+(Math.random()-.5)*.35,dist=70+Math.random()*120;
+    s.style.setProperty('--fx',(Math.cos(ang)*dist)+'px');
+    s.style.setProperty('--fy',(Math.sin(ang)*dist)+'px');
+    s.style.setProperty('--sc',(.5+Math.random()*.9).toFixed(2));
+    s.style.setProperty('--rot',((Math.random()-.5)*360)+'deg');
+    s.style.setProperty('--dur',(.7+Math.random()*.5).toFixed(2)+'s');
+    s.style.setProperty('--delay',(Math.random()*.08).toFixed(2)+'s');
+    frag.appendChild(s);
+  }
+  layer.appendChild(frag);setTimeout(()=>layer.remove(),1600);
+}
+function rippleBurst(el){
+  const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<4;i++){
+    const ring=document.createElement('div');ring.className='ripple-ring';
+    const size=Math.min(r.width,r.height)*(.85+i*.35);
+    ring.style.width=size+'px';ring.style.height=size+'px';
+    ring.style.left=(cx-size/2)+'px';ring.style.top=(cy-size/2)+'px';
+    ring.style.setProperty('--dur',(.8+i*.18).toFixed(2)+'s');
+    ring.style.setProperty('--delay',(i*.12).toFixed(2)+'s');
+    frag.appendChild(ring);
+  }
+  layer.appendChild(frag);setTimeout(()=>layer.remove(),1800);
+}
+function petalBurst(el){
+  const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
+  const colors=['#E9A6B4','#F4C7C3','#E7C36B','#DDEBCF'];
+  const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  for(let i=0;i<26;i++){
+    const p=document.createElement('div');p.className='petal';
+    p.style.left=(cx+(Math.random()-.5)*r.width*.8)+'px';
+    p.style.top=(cy+(Math.random()-.5)*30)+'px';
+    p.style.background=colors[i%colors.length];
+    p.style.setProperty('--fx',((Math.random()-.5)*180)+'px');
+    p.style.setProperty('--fy',(240+Math.random()*360)+'px');
+    p.style.setProperty('--rot',((Math.random()-.5)*900)+'deg');
+    p.style.setProperty('--dur',(1.5+Math.random()*.9).toFixed(2)+'s');
+    p.style.setProperty('--delay',(Math.random()*.2).toFixed(2)+'s');
+    frag.appendChild(p);
+  }
+  layer.appendChild(frag);setTimeout(()=>layer.remove(),2600);
+}
+function applyFxChoice(){
+  document.querySelectorAll('#fxSeg button').forEach(b=>b.classList.toggle('on',b.dataset.fx===doneFx));
+  const nm=$('fxName');if(nm)nm.textContent=(DONE_FX[doneFx]||DONE_FX.shard).name;
+}
+function loadDoneFx(){
+  try{const v=JSON.parse(localStorage.getItem(FX_KEY));if(v&&DONE_FX[v.fx])doneFx=v.fx}catch(e){}
+  applyFxChoice();
+}
+function initDoneFx(){
+  const seg=$('fxSeg');
+  if(seg)seg.onclick=e=>{
+    const b=e.target.closest('button');if(!b||!DONE_FX[b.dataset.fx])return;
+    doneFx=b.dataset.fx;
+    try{localStorage.setItem(FX_KEY,JSON.stringify({fx:doneFx}))}catch(e){}
+    applyFxChoice();toast('完成效果已换为 '+DONE_FX[doneFx].name);playDoneFx(seg);
+  };
+  loadDoneFx();
 }
 
 const THEME_KEY='qingji_theme_v1';
@@ -2086,7 +2217,7 @@ $('sheet').addEventListener('touchend',()=>{
 });
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
 applyAuthVisibility();initMember();
-initTheme();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
+initTheme();initDoneFx();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
 enableShake();setTimeout(startAd,300);
