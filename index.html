@@ -1507,6 +1507,42 @@ function renderCalDay(){
     '<span class="hck">'+(t.done?'✓':'○')+'</span>'+esc(t.title)+'<span class="hm">'+timeStr(t.ts)+'</span></div>').join('')
     :'<div class="empty" style="padding:24px"><p>这一天还没有安排</p></div>';
 }
+function parseCssColor(str){
+  str=(str||'').trim();
+  if(str.charAt(0)==='#'){
+    const h=str.slice(1);
+    const hex=h.length===3?h.split('').map(c=>c+c).join(''):h;
+    return [parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
+  }
+  const m=str.match(/\d+(\.\d+)?/g);
+  return m&&m.length>=3?[Number(m[0]),Number(m[1]),Number(m[2])]:[47,110,82];
+}
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min;
+  let h=0,s=0;const l=(max+min)/2;
+  if(d){
+    s=l>.5?d/(2-max-min):d/(max+min);
+    if(max===r)h=(g-b)/d+(g<b?6:0);
+    else if(max===g)h=(b-r)/d+2;
+    else h=(r-g)/d+4;
+    h*=60;
+  }
+  return [h,s*100,l*100];
+}
+function fxPalette(count){
+  const brand=getComputedStyle(document.documentElement).getPropertyValue('--brand')||'#2F6E52';
+  const rgb=parseCssColor(brand),hsl=rgbToHsl(rgb[0],rgb[1],rgb[2]),h=hsl[0],s=hsl[1],l=hsl[2];
+  const offsets=[0,-18,18,-34,34,8];
+  const sats=[s,Math.max(32,s-8),Math.min(96,s+8),Math.max(28,s-14),Math.min(96,s+4),Math.min(96,s+14)];
+  const lights=[l,Math.min(86,l+14),Math.max(30,l-10),Math.min(90,l+22),Math.max(26,l-14),Math.min(92,l+28)];
+  const arr=[];
+  for(let i=0;i<count;i++){
+    const k=i%offsets.length;
+    arr.push('hsl('+Math.round((h+offsets[k]+360)%360)+', '+Math.round(sats[k])+'%, '+Math.round(lights[k])+'%)');
+  }
+  return arr;
+}
 function shatterCard(el){
   if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const r=el.getBoundingClientRect();
@@ -1516,7 +1552,7 @@ function shatterCard(el){
   const cols=Math.max(10,Math.min(22,Math.round(r.width/16)));
   const rows=Math.max(5,Math.min(12,Math.round(r.height/14)));
   const cw=r.width/cols,ch=r.height/rows;
-  const palette=[base,base,base,'var(--brand-soft)','var(--safe-soft)','var(--brand)','var(--ink3)'];
+  const palette=[base].concat(fxPalette(6));
   const frag=document.createDocumentFragment();
   for(let gy=0;gy<rows;gy++){
     for(let gx=0;gx<cols;gx++){
@@ -1559,7 +1595,7 @@ function playDoneFx(el){
 }
 function confettiBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
-  const colors=['var(--brand)','var(--safe)','#E7C36B','#E9A6B4','#6BB2E8','#FFFBF2'];
+  const colors=fxPalette(6);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   for(let i=0;i<36;i++){
     const s=document.createElement('div');s.className='confetti';
@@ -1579,7 +1615,7 @@ function confettiBurst(el){
 }
 function sparkleBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
-  const colors=['#F5D06F','#FFF3B0','var(--brand)','#FFFFFF'];
+  const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   for(let i=0;i<24;i++){
     const s=document.createElement('div');s.className='sparkle';
@@ -1600,12 +1636,14 @@ function sparkleBurst(el){
 }
 function rippleBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
+  const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   for(let i=0;i<4;i++){
     const ring=document.createElement('div');ring.className='ripple-ring';
     const size=Math.min(r.width,r.height)*(.85+i*.35);
     ring.style.width=size+'px';ring.style.height=size+'px';
     ring.style.left=(cx-size/2)+'px';ring.style.top=(cy-size/2)+'px';
+    ring.style.borderColor=colors[i%colors.length];
     ring.style.setProperty('--dur',(.8+i*.18).toFixed(2)+'s');
     ring.style.setProperty('--delay',(i*.12).toFixed(2)+'s');
     frag.appendChild(ring);
@@ -1614,7 +1652,7 @@ function rippleBurst(el){
 }
 function petalBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
-  const colors=['#E9A6B4','#F4C7C3','#E7C36B','#DDEBCF'];
+  const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   for(let i=0;i<26;i++){
     const p=document.createElement('div');p.className='petal';
