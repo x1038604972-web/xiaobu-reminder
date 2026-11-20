@@ -22,6 +22,7 @@
   --glass-bg:rgba(255,252,246,.62);--glass-bg-2:rgba(246,241,232,.48);
   --glass-line:rgba(255,255,255,.88);--glass-sheen:rgba(255,255,255,.6);
   --glass-shadow:0 24px 70px rgba(35,32,28,.22),inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(35,32,28,.06);
+  --check-ring:rgba(35,32,28,.44);--check-fill:rgba(255,255,255,.46);--check-shadow:inset 0 1px 0 rgba(255,255,255,.9);
   --ease:cubic-bezier(.22,1,.36,1);--ease-back:cubic-bezier(.2,1.4,.4,1);--spring:cubic-bezier(.34,1.56,.64,1);--grav:cubic-bezier(.38,.02,.62,1);
 }
 html[data-mode="dark"]{
@@ -34,6 +35,7 @@ html[data-mode="dark"]{
   --glass-bg:rgba(36,34,32,.62);--glass-bg-2:rgba(27,26,24,.5);
   --glass-line:rgba(255,255,255,.22);--glass-sheen:rgba(255,255,255,.16);
   --glass-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.36);
+  --check-ring:rgba(255,255,255,.46);--check-fill:rgba(255,255,255,.07);--check-shadow:inset 0 1px 0 rgba(255,255,255,.2);
 }
 @media(prefers-color-scheme:dark){html[data-mode="auto"]{
   --paper:#1B1A18;--bg:#1B1A18;--surface:#242220;
@@ -45,6 +47,7 @@ html[data-mode="dark"]{
   --glass-bg:rgba(36,34,32,.62);--glass-bg-2:rgba(27,26,24,.5);
   --glass-line:rgba(255,255,255,.22);--glass-sheen:rgba(255,255,255,.16);
   --glass-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.36);
+  --check-ring:rgba(255,255,255,.46);--check-fill:rgba(255,255,255,.07);--check-shadow:inset 0 1px 0 rgba(255,255,255,.2);
 }}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -253,7 +256,8 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .card.done{opacity:.62}
 .card.done .title{text-decoration:line-through;color:var(--ink3)}
 .check{
-  width:24px;height:24px;border-radius:50%;border:2px solid var(--line);flex:none;margin-top:2px;
+  width:24px;height:24px;border-radius:50%;border:2px solid var(--check-ring);flex:none;margin-top:2px;
+  background:var(--check-fill);box-shadow:var(--check-shadow);
   display:flex;align-items:center;justify-content:center;transition:all .15s ease;
 }
 .check svg{opacity:0;transform:scale(.5);transition:all .18s cubic-bezier(.2,1.6,.4,1)}
