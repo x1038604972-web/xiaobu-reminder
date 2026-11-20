@@ -425,6 +425,8 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 
 .welcome{position:absolute;inset:0;z-index:90;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;text-align:center}
 .welcome.on{display:flex;animation:fade .4s var(--ease)}
+#authMask{z-index:100}
+#authSheet{z-index:101}
 .welcome-mark{width:76px;height:76px;margin-bottom:20px;animation:pop .6s var(--spring)}
 .welcome h1{font-size:28px;font-weight:900;letter-spacing:.08em;margin-bottom:8px}
 .welcome .ws{font-size:14px;color:var(--ink2);line-height:1.6;margin-bottom:36px}
@@ -2960,7 +2962,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-13').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-14').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
