@@ -1617,9 +1617,15 @@ function toggleDone(id,skipFx){
   const commit=()=>{
     if(!t.done&&t.repeat&&t.repeat!=='none'){
       t.completedCount=(t.completedCount||0)+1;recordHistory(t,true);
-      const nx=nextTs(t);t.ts=nx;t.notified=false;t.escalateCount=0;t.lastShownAt=0;
+      const nx=nextTs(t);
+      const next=Object.assign({},t,{
+        id:'t'+Date.now()+Math.random().toString(36).slice(2,5),
+        ts:nx,done:false,notified:false,escalateCount:0,lastShownAt:0,created:Date.now()
+      });
+      tasks.unshift(next);
+      t.done=true;t.notified=true;
       save();render();playDoneVibe(doneVibe);
-      toast('已完成这次，下次：'+fullTime(nx),'success');return;
+      toast('已完成，已划到已完成 · 下次：'+fullTime(nx),'success');return;
     }
     t.done=!t.done;
     if(t.done)recordHistory(t,false);
@@ -2959,7 +2965,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-9').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-10').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
