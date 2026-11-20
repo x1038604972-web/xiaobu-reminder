@@ -1458,7 +1458,12 @@ function playFlip(before){
 function render(){
   const before=captureCardY();
   renderTop();
-  const todo=tasks.filter(t=>!t.done).sort((a,b)=>a.ts-b.ts);
+  const todayEnd=today0()+86400000-1;
+  const todo=tasks.filter(t=>{
+    if(t.done)return false;
+    if(t.repeat&&t.repeat!=='none'&&t.ts>todayEnd)return false;
+    return true;
+  }).sort((a,b)=>a.ts-b.ts);
   const overdue=todo.filter(t=>isOver(t.ts));
   const normal=todo.filter(t=>!isOver(t.ts));
   const done=tasks.filter(t=>t.done).sort((a,b)=>b.ts-a.ts);
@@ -2965,7 +2970,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-10').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-11').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
