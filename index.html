@@ -22,6 +22,11 @@
   --glass-bg:rgba(255,252,246,.62);--glass-bg-2:rgba(246,241,232,.48);
   --glass-line:rgba(255,255,255,.88);--glass-sheen:rgba(255,255,255,.6);
   --glass-shadow:0 24px 70px rgba(35,32,28,.22),inset 0 1px 0 rgba(255,255,255,.9),inset 0 -1px 0 rgba(35,32,28,.06);
+  --glass-blur-panel:36px;--glass-sat-panel:200%;
+  --glass-blur-surface:24px;--glass-sat-surface:180%;
+  --glass-blur-small:10px;--glass-sat-small:150%;
+  --glass-blur-mask:12px;--glass-sat-mask:160%;
+  --glass-blur-phone:30px;--glass-sat-phone:170%;
   --check-ring:rgba(35,32,28,.44);--check-fill:rgba(255,255,255,.46);--check-shadow:inset 0 1px 0 rgba(255,255,255,.9);
   --ease:cubic-bezier(.22,1,.36,1);--ease-back:cubic-bezier(.2,1.4,.4,1);--spring:cubic-bezier(.34,1.56,.64,1);--grav:cubic-bezier(.38,.02,.62,1);
 }
@@ -49,6 +54,35 @@ html[data-mode="dark"]{
   --glass-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.36);
   --check-ring:rgba(255,255,255,.46);--check-fill:rgba(255,255,255,.07);--check-shadow:inset 0 1px 0 rgba(255,255,255,.2);
 }}
+html[data-style="original"]{
+  --glass-bg:var(--surface);--glass-bg-2:var(--surface);
+  --glass-line:var(--line);--glass-sheen:transparent;--glass-shadow:var(--shadow);
+  --glass-blur-panel:0px;--glass-sat-panel:100%;
+  --glass-blur-surface:0px;--glass-sat-surface:100%;
+  --glass-blur-small:0px;--glass-sat-small:100%;
+  --glass-blur-mask:0px;--glass-sat-mask:100%;
+  --glass-blur-phone:0px;--glass-sat-phone:100%;
+}
+html[data-style="frosted"]{
+  --glass-bg:rgba(255,252,246,.86);--glass-bg-2:rgba(246,241,232,.78);
+  --glass-line:rgba(255,255,255,.7);--glass-sheen:rgba(255,255,255,.1);
+  --glass-shadow:0 18px 48px rgba(35,32,28,.16),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(35,32,28,.05);
+  --glass-blur-panel:30px;--glass-sat-panel:120%;
+  --glass-blur-surface:22px;--glass-sat-surface:110%;
+  --glass-blur-small:8px;--glass-sat-small:105%;
+  --glass-blur-mask:10px;--glass-sat-mask:110%;
+  --glass-blur-phone:22px;--glass-sat-phone:110%;
+}
+html[data-mode="dark"][data-style="frosted"]{
+  --glass-bg:rgba(36,34,32,.88);--glass-bg-2:rgba(27,26,24,.8);
+  --glass-line:rgba(255,255,255,.14);--glass-sheen:rgba(255,255,255,.05);
+  --glass-shadow:0 18px 48px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.3);
+}
+@media(prefers-color-scheme:dark){html[data-mode="auto"][data-style="frosted"]{
+  --glass-bg:rgba(36,34,32,.88);--glass-bg-2:rgba(27,26,24,.8);
+  --glass-line:rgba(255,255,255,.14);--glass-sheen:rgba(255,255,255,.05);
+  --glass-shadow:0 18px 48px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08),inset 0 -1px 0 rgba(0,0,0,.3);
+}}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
@@ -73,7 +107,7 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 @media(prefers-color-scheme:dark){html[data-mode="auto"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #0D0C0B,0 0 0 11px #262320}}
 @media(min-width:521px){
   body{background:radial-gradient(circle at 15% 12%,rgba(47,110,82,.18),transparent 36%),radial-gradient(circle at 85% 88%,rgba(231,195,107,.2),transparent 42%),#E8E1D5}
-  .phone{background:rgba(246,241,232,.72);border:1px solid rgba(255,255,255,.66);backdrop-filter:blur(30px) saturate(170%);-webkit-backdrop-filter:blur(30px) saturate(170%);box-shadow:0 30px 90px rgba(35,32,28,.28),0 0 0 10px rgba(28,30,32,.94),0 0 0 11px rgba(255,255,255,.32),inset 0 1px 0 rgba(255,255,255,.75)}
+  .phone{background:rgba(246,241,232,.72);border:1px solid rgba(255,255,255,.66);backdrop-filter:blur(var(--glass-blur-phone)) saturate(var(--glass-sat-phone));-webkit-backdrop-filter:blur(var(--glass-blur-phone)) saturate(var(--glass-sat-phone));box-shadow:0 30px 90px rgba(35,32,28,.28),0 0 0 10px rgba(28,30,32,.94),0 0 0 11px rgba(255,255,255,.32),inset 0 1px 0 rgba(255,255,255,.75)}
   html[data-mode="dark"] body{background:radial-gradient(circle at 15% 12%,rgba(95,174,134,.16),transparent 36%),radial-gradient(circle at 85% 88%,rgba(231,195,107,.12),transparent 42%),#11100F}
   html[data-mode="dark"] .phone{background:rgba(27,26,24,.72);border-color:rgba(255,255,255,.18);box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 0 10px rgba(13,12,11,.96),0 0 0 11px rgba(255,255,255,.16),inset 0 1px 0 rgba(255,255,255,.16)}
 }
@@ -556,29 +590,39 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .member-benefit-row.head{font-weight:800;color:var(--ink3);font-size:10px;background:var(--bg);border-radius:8px}
 .member-note{font-size:10px;color:var(--ink3);line-height:1.6;margin-top:12px;background:var(--bg);border-radius:9px;padding:9px 10px}
 
-.sheet-mask,.modal-mask,.sum-mask{background:rgba(35,32,28,.22);backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%)}
+.sheet-mask,.modal-mask,.sum-mask{background:rgba(35,32,28,.22);backdrop-filter:blur(var(--glass-blur-mask)) saturate(var(--glass-sat-mask));-webkit-backdrop-filter:blur(var(--glass-blur-mask)) saturate(var(--glass-sat-mask))}
 html[data-mode="dark"] .sheet-mask,html[data-mode="dark"] .modal-mask,html[data-mode="dark"] .sum-mask{background:rgba(0,0,0,.42)}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] .sheet-mask,html[data-mode="auto"] .modal-mask,html[data-mode="auto"] .sum-mask{background:rgba(0,0,0,.42)}}
 .sheet,.modal,.voice-panel{
   background:linear-gradient(145deg,var(--glass-sheen),rgba(255,255,255,0) 42%),linear-gradient(160deg,var(--glass-bg),var(--glass-bg-2));
   border:1px solid var(--glass-line);
   box-shadow:var(--glass-shadow);
-  backdrop-filter:blur(36px) saturate(200%);
-  -webkit-backdrop-filter:blur(36px) saturate(200%);
+  backdrop-filter:blur(var(--glass-blur-panel)) saturate(var(--glass-sat-panel));
+  -webkit-backdrop-filter:blur(var(--glass-blur-panel)) saturate(var(--glass-sat-panel));
 }
 .sheet,.voice-panel{border-bottom:none}
 .card,.quick,.cal-grid{
   background:linear-gradient(145deg,var(--glass-sheen),rgba(255,255,255,0) 42%),linear-gradient(160deg,var(--glass-bg),var(--glass-bg-2));
   border:1px solid var(--glass-line);
   box-shadow:var(--glass-shadow);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  backdrop-filter:blur(var(--glass-blur-surface)) saturate(var(--glass-sat-surface));
+  -webkit-backdrop-filter:blur(var(--glass-blur-surface)) saturate(var(--glass-sat-surface));
 }
-.postpone-btn,.icon-btn,.tag,.cal-cell.today,.cal-cell.sel,.cal-nav button{backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}
+.postpone-btn,.icon-btn,.tag,.cal-cell.today,.cal-cell.sel,.cal-nav button{backdrop-filter:blur(var(--glass-blur-small)) saturate(var(--glass-sat-small));-webkit-backdrop-filter:blur(var(--glass-blur-small)) saturate(var(--glass-sat-small))}
 .cal-cell.today{background:linear-gradient(145deg,var(--glass-sheen),rgba(255,255,255,0) 45%),var(--brand-soft);border:1px solid var(--glass-line)}
 .cal-cell.sel{background:linear-gradient(145deg,rgba(255,255,255,.24),rgba(255,255,255,0) 45%),var(--brand);color:#FFFBF2;border:1px solid rgba(255,255,255,.36)}
 .cal-nav button{background:var(--glass-bg-2);border:1px solid var(--glass-line)}
 .postpone-btn{border:1px solid var(--glass-line)}
+#view-alerts .set-card,#view-alerts .demo-btn{
+  background:linear-gradient(145deg,var(--glass-sheen),rgba(255,255,255,0) 42%),linear-gradient(160deg,var(--glass-bg),var(--glass-bg-2));
+  border:1px solid var(--glass-line);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(var(--glass-blur-surface)) saturate(var(--glass-sat-surface));
+  -webkit-backdrop-filter:blur(var(--glass-blur-surface)) saturate(var(--glass-sat-surface));
+}
+#view-alerts .demo-btn{background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,0) 45%),linear-gradient(160deg,var(--brand),var(--brand-press));border-color:rgba(255,255,255,.3);color:#FFFBF2}
+html[data-style="original"] #view-alerts .demo-btn{background:var(--brand);border-color:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-style="original"] .cal-cell.sel{background:var(--brand);border-color:var(--brand)}
 
 .toast{
   position:absolute;left:50%;bottom:148px;transform:translate(-50%,16px);background:#23201C;color:#FFFBF2;
@@ -747,6 +791,13 @@ html[data-mode="dark"] .toast button{color:#245740}
               <div class="lbl">主题色</div>
               <div class="swatches" id="swatches"></div>
               <div class="sw-name" id="swName">松绿</div>
+            </div>
+            <div class="set-row" style="display:block">
+              <div><div class="lbl">视觉风格</div><div class="sub">原版 / 液态玻璃 / 磨砂</div></div>
+              <div class="seg" id="styleSeg">
+                <button data-style="original">原版</button><button data-style="liquid" class="on">液态玻璃</button><button data-style="frosted">磨砂</button>
+              </div>
+              <div class="sw-name" id="styleName">液态玻璃</div>
             </div>
             <div class="set-row" style="display:block">
               <div><div class="lbl">完成粒子效果</div><div class="sub">完成任务时的动画</div></div>
@@ -2007,6 +2058,26 @@ function initTheme(){
   applyTheme();
 }
 
+const STYLE_KEY='qingji_visual_style_v1';
+const VISUAL_STYLES={original:'原版',liquid:'液态玻璃',frosted:'磨砂'};
+let visualStyle='liquid';
+function applyVisualStyle(){
+  document.documentElement.setAttribute('data-style',visualStyle);
+  document.querySelectorAll('#styleSeg button').forEach(b=>b.classList.toggle('on',b.dataset.style===visualStyle));
+  const nm=$('styleName');if(nm)nm.textContent=VISUAL_STYLES[visualStyle]||VISUAL_STYLES.liquid;
+}
+function initVisualStyle(){
+  try{const v=JSON.parse(localStorage.getItem(STYLE_KEY));if(v&&VISUAL_STYLES[v.style])visualStyle=v.style}catch(e){}
+  const seg=$('styleSeg');
+  if(seg)seg.onclick=e=>{
+    const b=e.target.closest('button');if(!b||!VISUAL_STYLES[b.dataset.style])return;
+    visualStyle=b.dataset.style;
+    try{localStorage.setItem(STYLE_KEY,JSON.stringify({style:visualStyle}))}catch(x){}
+    applyVisualStyle();toast('视觉风格已换为 '+VISUAL_STYLES[visualStyle]);
+  };
+  applyVisualStyle();
+}
+
 const WELCOME_KEY='qingji_welcomed_v1';
 function applyAuthVisibility(){
   document.querySelectorAll('.auth-only').forEach(el=>el.classList.toggle('hidden',!AUTH_VISIBLE));
@@ -2554,7 +2625,7 @@ $('sheet').addEventListener('touchend',()=>{
 });
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
 applyAuthVisibility();initMember();
-initTheme();initDoneFx();initFxSound();initDoneVibe();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
+initVisualStyle();initTheme();initDoneFx();initFxSound();initDoneVibe();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
 enableShake();setTimeout(()=>{closeBoot();setTimeout(startAd,260)},1900);
