@@ -456,18 +456,93 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .guide-next{background:var(--brand);color:#FFFBF2}
 .guide-prev:active,.guide-next:active{transform:scale(.97)}
 
-.boot-splash{position:absolute;inset:0;z-index:120;background:linear-gradient(160deg,var(--surface),var(--bg));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:56px;padding:54px 24px 48px;overflow:hidden;transition:opacity .5s var(--ease),visibility .5s var(--ease)}
-.boot-splash.off{opacity:0;visibility:hidden;pointer-events:none}
-.boot-brand{position:relative;z-index:1;display:flex;align-items:center;gap:10px}
-.boot-brand-mark{width:40px;height:40px;border-radius:13px;background:linear-gradient(145deg,var(--brand),var(--brand-press));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(35,32,28,.14),inset 0 1px 0 rgba(255,255,255,.36)}
-.boot-brand-mark svg{width:23px;height:23px}
-.boot-brand-name{font-size:18px;font-weight:800;letter-spacing:.16em;color:var(--brand)}
-.boot-brand-tag{font-size:10px;color:var(--ink3);letter-spacing:.12em;border-left:1px solid var(--line);padding-left:10px;margin-left:2px}
-.boot-copy{position:relative;z-index:1;text-align:center}
-.boot-title{font-size:38px;font-weight:900;letter-spacing:.16em;line-height:1.15;color:transparent;background:linear-gradient(135deg,var(--brand-press),var(--brand) 45%,#78A98D);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:.6px rgba(255,255,255,.7);filter:drop-shadow(0 3px 0 rgba(255,255,255,.85)) drop-shadow(0 10px 20px rgba(47,110,82,.2));animation:bootTitleIn .8s var(--spring) both}
-.boot-slogan{font-family:"STKaiti","KaiTi","Kaiti SC",serif;font-size:17px;font-weight:700;color:var(--ink2);margin-top:12px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(255,255,255,.9)}
-.boot-note{position:relative;z-index:1;font-size:10px;color:var(--ink3);letter-spacing:.22em;margin-top:14px}
-@keyframes bootTitleIn{0%{opacity:0;transform:translateY(14px) scale(.94)}100%{opacity:1;transform:translateY(0) scale(1)}}
+/* ===== 品牌加载页（v2）===== */
+:root{
+  --boot-word:#265443;--boot-ring:rgba(47,110,82,.42);
+  --boot-glow-a:rgba(47,110,82,.19);--boot-glow-b:rgba(231,195,107,.18);
+  --boot-tex-op:.05;--boot-tex-blend:multiply;--boot-sign:rgba(119,112,100,.55);
+}
+html[data-mode="dark"]{
+  --boot-word:#A2D5B8;--boot-ring:rgba(120,169,141,.46);
+  --boot-glow-a:rgba(95,174,134,.22);--boot-glow-b:rgba(231,195,107,.10);
+  --boot-tex-op:.11;--boot-tex-blend:screen;--boot-sign:rgba(167,158,144,.5);
+}
+@media(prefers-color-scheme:dark){html[data-mode="auto"]{
+  --boot-word:#A2D5B8;--boot-ring:rgba(120,169,141,.46);
+  --boot-glow-a:rgba(95,174,134,.22);--boot-glow-b:rgba(231,195,107,.10);
+  --boot-tex-op:.11;--boot-tex-blend:screen;--boot-sign:rgba(167,158,144,.5);
+}}
+.boot-splash{position:absolute;inset:0;z-index:120;overflow:hidden;display:flex;flex-direction:column;align-items:center;
+  padding-top:8%;
+  background:radial-gradient(118% 78% at 50% -6%,var(--surface) 0%,var(--bg) 56%,var(--bg) 100%);
+  transition:opacity .4s var(--ease),transform .48s var(--ease);will-change:opacity,transform}
+.boot-splash.off{visibility:hidden;pointer-events:none}
+.boot-splash.done{opacity:0;transform:scale(1.035);pointer-events:none}
+.boot-splash.done .boot-stack{transform:translateY(-12px);transition:transform .4s var(--ease)}
+.boot-splash__glow{position:absolute;inset:-18%;pointer-events:none;
+  background:radial-gradient(42% 30% at 24% 20%,var(--boot-glow-a),transparent 74%),radial-gradient(38% 27% at 78% 84%,var(--boot-glow-b),transparent 74%);
+  animation:bootGlowDrift 18s ease-in-out infinite alternate}
+.boot-splash__texture{position:absolute;inset:0;pointer-events:none;opacity:var(--boot-tex-op);mix-blend-mode:var(--boot-tex-blend);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+.boot-stack{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.boot-mark{position:relative;width:76px;height:76px;border-radius:25px;
+  background:linear-gradient(148deg,#3C8163 0%,var(--brand) 46%,var(--brand-press) 100%);
+  box-shadow:0 16px 34px rgba(36,87,64,.24),0 2px 6px rgba(36,87,64,.16),inset 0 1px 0 rgba(255,255,255,.44),inset 0 -1px 2px rgba(0,0,0,.14);
+  display:flex;align-items:center;justify-content:center;animation:bootMarkIn .8s var(--spring) both;transform-origin:50% 58%}
+.boot-mark__ring{position:absolute;inset:-11px;border-radius:50%;opacity:0;
+  background:repeating-conic-gradient(from 0deg,var(--boot-ring) 0deg 2.4deg,transparent 2.4deg 10deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 1.4px),#000 calc(100% - .7px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 1.4px),#000 calc(100% - .7px));
+  animation:bootRingIn .9s .24s var(--ease) forwards,bootRingDrift 24s linear infinite}
+.boot-mark__sweep{position:absolute;inset:0;border-radius:inherit;overflow:hidden}
+.boot-mark__sweep::before{content:"";position:absolute;top:-40%;bottom:-40%;width:78%;left:-125%;
+  background:linear-gradient(100deg,transparent 12%,rgba(255,255,255,.48) 50%,transparent 88%);
+  transform:rotate(8deg);animation:bootSweep 4.6s cubic-bezier(.45,0,.55,1) infinite}
+.boot-mark__glyph{width:38px;height:38px;position:relative;z-index:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.16))}
+.boot-mark__glyph path{stroke-dasharray:1;stroke-dashoffset:1;animation:bootDraw 1.05s .2s cubic-bezier(.62,0,.32,1) forwards}
+.boot-word{margin-top:28px;font-size:28px;font-weight:800;color:var(--boot-word);
+  letter-spacing:.34em;padding-left:.34em;animation:bootWordIn 1s .24s var(--ease) both}
+.boot-slogan{margin-top:14px;font-family:"STKaiti","KaiTi","Kaiti SC","Songti SC",serif;
+  font-size:15px;font-weight:700;color:var(--ink2);letter-spacing:.22em;padding-left:.22em;
+  animation:bootRiseIn .8s .46s var(--ease) both}
+.boot-meter{position:relative;z-index:1;width:188px;padding-bottom:66px;display:flex;flex-direction:column;align-items:center}
+.boot-rule{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--line) 16%,var(--line) 84%,transparent);
+  transform:scaleX(0);transform-origin:50% 50%;animation:bootRuleIn .9s .5s var(--ease) forwards}
+.boot-track{position:relative;width:148px;height:2px;border-radius:2px;background:var(--line);margin-top:22px}
+.boot-bar{position:absolute;left:0;top:0;height:2px;width:0%;border-radius:2px;
+  background:linear-gradient(90deg,var(--brand) 0%,#4C8F6F 68%,#7FB79B 100%);
+  transition:width .4s cubic-bezier(.24,.9,.3,1)}
+.boot-bar::after{content:"";position:absolute;right:-3px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
+  background:#86BE9F;box-shadow:0 0 0 3px rgba(134,190,159,.2),0 0 10px rgba(134,190,159,.6);
+  opacity:0;transform:scale(.6);transition:opacity .3s,transform .3s var(--spring)}
+.boot-splash[data-run="1"] .boot-bar::after{opacity:1;transform:scale(1)}
+.boot-splash.done .boot-bar::after{transform:scale(1.5);opacity:0}
+.boot-readout{width:148px;margin-top:10px;text-align:right;font-variant-numeric:tabular-nums;font-feature-settings:"tnum";
+  font-size:11.5px;font-weight:800;color:var(--ink3);letter-spacing:.04em;transition:transform .3s var(--spring)}
+.boot-readout.full{transform:scale(1.06);color:var(--brand)}
+html[data-mode="dark"] .boot-readout.full{color:#9FD3B6}
+@media(prefers-color-scheme:dark){html[data-mode="auto"] .boot-readout.full{color:#9FD3B6}}
+.boot-unit{font-size:9px;font-weight:700;opacity:.55;margin-left:1px}
+.boot-hint{margin-top:12px;font-size:10.5px;color:var(--ink3);letter-spacing:.22em;padding-left:.22em;height:14px;overflow:hidden}
+.boot-hint span{display:block;animation:bootHintSwap 5.6s steps(1) infinite}
+.boot-sign{margin-top:26px;font-size:9.5px;font-weight:700;color:var(--boot-sign);letter-spacing:.3em;padding-left:.3em}
+@keyframes bootMarkIn{0%{opacity:0;transform:scale(.9) translateY(7px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes bootRingIn{to{opacity:.55}}
+@keyframes bootDraw{to{stroke-dashoffset:0}}
+@keyframes bootRingDrift{to{transform:rotate(360deg)}}
+@keyframes bootSweep{0%{left:-125%}58%,100%{left:152%}}
+@keyframes bootWordIn{0%{opacity:0;letter-spacing:.7em;transform:translateY(10px)}100%{opacity:1;letter-spacing:.34em;transform:translateY(0)}}
+@keyframes bootRiseIn{0%{opacity:0;transform:translateY(9px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes bootRuleIn{to{transform:scaleX(1)}}
+@keyframes bootHintSwap{0%,24%{transform:translateY(0)}25%,49%{transform:translateY(-14px)}50%,74%{transform:translateY(-28px)}75%,100%{transform:translateY(-42px)}}
+@keyframes bootGlowDrift{0%{transform:translate3d(-1.6%,-1%,0) scale(1)}100%{transform:translate3d(1.6%,1.6%,0) scale(1.07)}}
+@media (prefers-reduced-motion:reduce){
+  .boot-splash *{animation:none!important;transition-duration:.01ms!important}
+  .boot-mark__glyph path{stroke-dashoffset:0}
+  .boot-mark__ring{opacity:.5}
+  .boot-rule{transform:scaleX(1)}
+  .boot-splash.done{transform:none}
+}
 
 .ad-splash{position:absolute;inset:0;z-index:95;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
 .ad-splash.on{display:flex;animation:fade .35s var(--ease)}
@@ -660,16 +735,30 @@ html[data-mode="dark"] .toast button{color:#245740}
 <div class="phone">
 <div class="app">
 
-  <div class="boot-splash" id="bootSplash">
-    <div class="boot-brand">
-      <div class="boot-brand-mark"><svg viewBox="0 0 1024 1024" aria-hidden="true"><path d="M300 520L438 658L760 320" fill="none" stroke="#FFFBF2" stroke-width="122" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div class="boot-brand-name">小步</div>
-      <div class="boot-brand-tag">STEP BY STEP</div>
-    </div>
-    <div class="boot-copy">
-      <div class="boot-title">小步</div>
+  <div class="boot-splash" id="bootSplash" role="status" aria-live="polite" aria-label="正在进入小步">
+    <div class="boot-splash__glow" aria-hidden="true"></div>
+    <div class="boot-splash__texture" aria-hidden="true"></div>
+
+    <div class="boot-stack">
+      <div class="boot-mark">
+        <span class="boot-mark__ring" aria-hidden="true"></span>
+        <span class="boot-mark__sweep" aria-hidden="true"></span>
+        <svg class="boot-mark__glyph" viewBox="0 0 1024 1024" aria-hidden="true">
+          <path d="M300 520L438 658L760 320" pathLength="1" fill="none" stroke="#FFFBF2" stroke-width="122" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="boot-word">小步</div>
       <div class="boot-slogan">说出来，就有人替你记住</div>
-      <div class="boot-note">每一步都算数</div>
+    </div>
+
+    <div class="boot-meter">
+      <div class="boot-rule" aria-hidden="true"></div>
+      <div class="boot-track" aria-hidden="true"><i class="boot-bar" id="bootBar"></i></div>
+      <div class="boot-readout" id="bootReadout"><span id="bootNum">0</span><span class="boot-unit">%</span></div>
+      <div class="boot-hint" aria-hidden="true">
+        <span>正在整理今天的步伐<br>校准你的提醒时间<br>把清单一张张铺好<br>就快好了</span>
+      </div>
+      <div class="boot-sign">STEP BY STEP</div>
     </div>
   </div>
 
@@ -2212,10 +2301,63 @@ function triggerShake(){
   $('shakeHint').textContent='已识别摇晃，正在前往京东…';
   setTimeout(()=>{closeAd();openJd()},520);
 }
+/* ---- 品牌加载页：真实启动进度（0→100 由启动阶段驱动，不是假动画）---- */
+var bootEls=null,bootTarget=0,bootShown=0,bootRaf=0,bootClosing=false,bootEnded=false,bootMinUntil=0;
+function bootRefs(){
+  if(bootEls)return bootEls;
+  var el=$('bootSplash');if(!el)return null;
+  bootEls={el:el,bar:$('bootBar'),num:$('bootNum'),read:$('bootReadout')};
+  bootMinUntil=performance.now()+1150;
+  return bootEls;
+}
+function bootSet(p){
+  var r=bootRefs();if(!r||bootEnded)return;
+  bootTarget=Math.max(bootTarget,Math.min(100,p));
+  if(!bootRaf)bootRaf=requestAnimationFrame(bootTick);
+}
+function bootTick(){
+  var r=bootEls;if(!r||bootEnded){bootRaf=0;return}
+  var gap=bootTarget-bootShown;
+  bootShown+=Math.max(.4,gap*.16);
+  if(Math.abs(gap)<.12)bootShown=bootTarget;
+  r.bar.style.width=bootShown.toFixed(1)+'%';
+  r.num.textContent=Math.round(bootShown);
+  if(bootShown>=100){
+    r.read.classList.add('full');
+    if(!bootClosing){
+      bootClosing=true;
+      var wait=Math.max(0,bootMinUntil-performance.now());
+      setTimeout(bootHide,wait+240);
+    }
+    bootRaf=0;return;
+  }
+  bootRaf=requestAnimationFrame(bootTick);
+}
+function bootHide(){
+  var r=bootEls;if(!r||bootEnded)return;
+  bootEnded=true;
+  r.el.classList.add('done');r.el.classList.add('off');
+  setTimeout(function(){r.el.style.display='none'},620);
+}
 function closeBoot(){
-  const boot=$('bootSplash');if(!boot||boot.classList.contains('off'))return;
-  boot.classList.add('off');
-  setTimeout(()=>{boot.style.display='none'},560);
+  var r=bootRefs();if(!r||bootEnded)return;
+  bootSet(100);
+  /* 兜底：动画帧被节流（后台标签 / 省电模式）时也不让加载层卡住 */
+  setTimeout(function(){
+    if(bootEnded)return;
+    if(bootShown<100){bootShown=100;r.bar.style.width='100%';r.num.textContent='100';r.read.classList.add('full');}
+    bootHide();
+  },700);
+}
+function bootHooks(){
+  var r=bootRefs();if(!r)return;
+  r.el.dataset.run='1';
+  bootSet(6);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){bootSet(34)});
+  else bootSet(34);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){bootSet(58)}).catch(function(){});
+  window.addEventListener('load',function(){bootSet(92)});
+  requestAnimationFrame(function(){requestAnimationFrame(function(){bootSet(84)})});
 }
 function startAd(){
   if(memberPlan==='super'){closeAd();return}
@@ -2402,9 +2544,35 @@ function voiceRender(){
   else{t.textContent=voiceActive?'正在听…':'点击麦克风开始说话';t.classList.toggle('placeholder',!voiceActive)}
   $('voiceGo').disabled=!voiceFinal.trim();
 }
+function micAuthState(){
+  if(!navigator.permissions||!navigator.permissions.query)return Promise.resolve('unknown');
+  return navigator.permissions.query({name:'microphone'}).then(r=>r.state).catch(()=> 'unknown');
+}
+function startVoiceWithMic(){
+  $('voiceState').textContent='正在请求麦克风权限…';
+  $('voiceHint').innerHTML='若手机弹出权限提示，请点「允许」';
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    $('voiceState').textContent='正在准备录音…';
+    startVoice();return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    try{stream.getTracks().forEach(t=>t.stop())}catch(e){}
+    $('voiceState').textContent='已获得麦克风权限';
+    startVoice();
+  }).catch(err=>{
+    const n=err&&err.name||'';
+    const msg=(n==='NotAllowedError'||n==='PermissionDeniedError')?'麦克风权限被拒绝':(n==='NotFoundError'||n==='DevicesNotFoundError')?'没有找到麦克风':'无法访问麦克风';
+    voiceActive=false;$('voicePanel').classList.remove('rec');$('voiceMic').classList.remove('rec');
+    $('voiceState').textContent=msg;
+    $('voiceHint').innerHTML='请在浏览器地址栏的权限设置里允许麦克风后，再点一次麦克风。';
+    toast(msg);
+  });
+}
 function openVoice(){
   buildWave();voiceFinal='';voiceInterim='';voiceRender();
-  $('voiceState').textContent='准备录音';
+  $('voiceMic').style.opacity='1';
+  $('voiceState').textContent='正在检查麦克风权限…';
+  $('voiceHint').innerHTML='稍等，正在确认麦克风是否可用';
   $('voiceMask').classList.add('on');$('voicePanel').classList.add('on');
   if(!SpeechRec){
     $('voiceState').textContent='浏览器不支持语音识别';
@@ -2412,7 +2580,12 @@ function openVoice(){
     $('voiceMic').style.opacity='.4';
     return;
   }
-  setTimeout(startVoice,320);
+  micAuthState().then(state=>{
+    if(state==='granted'){
+      $('voiceState').textContent='已有麦克风权限，正在启动…';
+      startVoice();
+    }else startVoiceWithMic();
+  });
 }
 function closeVoice(){
   voiceActive=false;
@@ -2442,8 +2615,14 @@ function startVoice(){
     };
     recog.onerror=e=>{
       voiceActive=false;$('voicePanel').classList.remove('rec');$('voiceMic').classList.remove('rec');
-      const msg=e.error==='not-allowed'?'麦克风权限被拒绝':e.error==='no-speech'?'没听到声音，再试一次':'识别出错，请重试';
-      $('voiceState').textContent=msg;toast(msg);
+      let msg;
+      if(e.error==='not-allowed'||e.error==='service-not-allowed')msg='麦克风权限被拒绝，请在浏览器权限设置里允许';
+      else if(e.error==='no-speech')msg='没听到声音，再试一次';
+      else if(e.error==='audio-capture')msg='没有找到麦克风设备';
+      else msg='识别出错，请重试';
+      $('voiceState').textContent=msg;
+      if(msg.indexOf('权限')>=0)$('voiceHint').innerHTML='请在浏览器地址栏的权限设置里允许麦克风后，再点一次麦克风。';
+      toast(msg);
     };
     recog.onend=()=>{
       if(voiceActive){$('voicePanel').classList.remove('rec');$('voiceMic').classList.remove('rec');$('voiceState').textContent='已停止，可点麦克风继续';voiceActive=false;voiceRender()}
@@ -2680,7 +2859,12 @@ $('voiceGo').onclick=commitVoice;
 $('voiceMic').onclick=()=>{
   if(!SpeechRec)return;
   if(voiceActive){if(recog){try{recog.stop()}catch(e){}}}
-  else startVoice();
+  else micAuthState().then(state=>{
+    if(state==='granted'){
+      $('voiceState').textContent='已有麦克风权限，正在启动…';
+      startVoice();
+    }else startVoiceWithMic();
+  });
 };
 $('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar()};
 $('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar()};
@@ -2740,13 +2924,13 @@ applyAuthVisibility();initMember();
 initVisualStyle();initTheme();initDoneFx();initFxSound();initDoneVibe();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
-enableShake();setTimeout(()=>{closeBoot();setTimeout(startAd,260)},1900);
+enableShake();bootHooks();setTimeout(()=>{closeBoot();setTimeout(startAd,260)},1900);
 setInterval(()=>{renderTop();checkReminders()},60000);
 window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConfig()});
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-8').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
