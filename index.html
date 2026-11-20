@@ -546,24 +546,6 @@ html[data-mode="dark"] .boot-readout.full{color:#9FD3B6}
   .boot-splash.done{transform:none}
 }
 
-.ad-splash{position:absolute;inset:0;z-index:95;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
-.ad-splash.on{display:flex;animation:fade .35s var(--ease)}
-.ad-badge{position:absolute;top:56px;right:22px;font-size:11px;color:var(--ink3);border:1px solid var(--line);border-radius:8px;padding:4px 9px}
-.ad-logo{width:82px;height:82px;border-radius:22px;background:#E1251B;display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:0 10px 30px rgba(225,37,27,.25);animation:pop .6s var(--spring)}
-.ad-splash h1{font-size:21px;font-weight:800;margin-bottom:6px}
-.ad-splash .ad-sub{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:36px}
-.shake-phone{width:96px;height:150px;border:3px solid var(--brand);border-radius:18px;display:flex;align-items:center;justify-content:center;margin:0 auto 26px;position:relative;animation:shakeIdle 1.6s ease-in-out infinite}
-.shake-phone::before{content:'';width:40px;height:40px;border-radius:50%;background:var(--brand-soft)}
-.shake-phone::after{content:'';position:absolute;width:8px;height:8px;border-radius:50%;background:var(--brand);top:9px;left:50%;transform:translateX(-50%)}
-@keyframes shakeIdle{0%,100%{transform:rotate(0)}20%{transform:rotate(-11deg)}40%{transform:rotate(11deg)}60%{transform:rotate(-7deg)}80%{transform:rotate(7deg)}}
-.shake-phone.shaking{animation:shakeHard .35s ease-in-out 3}
-@keyframes shakeHard{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-16px) rotate(-18deg)}75%{transform:translateX(16px) rotate(18deg)}}
-.ad-splash .ad-hint{font-size:13px;color:var(--ink);font-weight:700;margin-bottom:8px}
-.ad-splash .ad-tip{font-size:11px;color:var(--ink3);line-height:1.6;margin-bottom:32px;max-width:260px}
-.ad-go{width:100%;height:48px;border-radius:14px;background:#E1251B;color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s var(--ease)}
-.ad-go:active{transform:scale(.97)}
-.ad-skip{margin-top:16px;font-size:12.5px;color:var(--ink3);font-weight:600;padding:10px 20px}
-.ad-count{color:var(--brand);font-weight:800}
 
 .acc-avatar img{width:100%;height:100%;border-radius:14px;object-fit:cover}
 .cfg-field{margin-top:12px}
@@ -762,18 +744,6 @@ html[data-mode="dark"] .toast button{color:#245740}
       </div>
       <div class="boot-sign">STEP BY STEP</div>
     </div>
-  </div>
-
-  <div class="ad-splash" id="adSplash">
-    <div class="ad-badge">广告</div>
-    <div class="ad-logo"><svg width="46" height="46" viewBox="0 0 24 24" fill="#fff"><path d="M7 4h10l-1 3H8l-1 5h9l-2 8H4l2-8H3l1-5h3V4z"/></svg></div>
-    <h1>逛京东，好事发生</h1>
-    <div class="ad-sub">摇一摇，发现今天的好物</div>
-    <div class="shake-phone" id="shakePhone"></div>
-    <div class="ad-hint" id="shakeHint">摇一摇手机，跳转到京东</div>
-    <div class="ad-tip">也可以点下方按钮直接前往；不支持摇一摇的设备请用按钮。</div>
-    <button class="ad-go" id="adGo">立即前往京东 <span style="font-size:17px">→</span></button>
-    <button class="ad-skip" id="adSkip">跳过广告 <span class="ad-count" id="adCount">5</span>s</button>
   </div>
 
   <div class="welcome" id="welcome">
@@ -1152,7 +1122,7 @@ html[data-mode="dark"] .toast button{color:#245740}
       <div class="member-plan rec" data-plan-card="super">
         <div class="member-plan-tag">推荐</div>
         <div class="member-plan-name">超级会员</div>
-        <div class="member-plan-desc">无限记录、免广告与完整高级体验。</div>
+        <div class="member-plan-desc">无限记录与完整高级体验。</div>
         <div class="member-price"><b>$19</b><span>/ 月</span></div>
         <div class="member-year">年付 $159 / 年 · 省 $69</div>
         <button class="member-plan-btn" data-plan="super">暂未开通</button>
@@ -1169,7 +1139,6 @@ html[data-mode="dark"] .toast button{color:#245740}
       <div class="member-benefit-row"><span>自定义主题</span><span>—</span><span>支持</span><span>支持</span></div>
       <div class="member-benefit-row"><span>AI 智能整理</span><span>3 次/月</span><span>30 次/月</span><span>300 次/月</span></div>
       <div class="member-benefit-row"><span>数据导出</span><span>JSON</span><span>CSV+JSON</span><span>自动备份</span></div>
-      <div class="member-benefit-row"><span>开屏广告</span><span>有</span><span>有</span><span>免广告</span></div>
       <div class="member-benefit-row"><span>客服支持</span><span>帮助中心</span><span>邮件</span><span>优先</span></div>
     </div>
     <div class="member-note">会员购买功能暂未开通，当前仅展示方案。后续接入支付与账号体系后，会在这里开放购买和管理。</div>
@@ -1207,7 +1176,6 @@ let themeKey='pine',modePref='auto';
 let sb=null,sbConfig=null,sbUser=null,emailMode='login';
 const SB_KEY='qingji_supabase_v1';
 const AUTH_VISIBLE=true;
-const JD_URL='https://www.jd.com/';
 const FX_KEY='qingji_done_fx_v1';
 const DONE_FX={
   shard:{name:'碎片飞散'},
@@ -2262,7 +2230,7 @@ function renderMember(){
     card.querySelector('.member-badge').textContent=p.badge;
     $('memberCardDesc').textContent=MEMBER_PURCHASE_ENABLED
       ? (memberPlan==='super'
-        ? '超级会员已生效：免开屏广告，未完成事项不限条数。'
+        ? '超级会员已生效：未完成事项不限条数。'
         : ('当前可保留 '+memberQuotaLabel(memberPlan)+'未完成事项。升级后解锁更大容量与完整权益。'))
       : '会员功能暂未开通，现在所有人都可以免费使用现有功能。';
     $('memberCardLink').textContent=memberPlan==='free'||!MEMBER_PURCHASE_ENABLED?'查看会员方案 →':'管理我的会员 →';
@@ -2294,7 +2262,6 @@ function activateMember(plan){
   }
   memberPlan=plan;
   try{localStorage.setItem(MEMBER_KEY,JSON.stringify({plan:memberPlan,updatedAt:Date.now()}))}catch(e){}
-  if(plan==='super')closeAd();
   renderMember();closeMemberModal();
   toast(plan==='free'?'已恢复为免费用户':('已开通 '+MEMBER_PLANS[plan].name));
 }
@@ -2313,33 +2280,7 @@ function initMember(){
   if(modal)modal.onclick=e=>{const b=e.target.closest('[data-plan]');if(b)activateMember(b.dataset.plan)};
   loadMember();
 }
-function openJd(){
-  try{window.open(JD_URL,'_blank','noopener')}catch(e){}
-  try{location.href=JD_URL}catch(e){}
-}
-let shakeArmed=false,adTimer=null,autoShakeTimer=null,adResolved=false;
-function enableShake(){
-  const DM=window.DeviceMotionEvent;if(!DM)return;
-  const attach=()=>{
-    let last=0;
-    window.addEventListener('devicemotion',e=>{
-      if(!shakeArmed)return;
-      const a=e.accelerationIncludingGravity||e.acceleration;if(!a)return;
-      const now=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
-      const delta=Math.abs(now-last);last=now;
-      if(delta>18)triggerShake();
-    });
-  };
-  if(typeof DM.requestPermission==='function'){
-    DM.requestPermission().then(p=>{if(p==='granted')attach()}).catch(()=>{});
-  }else attach();
-}
-function triggerShake(){
-  if(!shakeArmed)return;shakeArmed=false;
-  const p=$('shakePhone');p.classList.remove('shaking');void p.offsetWidth;p.classList.add('shaking');
-  $('shakeHint').textContent='已识别摇晃，正在前往京东…';
-  setTimeout(()=>{closeAd();openJd()},520);
-}
+let adResolved=false;
 /* ---- 品牌加载页：真实启动进度（0→100 由启动阶段驱动，不是假动画）---- */
 var bootEls=null,bootTarget=0,bootShown=0,bootRaf=0,bootClosing=false,bootEnded=false,bootMinUntil=0;
 function bootRefs(){
@@ -2398,21 +2339,7 @@ function bootHooks(){
   window.addEventListener('load',function(){bootSet(92)});
   requestAnimationFrame(function(){requestAnimationFrame(function(){bootSet(84)})});
 }
-function startAd(){
-  if(memberPlan==='super'){closeAd();return}
-  shakeArmed=true;
-  let n=5;$('adCount').textContent=n;
-  $('adSplash').classList.add('on');
-  clearInterval(adTimer);clearTimeout(autoShakeTimer);
-  autoShakeTimer=setTimeout(()=>triggerShake(),3000);
-  adTimer=setInterval(()=>{
-    n--;$('adCount').textContent=Math.max(0,n);
-    if(n<=0){clearInterval(adTimer);triggerShake()}
-  },1000);
-}
 function closeAd(){
-  clearInterval(adTimer);clearTimeout(autoShakeTimer);shakeArmed=false;
-  $('adSplash').classList.remove('on');
   adResolved=true;scheduleGuide(false);
 }
 function loadSbConfig(){
@@ -2868,9 +2795,6 @@ $('exportBtn').onclick=exportData;
 $('importBtn').onclick=()=>$('importFile').click();
 $('importFile').onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value=''};
 $('clearBtn').onclick=clearAll;
-$('adGo').onclick=()=>{closeAd();openJd()};
-$('adSkip').onclick=closeAd;
-$('shakePhone').onclick=triggerShake;
 $('loginEmail').onclick=()=>openAuth('register');
 $('loginSkip').onclick=()=>{finishWelcome();toast('已以本地模式开始')};
 $('cfgEntry').onclick=openCfg;
@@ -2956,13 +2880,13 @@ applyAuthVisibility();initMember();
 initVisualStyle();initTheme();initDoneFx();initFxSound();initDoneVibe();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
 if(AUTH_VISIBLE){showWelcome()}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
-enableShake();bootHooks();setTimeout(()=>{closeBoot();setTimeout(startAd,260)},1900);
+bootHooks();setTimeout(()=>{closeBoot();setTimeout(closeAd,260)},1900);
 setInterval(()=>{renderTop();checkReminders()},60000);
 window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConfig()});
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-14').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-15').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
