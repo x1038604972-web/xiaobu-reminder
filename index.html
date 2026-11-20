@@ -62,7 +62,7 @@ button{cursor:pointer;border:none;background:none}
 }
 @media(max-width:520px){
   body{background:var(--bg)}
-  .phone{width:100vw;height:100dvh;border-radius:0;box-shadow:none}
+  .phone{width:100vw;height:100dvh;border-radius:0;box-shadow:none;background:radial-gradient(circle at 18% 0%,var(--brand-soft),transparent 30%),radial-gradient(circle at 85% 100%,var(--brand-soft),transparent 34%),var(--bg)}
 }
 html[data-mode="dark"] body,html[data-mode="auto"] body{background:var(--bg)}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] body{background:var(--bg)}}
@@ -275,7 +275,7 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .postpone-btn{min-width:48px;height:44px;padding:0 10px;border-radius:12px;background:var(--brand-soft);color:var(--brand-ink);font-size:12px;font-weight:750;flex:none;transition:background .12s,color .12s}
 .postpone-btn:active{background:var(--brand);color:#FFFBF2}
 .card.just-added{animation:addedFlash 1.1s var(--ease)}
-@keyframes addedFlash{0%{box-shadow:0 0 0 3px var(--brand) inset;background:var(--brand-soft)}100%{box-shadow:var(--shadow);background:var(--surface)}}
+@keyframes addedFlash{0%{box-shadow:0 0 0 3px var(--brand) inset,var(--glass-shadow)}100%{box-shadow:var(--glass-shadow)}}
 .detail{
   max-height:0;overflow:hidden;transition:max-height .25s ease,margin .25s ease,padding .25s ease;
   font-size:12.5px;color:var(--ink2);line-height:1.6;
@@ -563,6 +563,15 @@ html[data-mode="dark"] .sheet-mask,html[data-mode="dark"] .modal-mask,html[data-
   -webkit-backdrop-filter:blur(36px) saturate(200%);
 }
 .sheet,.voice-panel{border-bottom:none}
+.card,.quick{
+  background:linear-gradient(145deg,var(--glass-sheen),rgba(255,255,255,0) 42%),linear-gradient(160deg,var(--glass-bg),var(--glass-bg-2));
+  border:1px solid var(--glass-line);
+  box-shadow:var(--glass-shadow);
+  backdrop-filter:blur(24px) saturate(180%);
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+}
+.postpone-btn,.icon-btn,.tag{backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%)}
+.postpone-btn{border:1px solid var(--glass-line)}
 
 .toast{
   position:absolute;left:50%;bottom:148px;transform:translate(-50%,16px);background:#23201C;color:#FFFBF2;
