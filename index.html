@@ -2570,6 +2570,7 @@ $('batchDel').onclick=()=>{
 };
 let swipe=null;
 document.querySelector('.scroll').addEventListener('touchstart',e=>{
+  if(e.target.closest('.swipe-actions')){swipe=null;return}
   const card=e.target.closest('.card');if(!card||batchMode)return;
   swipe={card,x:e.touches[0].clientX,y:e.touches[0].clientY,dx:0,lock:null};
 },{passive:true});
@@ -2587,10 +2588,10 @@ document.querySelector('.scroll').addEventListener('touchmove',e=>{
 },{passive:true});
 document.querySelector('.scroll').addEventListener('touchend',()=>{
   if(!swipe)return;
-  const card=swipe.card,dx=swipe.dx;
+  const card=swipe.card,dx=swipe.dx,lock=swipe.lock;
   card.classList.remove('swiping');
   const shift=card.querySelector('.body-shift');if(shift)shift.style.transform='';
-  if(dx<-70)card.classList.add('swiped');else card.classList.remove('swiped');
+  if(lock==='x'){if(dx<-70)card.classList.add('swiped');else card.classList.remove('swiped')}
   swipe=null;
 });
 document.addEventListener('click',e=>{
@@ -2745,7 +2746,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-6').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
