@@ -894,11 +894,6 @@ html[data-mode="dark"] .toast button{color:#245740}
             <input type="file" id="importFile" accept=".json,application/json" style="display:none">
           </div>
         </div>
-        <div class="set-card" data-set>
-          <div class="set-title">界面遵循的设计原则<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          <div class="set-desc">8 条原则：尼尔森可用性、格式塔、希克定律、菲茨定律、雅各布定律、认知负荷、渐进式呈现、反馈与可供性。</div>
-          <div class="set-detail">· 底部大按钮放在拇指区（菲茨）<br>· 每页只有一个主操作（希克）<br>· 详情点开才出现（渐进式）<br>· 删除后可撤销、点击有回应（尼尔森 / 反馈）<br>· 常用布局沿用习惯（雅各布）<br>· 卡片分组、间距区分（格式塔）<br>· 一次只看今天（认知负荷）<br>· 松绿主色，深绿只标完成（品牌规范）</div>
-        </div>
       </div>
     </section>
   </div>
@@ -2750,7 +2745,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-5').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-6').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
