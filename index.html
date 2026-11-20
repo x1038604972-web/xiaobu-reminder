@@ -1207,7 +1207,7 @@ const THEMES={
 let themeKey='pine',modePref='auto';
 let sb=null,sbConfig=null,sbUser=null,emailMode='login';
 const SB_KEY='qingji_supabase_v1';
-const AUTH_VISIBLE=false;
+const AUTH_VISIBLE=true;
 const JD_URL='https://www.jd.com/';
 const FX_KEY='qingji_done_fx_v1';
 const DONE_FX={
@@ -2970,7 +2970,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-11').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-12').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
