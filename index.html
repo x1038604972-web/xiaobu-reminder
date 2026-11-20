@@ -2480,11 +2480,6 @@ function submitEmail(){
   if(emailMode==='register')sb.auth.signUp({email,password:pass}).then(done).catch(e=>{$('emailErr').textContent=e.message});
   else sb.auth.signInWithPassword({email,password:pass}).then(done).catch(e=>{$('emailErr').textContent=e.message});
 }
-function githubLogin(){
-  if(!sbReady()){openCfg();toast('请先配置 Supabase 并启用 GitHub 登录');return}
-  sb.auth.signInWithOAuth({provider:'github',options:{redirectTo:location.href.split('#')[0]}})
-    .catch(e=>toast('跳转失败：'+(e.message||'请检查配置')));
-}
 function showWelcome(){
   let welcomed=false;try{welcomed=localStorage.getItem(WELCOME_KEY)==='1'}catch(e){}
   if(!welcomed)$('welcome').classList.add('on');
