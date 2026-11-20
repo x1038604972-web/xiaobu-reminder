@@ -780,12 +780,9 @@ html[data-mode="dark"] .toast button{color:#245740}
       <path d="M320 510L450 640L770 300" fill="none" stroke="#FFFBF2" stroke-width="112" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
     <h1>小步</h1>
-    <div class="ws">说出来，就有人替你记住<br>登录后，你的事项会在这台设备上按账号保存</div>
-    <button class="wbtn auth-only" style="background:#24292F;color:#fff" id="loginGithub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .3a12 12 0 00-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.8.1-.8 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6a4.7 4.7 0 011.3-3.3 4.3 4.3 0 01.1-3.2s1-.3 3.4 1.3a11.4 11.4 0 016.1 0c2.3-1.6 3.3-1.3 3.3-1.3a4.3 4.3 0 01.1 3.2 4.7 4.7 0 011.3 3.3c0 4.7-2.8 5.7-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0012 .3z"/></svg>GitHub 登录</button>
-    <button class="wbtn auth-only" style="background:var(--brand);color:#FFFBF2" id="loginEmail"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></svg>邮箱注册 / 登录</button>
-    <button class="wskip" id="loginSkip">先看看，以本地模式使用</button>
-    <div class="wtip auth-only" id="welcomeTip">真实登录需先配置 Supabase（免费），在「我的 → 系统设置」里填写。</div>
-    <button class="wcfg auth-only" id="welcomeCfg">去配置真实登录 →</button>
+    <div class="ws">说出来，就有人替你记住<br>用邮箱注册，事项会按账号保存在这台设备上</div>
+    <button class="wbtn" style="background:var(--brand);color:#FFFBF2" id="loginEmail"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 7l9 6 9-6"/></svg>邮箱注册 / 登录</button>
+    <button class="wskip" id="loginSkip">游客进入（本地使用）</button>
   </div>
 
   <div class="top">
@@ -1082,8 +1079,8 @@ html[data-mode="dark"] .toast button{color:#245740}
   <div class="sheet-mask" id="authMask"></div>
   <div class="sheet" id="authSheet">
     <div class="grab"></div>
-    <h2 id="authTitle">注册账号</h2>
-    <div class="auth-field"><label>用户名</label><input id="authUser" type="text" maxlength="20" placeholder="2–20 个字" autocomplete="username"></div>
+    <h2 id="authTitle">邮箱注册</h2>
+    <div class="auth-field"><label>邮箱</label><input id="authUser" type="email" maxlength="60" placeholder="name@example.com" autocomplete="email"></div>
     <div class="auth-field"><label>密码</label><input id="authPass" type="password" maxlength="30" placeholder="至少 4 位" autocomplete="current-password"></div>
     <div class="auth-err" id="authErr"></div>
     <button class="save" id="authSubmit">注册</button>
@@ -1810,7 +1807,7 @@ function renderAccount(){
   });
 }
 function openAuth(mode){
-  authMode=mode;$('authTitle').textContent=mode==='register'?'注册账号':'登录账号';
+  authMode=mode;$('authTitle').textContent=mode==='register'?'邮箱注册':'邮箱登录';
   $('authSubmit').textContent=mode==='register'?'注册':'登录';
   $('authSwitch').textContent=mode==='register'?'已有账号？去登录':'没有账号？去注册';
   $('authUser').value='';$('authPass').value='';$('authErr').textContent='';
@@ -1819,20 +1816,20 @@ function openAuth(mode){
 }
 function closeAuth(){$('authMask').classList.remove('on');$('authSheet').classList.remove('on')}
 function submitAuth(){
-  const u=$('authUser').value.trim(),p=$('authPass').value;
-  if(u.length<2||u.length>20){$('authErr').textContent='用户名需 2–20 个字';return}
+  const u=$('authUser').value.trim().toLowerCase(),p=$('authPass').value;
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u)){$('authErr').textContent='请输入正确的邮箱地址';return}
   if(p.length<4){$('authErr').textContent='密码至少 4 位';return}
   if(authMode==='register'){
-    if(accounts.some(a=>a.user===u)){$('authErr').textContent='用户名已存在';return}
+    if(accounts.some(a=>a.user===u)){$('authErr').textContent='该邮箱已注册，请直接登录';return}
     accounts.push({user:u,pass:hashPass(p),data:snapshot(),created:Date.now()});
     localStorage.setItem(ACC_KEY,JSON.stringify(accounts));
     currentUser=u;localStorage.setItem(CUR_KEY,u);localStorage.setItem(KEY,snapshot());
-    closeAuth();render();renderAccount();toast('已注册并登录 · '+u);
+    closeAuth();finishWelcome();render();renderAccount();toast('已注册并登录 · '+u);
   }else{
     const a=accounts.find(x=>x.user===u);
-    if(!a){$('authErr').textContent='用户不存在';return}
+    if(!a){$('authErr').textContent='该邮箱未注册，请先注册';return}
     if(a.pass!==hashPass(p)){$('authErr').textContent='密码错误';return}
-    closeAuth();switchUser(u);toast('欢迎回来 · '+u);
+    closeAuth();finishWelcome();switchUser(u);toast('欢迎回来 · '+u);
   }
 }
 function renderCalendar(){
@@ -2877,9 +2874,7 @@ $('clearBtn').onclick=clearAll;
 $('adGo').onclick=()=>{closeAd();openJd()};
 $('adSkip').onclick=closeAd;
 $('shakePhone').onclick=triggerShake;
-$('loginGithub').onclick=githubLogin;
-$('loginEmail').onclick=openEmail;
-$('welcomeCfg').onclick=()=>{finishWelcome();openCfg()};
+$('loginEmail').onclick=()=>openAuth('register');
 $('loginSkip').onclick=()=>{finishWelcome();toast('已以本地模式开始')};
 $('cfgEntry').onclick=openCfg;
 $('cfgMask').onclick=closeCfg;$('cfgSave').onclick=saveCfg;$('cfgClear').onclick=clearCfg;
@@ -2962,7 +2957,7 @@ $('sheet').addEventListener('touchend',()=>{
 if(!SpeechRec)$('micBtn').title='当前浏览器不支持语音识别';
 applyAuthVisibility();initMember();
 initVisualStyle();initTheme();initDoneFx();initFxSound();initDoneVibe();loadAccounts();loadSbConfig();load();buildTimeChips();render();refreshNotifyStatus();initDnd();renderAccount();
-if(AUTH_VISIBLE){showWelcome();if(sbReady())$('welcomeTip').textContent='真实登录已配置，可用 GitHub 或邮箱登录'}
+if(AUTH_VISIBLE){showWelcome()}
 else{try{localStorage.setItem(WELCOME_KEY,'1')}catch(e){}}
 enableShake();bootHooks();setTimeout(()=>{closeBoot();setTimeout(startAd,260)},1900);
 setInterval(()=>{renderTop();checkReminders()},60000);
@@ -2970,7 +2965,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-12').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-13').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
