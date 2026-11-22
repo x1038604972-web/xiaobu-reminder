@@ -101,6 +101,22 @@ button{cursor:pointer;border:none;background:none}
   body{background:var(--bg)}
   .phone{width:100vw;height:100dvh;border-radius:0;box-shadow:none;background:radial-gradient(circle at 18% 0%,var(--brand-soft),transparent 30%),radial-gradient(circle at 85% 100%,var(--brand-soft),transparent 34%),var(--bg)}
 }
+html[data-elder="on"] .phone{font-size:17px}
+html[data-elder="on"] .title{font-size:18px}
+html[data-elder="on"] .quick input{font-size:17px}
+html[data-elder="on"] .card .check,
+html[data-elder="on"] .icon-btn,
+html[data-elder="on"] .postpone-btn{min-height:50px;min-width:50px}
+html[data-elder="on"] .tab{font-size:14px}
+html[data-elder="on"] .chip,
+html[data-elder="on"] .save,
+html[data-elder="on"] .wbtn,
+html[data-elder="on"] .mbtn{font-size:15px;min-height:48px}
+html[data-elder="on"] .big-input{font-size:21px}
+html[data-elder="on"] .tag,
+html[data-elder="on"] .cd,
+html[data-elder="on"] .meta{font-size:13px}
+html[data-elder="on"] .lv-opt small{font-size:11.5px}
 html[data-mode="dark"] body,html[data-mode="auto"] body{background:var(--bg)}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] body{background:var(--bg)}}
 html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #0D0C0B,0 0 0 11px #262320}
@@ -280,6 +296,10 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .empty{text-align:center;padding:54px 20px;color:var(--ink3)}
 .empty svg{opacity:.4;margin-bottom:12px}
 .empty p{font-size:13px;line-height:1.6}
+.guide-entry{display:flex;align-items:center;gap:7px;margin:0 20px 12px;padding:11px 13px;border-radius:12px;background:var(--brand-soft);color:var(--brand-ink);font-size:12px;font-weight:700;cursor:pointer}
+.guide-entry span{width:20px;height:20px;border-radius:50%;background:var(--brand);color:#FFFBF2;display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none}
+.guide-entry b{margin-left:auto}
+.guide-entry:active{opacity:.75}
 
 .card{
   background:var(--surface);border-radius:var(--r);padding:15px 16px;margin-bottom:10px;
@@ -314,6 +334,14 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .postpone-btn:active{background:var(--brand);color:#FFFBF2}
 .card.just-added{animation:addedFlash 1.1s var(--ease)}
 @keyframes addedFlash{0%{box-shadow:0 0 0 3px var(--brand) inset,var(--glass-shadow)}100%{box-shadow:var(--glass-shadow)}}
+.card.next-card{padding-top:19px;padding-bottom:19px;margin-bottom:12px;box-shadow:0 8px 26px rgba(35,32,28,.16),0 0 0 2px var(--brand)}
+.card.next-card .title{font-size:17px;font-weight:800}
+.next-flag{display:inline-flex;align-items:center;background:var(--brand);color:#FFFBF2;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;letter-spacing:.05em}
+.card.soon-card{box-shadow:0 6px 20px rgba(35,32,28,.14),0 0 0 1.5px var(--brand-soft)}
+.card.urgent{box-shadow:0 6px 20px rgba(225,37,27,.12),0 0 0 1.5px var(--alert)}
+.card.urgent .title{color:var(--alert)}
+.card.urgent .cd.soon{color:var(--alert);font-weight:800}
+.content-auto{content-visibility:auto;contain-intrinsic-size:auto 110px}
 .detail{
   max-height:0;overflow:hidden;transition:max-height .25s ease,margin .25s ease,padding .25s ease;
   font-size:12.5px;color:var(--ink2);line-height:1.6;
@@ -337,8 +365,9 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .quick-more{height:38px;padding:0 11px;border-radius:10px;color:var(--ink2);font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;flex:none}
 .quick-more svg{width:14px;height:14px;color:var(--brand)}
 .quick-more:active{background:var(--line2)}
-.mic-btn{width:38px;height:38px;border-radius:10px;color:var(--brand);display:flex;align-items:center;justify-content:center;flex:none;transition:all .15s var(--ease)}
-.mic-btn svg{width:20px;height:20px}
+.mic-btn{width:44px;height:44px;border-radius:12px;color:var(--brand);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex:none;transition:all .15s var(--ease);background:var(--brand-soft)}
+.mic-btn svg{width:19px;height:19px}
+.mic-btn em{font-size:9px;font-style:normal;font-weight:800;letter-spacing:.02em;line-height:1}
 .mic-btn:active{background:var(--brand-soft);transform:scale(.9)}
 .mic-btn:disabled{opacity:.4;color:var(--ink3)}
 .add-btn{
@@ -406,6 +435,19 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .chip:active{transform:scale(.95)}
 .chip.on{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
 .chip.on.lv3{background:var(--brand-press);border-color:var(--brand-press);color:#FFFBF2}
+.lv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.lv-opt{flex-direction:column;align-items:flex-start;gap:3px;padding:11px 10px;line-height:1.25;text-align:left}
+.lv-opt .lv-ico{font-size:16px;line-height:1;opacity:.85}
+.lv-opt b{font-size:12.5px;font-weight:800}
+.lv-opt small{font-size:10px;font-weight:500;color:var(--ink3);line-height:1.35}
+.lv-opt[data-lv="1"] .lv-ico{color:#C79A3A}
+.lv-opt.lv2 .lv-ico{color:var(--brand)}
+.lv-opt.lv3 .lv-ico{color:var(--alert)}
+.lv-opt.on small{opacity:.85}
+.lv-opt.on.lv2{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
+.lv-opt.on.lv3{background:var(--alert);border-color:var(--alert);color:#FFFBF2}
+.tag.lv1{background:#F6ECD2;color:#8A6A1E}
+html[data-mode="dark"] .tag.lv1{background:#3A3420;color:#E6C96A}
 .custom-time{margin-top:10px}
 .custom-time input{
   width:100%;border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:var(--surface);outline:none;font-size:13px;
@@ -446,6 +488,7 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .voice-text{min-height:56px;max-height:110px;overflow-y:auto;border-radius:12px;background:var(--bg);padding:12px 14px;font-size:14px;line-height:1.6;color:var(--ink);text-align:center;display:flex;align-items:center;justify-content:center}
 .voice-text.placeholder{color:var(--ink3);font-size:13px}
 .voice-hint{font-size:11px;color:var(--ink3);text-align:center;margin-top:12px;line-height:1.6}
+.voice-parsed{margin-top:10px;padding:9px 11px;border-radius:10px;background:var(--brand-soft);color:var(--brand-ink);font-size:12px;font-weight:700;line-height:1.5;text-align:center}
 .voice-actions{display:flex;gap:9px;margin-top:16px}
 .voice-actions button{height:46px;border-radius:12px;font-size:13.5px;font-weight:700;flex:1}
 .voice-go{background:var(--brand);color:#FFFBF2}
@@ -817,6 +860,7 @@ html[data-mode="dark"] .toast button{color:#245740}
         <div class="sec-head"><span class="sec-title">已 过 时 间</span><button class="mini-btn" id="postponeAll">全部推迟到今天 20:00</button></div>
         <div id="overdueList"></div>
       </div>
+      <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 4 步新手导览 <b>→</b></div>
       <div class="sec">
         <div class="sec-head"><span class="sec-title">待 办</span><button class="mini-btn" id="batchToggle">批量</button></div>
         <div id="todoList"></div>
@@ -911,6 +955,18 @@ html[data-mode="dark"] .toast button{color:#245740}
               <div class="sw-name" id="styleName">液态玻璃</div>
             </div>
             <div class="set-row" style="display:block">
+              <div><div class="lbl">适老化模式</div><div class="sub">字号更大、按钮更高、对比更强，方便长辈使用</div></div>
+              <div class="seg" id="elderSeg">
+                <button data-elder="off" class="on">关闭</button><button data-elder="on">开启</button>
+              </div>
+            </div>
+            <div class="set-row">
+              <div><div class="lbl">性能优先</div><div class="sub">低配机型更流畅：关闭毛玻璃与粒子</div></div>
+              <div class="seg" id="perfSeg">
+                <button data-perf="auto" class="on">自动</button><button data-perf="on">开启</button><button data-perf="off">关闭</button>
+              </div>
+            </div>
+            <div class="set-row" style="display:block">
               <div><div class="lbl">完成粒子效果</div><div class="sub">完成任务时的动画</div></div>
               <div class="seg fx-seg" id="fxSeg">
                 <button data-fx="shard" class="on">碎片</button><button data-fx="confetti">彩纸</button><button data-fx="sparkle">星光</button><button data-fx="ripple">涟漪</button><button data-fx="petal">花瓣</button>
@@ -997,7 +1053,7 @@ html[data-mode="dark"] .toast button{color:#245740}
     <button class="quick-hint" id="quickHint">＋ 新建提醒 · 点这里设置时间和强度</button>
     <div class="quick">
       <input id="quickInput" type="text" placeholder="说出来，我替你记住…" maxlength="60" aria-label="说出来，我替你记住">
-      <button class="mic-btn" id="micBtn" aria-label="语音录入"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/></svg></button>
+      <button class="mic-btn" id="micBtn" aria-label="语音录入"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/></svg><em>说话</em></button>
       <button class="add-btn ios-host" id="quickAdd" aria-label="记下">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
       </button>
@@ -1026,10 +1082,10 @@ html[data-mode="dark"] .toast button{color:#245740}
     <div class="chips" id="timeChips"></div>
     <div class="custom-time" id="customTime" style="display:none"><input type="datetime-local" id="customInput" aria-label="自定义提醒时间"></div>
     <div class="field-label">提醒强度</div>
-    <div class="chips" id="lvChips">
-      <button class="chip on" data-lv="1">轻提醒</button>
-      <button class="chip" data-lv="2">普通</button>
-      <button class="chip lv3" data-lv="3">重要</button>
+    <div class="chips lv-grid" id="lvChips">
+      <button class="chip lv-opt on" data-lv="1"><span class="lv-ico">○</span><b>轻提醒</b><small>弹 1 次</small></button>
+      <button class="chip lv-opt lv2" data-lv="2"><span class="lv-ico">◐</span><b>普通</b><small>10 分钟后再弹 1 次</small></button>
+      <button class="chip lv-opt lv3" data-lv="3"><span class="lv-ico">●</span><b>重要</b><small>每 5 分钟追，最多 4 次</small></button>
     </div>
     <div class="field-label">重复</div>
     <div class="chips" id="repeatChips">
@@ -1133,7 +1189,8 @@ html[data-mode="dark"] .toast button{color:#245740}
     <div class="voice-mic" id="voiceMic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/></svg></div>
     <div class="wave" id="voiceWave"></div>
     <div class="voice-text placeholder" id="voiceText">点击麦克风开始说话</div>
-    <div class="voice-hint" id="voiceHint">说出要做的事和时间，例如「明天下午三点交作业」<br>识别后会自动记下</div>
+    <div class="voice-parsed" id="voiceParsed" style="display:none"></div>
+    <div class="voice-hint" id="voiceHint">说出要做的事和时间，例如「明天下午三点交作业」<br>识别后可确认再记下</div>
     <div class="voice-actions"><button class="voice-cancel" id="voiceCancel">取消</button><button class="voice-go" id="voiceGo" disabled>记下</button></div>
   </div>
 
@@ -1476,20 +1533,30 @@ function renderTop(){
   const urgent=tasks.filter(t=>!t.done&&t.lv===3).length;
   $('summaryTxt').innerHTML=left===0?dayHint():('还有 <b>'+left+'</b> 件事'+(urgent?'，其中 <b>'+urgent+'</b> 件重要':' · '+dayHint()));
 }
-function cardHTML(t){
+function cardHTML(t,opts){
+  opts=opts||{};
   const over=!t.done&&isOver(t.ts);
+  const diff=t.ts-Date.now();
+  const urgent=!t.done&&!over&&diff<7200000;
+  const soonColor=!t.done&&!over&&diff<2592000000;
   const rep=t.repeat&&t.repeat!=='none'?'<span class="tag rep">↻ '+repeatLabel(t)+'</span>':'';
   const unhandled=(t.lv===3&&!t.done&&(t.escalateCount||0)>=4)?'<span class="tag unhandled">未处理</span>':'';
-  const cd=!t.done&&!over?'<span class="cd'+(t.ts-Date.now()<3600000?' soon':'')+'">· '+countdown(t.ts)+'</span>':'';
+  const cd=!t.done&&!over?'<span class="cd'+(diff<3600000?' soon':'')+'">· '+countdown(t.ts)+'</span>':'';
+  const nextTip=(opts.next&&!t.done&&!over)?'<span class="next-flag">下一条</span>':'';
   const sel=batchMode&&selected.has(t.id);
   const left=batchMode
     ?'<button class="check ios-host" style="'+(sel?'background:var(--brand);border-color:var(--brand)':'')+'" data-act="select" aria-label="选择"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFBF2" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>'+iosTickHTML()+'</button>'
     :'<button class="check ios-host" data-act="check" aria-label="完成"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFBF2" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>'+iosTickHTML()+'</button>';
-  return '<div class="card'+(t.done?' done':'')+(sel?' sel':'')+'" data-id="'+t.id+'">'+
+  const cls=['card','content-auto'];
+  if(t.done)cls.push('done');
+  if(sel)cls.push('sel');
+  if(opts.next&&!t.done&&!over)cls.push('next-card');
+  if(urgent)cls.push('urgent');else if(soonColor)cls.push('soon-card');
+  return '<div class="'+cls.join(' ')+'" data-id="'+t.id+'">'+
     '<div class="swipe-actions"><button class="sw-done ios-host" data-act="check">✓<span>完成</span>'+iosTickHTML()+'</button><button class="sw-later" data-act="swipe-later">⏱<span>推迟</span></button><button class="sw-del" data-act="del">✕<span>删除</span></button></div>'+
     '<div class="body-shift" style="display:flex;gap:13px;align-items:flex-start;width:100%">'+left+
     '<div class="body" data-act="open"><div class="title">'+esc(t.title)+'</div>'+
-    '<div class="meta"><span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd+
+    '<div class="meta">'+nextTip+'<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd+
     '<span class="tag '+LV[t.lv].c+'">'+LV[t.lv].n+'</span></div>'+
     (t.note?'<div class="detail">'+esc(t.note)+'</div>':'')+
     '<span class="card-edit" data-act="edit">编辑</span></div>'+
@@ -1529,7 +1596,7 @@ function render(){
   $('doneCount').textContent=done.length?done.length+' 件':'';
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
-  $('todoList').innerHTML=normal.length?normal.map((t,i)=>cardHTML(t).replace('class="card','class="card enter')).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
+  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
   $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
   $('doneSec').style.display=done.length?'block':'none';
   const soon=normal.filter(t=>t.ts<Date.now()+86400000).sort((a,b)=>a.ts-b.ts);
@@ -1744,8 +1811,11 @@ function openModal(id,reminder){
   $('modalTitle').textContent=t.title;
   $('modalTime').textContent=fullTime(t.ts)+(isOver(t.ts)?' · 已过时间':'');
   $('modalNote').style.display=t.note?'block':'none';$('modalNote').textContent=t.note||'';
-  $('modalHint').textContent=cnt>=99?'你已选择不再提醒':(t.lv===3?'重要任务会追着提醒，直到你处理':'提醒会在到点时自动出现');
-  $('postponeRow').classList.remove('on');
+  let hint=cnt>=99?'你已选择今天不再提醒这条':(t.lv===3?'重要任务会追着提醒，直到你处理':'提醒会在到点时自动出现');
+  if(inDnd())hint+=' · 勿扰时段内只静默记录';
+  $('modalHint').textContent=hint;
+  $('mKnown').textContent=cnt>=99?'已静默':'今天别再提醒';
+  $('postponeRow').classList.add('on');
   $('postponeCustom').classList.remove('on');
   buildPostponeChips();
   $('modal').classList.toggle('mark-pulse',t.lv===3);
@@ -2009,8 +2079,8 @@ function shatterCard(el){
   const cs=window.getComputedStyle(el);
   const base=cs.backgroundColor||'#FFFCF6';
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);
-  const cols=Math.max(10,Math.min(22,Math.round(r.width/16)));
-  const rows=Math.max(5,Math.min(12,Math.round(r.height/14)));
+  const cols=Math.max(8,Math.min(16,Math.round(r.width/22)));
+  const rows=Math.max(4,Math.min(9,Math.round(r.height/20)));
   const cw=r.width/cols,ch=r.height/rows;
   const palette=[base].concat(fxPalette(6));
   const frag=document.createDocumentFragment();
@@ -2043,7 +2113,7 @@ function makeFxLayer(){
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);return layer;
 }
 function fxReduced(){
-  return window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return (window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)||perfOn();
 }
 function getAudioCtx(){
   const AC=window.AudioContext||window.webkitAudioContext;
@@ -2119,7 +2189,7 @@ function confettiBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(6);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  for(let i=0;i<36;i++){
+  for(let i=0;i<24;i++){
     const s=document.createElement('div');s.className='confetti';
     s.style.width=(6+Math.random()*5)+'px';s.style.height=(9+Math.random()*8)+'px';
     s.style.left=(cx+(Math.random()-.5)*r.width*.75)+'px';
@@ -2176,7 +2246,7 @@ function petalBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  for(let i=0;i<26;i++){
+  for(let i=0;i<18;i++){
     const p=document.createElement('div');p.className='petal';
     p.style.left=(cx+(Math.random()-.5)*r.width*.8)+'px';
     p.style.top=(cy+(Math.random()-.5)*30)+'px';
@@ -2313,21 +2383,58 @@ function initTheme(){
 }
 
 const STYLE_KEY='qingji_visual_style_v1';
+const PERF_KEY='qingji_perf_mode_v1';
+const ELDER_KEY='qingji_elder_mode_v1';
 const VISUAL_STYLES={original:'原版',liquid:'液态玻璃',frosted:'磨砂'};
-let visualStyle='liquid';
+let visualStyle='liquid',perfMode='auto',elderMode='off';
+function applyElder(){
+  document.documentElement.setAttribute('data-elder',elderMode);
+  document.querySelectorAll('#elderSeg button').forEach(b=>b.classList.toggle('on',b.dataset.elder===elderMode));
+}
+function isLowPowerDevice(){
+  const cores=navigator.hardwareConcurrency||8,mem=navigator.deviceMemory||8;
+  const save=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return save||cores<=4||mem<=4;
+}
+function perfOn(){
+  if(perfMode==='on')return true;
+  if(perfMode==='off')return false;
+  return isLowPowerDevice();
+}
 function applyVisualStyle(){
-  document.documentElement.setAttribute('data-style',visualStyle);
+  const perf=perfOn();
+  const style=perf?'original':visualStyle;
+  document.documentElement.setAttribute('data-style',style);
+  document.documentElement.setAttribute('data-perf',perf?'on':'off');
   document.querySelectorAll('#styleSeg button').forEach(b=>b.classList.toggle('on',b.dataset.style===visualStyle));
-  const nm=$('styleName');if(nm)nm.textContent=VISUAL_STYLES[visualStyle]||VISUAL_STYLES.liquid;
+  document.querySelectorAll('#perfSeg button').forEach(b=>b.classList.toggle('on',b.dataset.perf===perfMode));
+  const nm=$('styleName');if(nm)nm.textContent=perf?'性能优先（'+VISUAL_STYLES[style]+'）':(VISUAL_STYLES[visualStyle]||VISUAL_STYLES.liquid);
 }
 function initVisualStyle(){
   try{const v=JSON.parse(localStorage.getItem(STYLE_KEY));if(v&&VISUAL_STYLES[v.style])visualStyle=v.style}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem(PERF_KEY));if(v&&['auto','on','off'].indexOf(v.mode)>=0)perfMode=v.mode}catch(e){}
+  try{const v=JSON.parse(localStorage.getItem(ELDER_KEY));if(v&&['on','off'].indexOf(v.mode)>=0)elderMode=v.mode}catch(e){}
+  applyElder();
+  const eseg=$('elderSeg');
+  if(eseg)eseg.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    elderMode=b.dataset.elder;
+    try{localStorage.setItem(ELDER_KEY,JSON.stringify({mode:elderMode}))}catch(x){}
+    applyElder();toast(elderMode==='on'?'适老化模式已开启':'适老化模式已关闭');
+  };
   const seg=$('styleSeg');
   if(seg)seg.onclick=e=>{
     const b=e.target.closest('button');if(!b||!VISUAL_STYLES[b.dataset.style])return;
     visualStyle=b.dataset.style;
     try{localStorage.setItem(STYLE_KEY,JSON.stringify({style:visualStyle}))}catch(x){}
     applyVisualStyle();toast('视觉风格已换为 '+VISUAL_STYLES[visualStyle]);
+  };
+  const pseg=$('perfSeg');
+  if(pseg)pseg.onclick=e=>{
+    const b=e.target.closest('button');if(!b)return;
+    perfMode=b.dataset.perf;
+    try{localStorage.setItem(PERF_KEY,JSON.stringify({mode:perfMode}))}catch(x){}
+    applyVisualStyle();toast('性能模式已切换');
   };
   applyVisualStyle();
 }
@@ -2551,12 +2658,10 @@ function finishWelcome(){
 }
 const GUIDE_KEY='qingji_guide_v1';
 const GUIDE_STEPS=[
-  {tab:'today',sel:'.top',title:'先看「今天」',body:'这里是你的今天。问候、日期和右边的圆环，会告诉你还剩几件没走完。'},
-  {tab:'today',sel:'#quickInput',title:'说出来，就记下',body:'在底部输入要做的事，点「＋」就记下了。想改时间或提醒强度，点右边的「详细设置」。'},
-  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'走完一件，划掉一件',body:'点任务左边的圆圈就完成了一小步。左滑卡片还能推迟或删除。'},
-  {tab:'today',sel:'.tabbar',title:'四个页签，各管一摊',body:'今日看待办，日历看排期，提醒看快到点的，我的里有设置和数据。接下来带你看看日历和提醒。'},
-  {tab:'calendar',sel:'#calGrid',title:'日历里看排期',body:'这里按日期列出安排。点某一天，下面就会显示那天的事；带小绿点的是有安排的日子。'},
-  {tab:'alerts',sel:'#alertList',expand:true,title:'提醒里看快到点的',body:'这里汇总快要到点的事。开启系统通知后，切到别的页面也能收到提醒。'}
+  {tab:'today',sel:'#quickInput',title:'① 说出来，就记下',body:'在底部输入要做的事，比如「明天 9 点交作业」，点右边的「＋」就记下了。也可以点麦克风说话。'},
+  {tab:'today',sel:'#quickMore',title:'② 想改时间？',body:'点「详细设置」能选时间、提醒强度和重复。输入里带「明天 9 点」会自动识别。记下后提示里的「改时间」也能改。'},
+  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'③ 走完一件，划掉一件',body:'点任务左边的圆圈就完成了一小步。左滑卡片能推迟或删除，删错了 5 秒内点「撤销」能找回。'},
+  {tab:'today',sel:'.tabbar',title:'④ 四个页签',body:'今日看待办，日历看排期，提醒看快到点的，我的里有设置。长辈用可在「我的 → 外观」里打开适老化模式。'}
 ];
 let guideStep=0,guideActive=false,guideCheckTimer=null;
 function guideSeen(){try{return localStorage.getItem(GUIDE_KEY)==='1'}catch(e){return false}}
@@ -2635,6 +2740,12 @@ function voiceRender(){
   if(text){t.textContent=text;t.classList.remove('placeholder')}
   else{t.textContent=voiceActive?'正在听…':'点击麦克风开始说话';t.classList.toggle('placeholder',!voiceActive)}
   $('voiceGo').disabled=!voiceFinal.trim();
+  const box=$('voiceParsed');
+  if(voiceFinal.trim()){
+    const sp=parseSmart(voiceFinal),ts=sp.ts||presetTime(1);
+    box.style.display='block';
+    box.textContent='将记为：「'+sp.title+'」· '+fullTime(ts)+' · '+LV[sp.lv].n;
+  }else box.style.display='none';
 }
 function micAuthState(){
   if(!navigator.permissions||!navigator.permissions.query)return Promise.resolve('unknown');
@@ -2959,9 +3070,12 @@ $('modalMask').onclick=closeModal;
 $('mDone').onclick=()=>{if(modalId)toggleDone(modalId);closeModal()};
 $('mKnown').onclick=()=>{
   if(modalId){const t=tasks.find(x=>x.id===modalId);if(t){t.notified=true;t.escalateCount=99;save()}}
-  closeModal();toast('知道了');
+  closeModal();toast('今天不再提醒这条');
 };
-$('mLater').onclick=()=>{$('postponeRow').classList.toggle('on')};
+$('mLater').onclick=()=>{
+  const on=$('postponeRow').classList.toggle('on');
+  if(!on)$('postponeCustom').classList.remove('on');
+};
 $('postponeRow').onclick=e=>{
   const b=e.target.closest('.chip');if(!b)return;
   if(b.dataset.action==='custom'){
@@ -3048,6 +3162,7 @@ $('guideNext').onclick=guideNext;
 $('guidePrev').onclick=guidePrev;
 $('guideSkip').onclick=endGuide;
 $('guideCard').onclick=()=>startGuide(true);
+$('guideEntry').onclick=()=>startGuide(true);
 window.addEventListener('resize',()=>{if(guideActive)guideLayout()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(guideActive){endGuide();return}closeModal();closeSummary();closeSheet();closeAuth();closeVoice();closeEmail();closeCfg()}});
 
@@ -3089,7 +3204,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-16').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-17').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
