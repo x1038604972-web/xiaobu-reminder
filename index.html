@@ -1068,6 +1068,15 @@ html[data-mode="dark"] .toast button{color:#245740}
     <div class="home-ind"></div>
   </div>
 
+  <div class="sheet-mask" id="lateMask"></div>
+  <div class="sheet" id="lateSheet">
+    <div class="grab"></div>
+    <h2 id="lateTitle">推迟到什么时候</h2>
+    <div class="chips" id="lateRow"></div>
+    <div class="postpone-custom" id="lateCustom"><input type="datetime-local" id="lateInput" aria-label="自定义推迟时间"><button id="lateApply">确定</button></div>
+    <button class="sheet-del" id="lateCancel">取消</button>
+  </div>
+
   <div class="sheet-mask" id="sheetMask"></div>
   <div class="sheet" id="sheet">
     <div class="grab"></div>
@@ -1264,7 +1273,7 @@ html[data-mode="dark"] .toast button{color:#245740}
 const KEY='qingji_tasks_v1';const ACC_KEY='qingji_accounts_v1';const CUR_KEY='qingji_current_user_v1';
 const LV={1:{n:'轻提醒',c:'lv1'},2:{n:'普通',c:'lv2'},3:{n:'重要',c:'lv3'}};
 let tasks=[],meta={firstUse:0,lastOpen:0,streak:0,dnd:{on:false,from:22,to:8},history:[]},pendingTime=0,pendingLv=1,pendingRepeat='none',pendingWeekMask=0,quickTimeOverride=0,sheetTimePicked=false;
-let modalId=null,lastDeleted=null,toastTimer=null,editingId=null,lastQuickId=null,batchMode=false,selected=new Set(),undoAction=null,lastPostponeCustom=0;
+let modalId=null,lastDeleted=null,toastTimer=null,editingId=null,lastQuickId=null,batchMode=false,selected=new Set(),undoAction=null,lastPostponeCustom=0,lateId=null;
 let accounts=[],currentUser=null,calYear=0,calMonth=0,calSelected=null,authMode='register';
 let SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition,recog=null,voiceActive=false,voiceFinal='',voiceInterim='';
 const THEMES={
@@ -1343,6 +1352,12 @@ function presetTime(i){if(i===0)return Date.now();if(i===1)return atTime(18,0);i
 function dayStr(ts){const d=new Date(ts),n=new Date();const a=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),b=today0();if(a===b)return'今天';if(a===b+86400000)return'明天';if(a===b+172800000)return'后天';return(d.getMonth()+1)+'月'+d.getDate()+'日'}
 function timeStr(ts){const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())}
 function fullTime(ts){return dayStr(ts)+' '+timeStr(ts)}
+function parseLocalDT(v){
+  if(!v)return NaN;
+  const s=String(v).trim(),m=s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{1,2}):(\d{2})/);
+  if(m)return new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],0,0).getTime();
+  const t=Date.parse(s);return isNaN(t)?NaN:t;
+}
 function isOver(ts){return ts<Date.now()-60000}
 function countdown(ts){
   const diff=ts-Date.now();
@@ -1824,7 +1839,7 @@ function openModal(id,reminder){
 }
 function closeModal(){$('modalMask').classList.remove('on');$('modal').classList.remove('on');modalId=null}
 const PP_KEY='qingji_postpone_custom_v1';
-function buildPostponeChips(){
+function postponeChipHTML(){
   try{lastPostponeCustom=+(localStorage.getItem(PP_KEY)||0)||0}catch(e){}
   const chips=[];
   if(lastPostponeCustom>Date.now())chips.push('<button class="chip" data-last="1">上次 · '+fullTime(lastPostponeCustom)+'</button>');
@@ -1834,7 +1849,30 @@ function buildPostponeChips(){
   if(night.getTime()>Date.now())chips.push('<button class="chip" data-preset="20">今晚 20:00</button>');
   chips.push('<button class="chip" data-preset="9">明早 09:00</button>');
   chips.push('<button class="chip" data-action="custom">自定义…</button>');
-  $('postponeRow').innerHTML=chips.join('');
+  return chips.join('');
+}
+function buildPostponeChips(){$('postponeRow').innerHTML=postponeChipHTML();}
+function openLate(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  lateId=id;
+  $('lateTitle').textContent='推迟「'+(t.title.length>12?t.title.slice(0,12)+'…':t.title)+'」';
+  $('lateRow').innerHTML=postponeChipHTML();
+  $('lateCustom').classList.remove('on');
+  $('lateMask').classList.add('on');$('lateSheet').classList.add('on');
+}
+function closeLate(){
+  lateId=null;
+  $('lateMask').classList.remove('on');$('lateSheet').classList.remove('on');
+  $('lateCustom').classList.remove('on');
+}
+function applyLate(ts,label){
+  if(!lateId)return;
+  const t=tasks.find(x=>x.id===lateId);if(!t){closeLate();return}
+  const old=t.ts;
+  t.ts=ts;t.notified=false;t.escalateCount=0;t.lastShownAt=0;t.postponeCount=(t.postponeCount||0)+1;
+  save();render();closeLate();
+  undoAction=()=>{t.ts=old;t.notified=false;t.escalateCount=0;save();render();toast('已恢复原时间')};
+  toast('推迟到 '+(label||fullTime(ts)),'undo');
 }
 function postponeTs(ts){
   if(ts===undefined)return Date.now()+600000;
@@ -2923,7 +2961,7 @@ $('timeChips').onclick=e=>{
   if(i===4){$('customTime').style.display='block';$('customInput').focus();updateSheetSummary();return}
   $('customTime').style.display='none';pendingTime=presetTime(i);sheetTimePicked=true;updateSheetSummary();
 };
-$('customInput').onchange=e=>{const v=e.target.value;if(v){pendingTime=new Date(v).getTime();sheetTimePicked=true;toast('时间设为 '+fullTime(pendingTime));updateSheetSummary()}};
+$('customInput').onchange=e=>{const v=e.target.value;if(v){const ts=parseLocalDT(v);if(isNaN(ts)){toast('时间格式不对，请重新选');return}pendingTime=ts;sheetTimePicked=true;toast('时间设为 '+fullTime(pendingTime));updateSheetSummary()}};
 $('lvChips').onclick=e=>{
   const b=e.target.closest('.chip');if(!b)return;
   document.querySelectorAll('#lvChips .chip').forEach(c=>c.classList.toggle('on',c===b));
@@ -3041,18 +3079,13 @@ document.addEventListener('click',e=>{
   }
   else if(a==='check')toggleDone(id);
   else if(a==='swipe-later'){
-    const t=tasks.find(x=>x.id===id);if(t){const old=t.ts;t.ts=postponeTs(20);t.notified=false;t.escalateCount=0;save();render();
-      undoAction=()=>{t.ts=old;t.notified=false;t.escalateCount=0;save();render();toast('已恢复原时间')};
-      toast('已推迟到 '+fullTime(t.ts),'undo');card.classList.remove('swiped')}
+    card.classList.remove('swiped');openLate(id);
   }
   else if(a==='del')delTask(id);
   else if(a==='remind')openModal(id);
   else if(a==='edit')openEdit(id);
   else if(a==='postpone-one'){
-    const t=tasks.find(x=>x.id===id);if(!t)return;
-    const old=t.ts;t.ts=postponeTs(20);t.notified=false;t.escalateCount=0;save();render();
-    undoAction=()=>{t.ts=old;t.notified=false;t.escalateCount=0;save();render();toast('已恢复原时间')};
-    toast('已推迟到 '+fullTime(t.ts),'undo');
+    openLate(id);
   }
   else if(a==='open')card.classList.toggle('open');
 });
@@ -3090,9 +3123,29 @@ $('postponeRow').onclick=e=>{
 };
 $('postponeApply').onclick=()=>{
   const v=$('postponeInput').value;if(!v){toast('先选一个时间');return}
-  const ts=new Date(v).getTime();if(!ts||ts<=Date.now()){toast('请选择未来的时间');return}
+  const ts=parseLocalDT(v);if(!ts||isNaN(ts)||ts<=Date.now()){toast('请选择未来的时间');return}
   lastPostponeCustom=ts;try{localStorage.setItem(PP_KEY,String(ts))}catch(e){}
   doPostpone(ts,fullTime(ts));
+};
+$('lateMask').onclick=closeLate;
+$('lateCancel').onclick=closeLate;
+$('lateRow').onclick=e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  if(b.dataset.action==='custom'){
+    $('lateCustom').classList.add('on');
+    const d=new Date(Date.now()+3600000);
+    $('lateInput').value=dayKey(d.getTime())+'T'+timeStr(d.getTime());
+    $('lateInput').focus();return;
+  }
+  if(b.dataset.last){applyLate(lastPostponeCustom,'上次 · '+fullTime(lastPostponeCustom));return}
+  if(b.dataset.min){applyLate(Date.now()+parseInt(b.dataset.min)*60000,b.textContent.trim());return}
+  if(b.dataset.preset){applyLate(postponeTs(+b.dataset.preset),b.textContent.trim());return}
+};
+$('lateApply').onclick=()=>{
+  const v=$('lateInput').value;if(!v){toast('先选一个时间');return}
+  const ts=parseLocalDT(v);if(!ts||isNaN(ts)||ts<=Date.now()){toast('请选择未来的时间');return}
+  lastPostponeCustom=ts;try{localStorage.setItem(PP_KEY,String(ts))}catch(e){}
+  applyLate(ts,fullTime(ts));
 };
 $('sumMask').onclick=closeSummary;
 $('sumAll').onclick=postponeOverdue;
@@ -3164,7 +3217,7 @@ $('guideSkip').onclick=endGuide;
 $('guideCard').onclick=()=>startGuide(true);
 $('guideEntry').onclick=()=>startGuide(true);
 window.addEventListener('resize',()=>{if(guideActive)guideLayout()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(guideActive){endGuide();return}closeModal();closeSummary();closeSheet();closeAuth();closeVoice();closeEmail();closeCfg()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(guideActive){endGuide();return}closeModal();closeSummary();closeSheet();closeAuth();closeVoice();closeEmail();closeCfg();closeLate()}});
 
 function initDnd(){
   const opts=[];for(let h=0;h<24;h++)opts.push('<option value="'+h+'">'+pad(h)+':00</option>');
@@ -3204,7 +3257,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-17').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-18').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
