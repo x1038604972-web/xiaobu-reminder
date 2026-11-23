@@ -850,9 +850,12 @@ html[data-mode="dark"] .toast button{color:#245740}
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
-   小布 · AI 助手
+   小步 · AI 助手
    与主界面共用变量，自动跟随深浅色 / 适老化 / 性能优先
    ═══════════════════════════════════════════════ */
 .xb-mask{position:absolute;inset:0;background:rgba(35,32,28,.36);z-index:139;
@@ -1281,7 +1284,7 @@ html[data-mode="dark"] .xb-set .xb-actions button{background:#20241F;border-colo
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       <button class="mic-btn" id="micBtn" aria-label="语音录入"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/></svg><em>说话</em></button>
-      <button class="quick-more" id="xiaobuBtn" aria-label="小布"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg>小布</button>
+      <button class="quick-more" id="xiaobuBtn" aria-label="小步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg>小步</button>
     </div>
     <div class="tabbar">
       <button class="tab on" data-tab="today"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 15l2.5 2.5L16 12"/></svg>今日</button>
@@ -3124,7 +3127,7 @@ function openDetailFromQuick(){
   if(v){renderParsePreview(v,'parsePreviewSheet',true);const p=parseWhen(v);if(p){pendingTime=p;sheetTimePicked=false;updateSheetSummary();}}
 }
 $('quickAdd').onclick=openDetailFromQuick;
-$('xiaobuBtn').onclick=()=>toast('小布正在准备中，敬请期待');
+$('xiaobuBtn').onclick=()=>{if(window.XiaoBu)window.XiaoBu.open();else toast('小步正在准备中')};
 $('quickInput').onkeydown=e=>{if(e.key==='Enter')openDetailFromQuick()};
 $('titleInput').onkeydown=e=>{if(e.key==='Enter')$('saveBtn').click()};
 $('quickInput').oninput=e=>{
@@ -3465,7 +3468,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261123-xb1').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261123-xb2').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -3475,10 +3478,13 @@ try{
 
 
 
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
-   小布 · 会动手的提醒助手
+   小步 · 会动手的提醒助手
    ─ 本地意图引擎（默认，离线可用，确定性执行）
    ─ 可选大模型（填 API Key 后走 chat/completions，返回 JSON 动作）
    说明：主脚本用 let 声明 tasks / undoAction / elderMode 等，
@@ -3583,23 +3589,23 @@ try{
     var box = document.createElement('section');
     box.className = 'xb';
     box.id = 'xb';
-    box.setAttribute('aria-label', '小布助手');
+    box.setAttribute('aria-label', '小步助手');
     box.innerHTML =
       '<div class="xb-head">' +
         '<div class="xb-ava" id="xbAva">' + ICON_ROBOT + '<i></i></div>' +
-        '<div class="xb-id"><b>小布</b><span id="xbSub">会记事，也会替你动手</span></div>' +
+        '<div class="xb-id"><b>小步</b><span id="xbSub">会记事，也会替你动手</span></div>' +
         '<button class="xb-ico" id="xbSetBtn" aria-label="设置">' + ICON_GEAR + '</button>' +
         '<button class="xb-ico" id="xbClose" aria-label="关闭">✕</button>' +
       '</div>' +
       '<div class="xb-body" id="xbBody"></div>' +
       '<div class="xb-chips" id="xbChips"></div>' +
       '<div class="xb-input">' +
-        '<input id="xbText" type="text" maxlength="80" autocomplete="off" placeholder="跟小布说：明天 9 点提醒我交作业">' +
+        '<input id="xbText" type="text" maxlength="80" autocomplete="off" placeholder="跟小步说：明天 9 点提醒我交作业">' +
         '<button class="xb-mic" id="xbMic" aria-label="语音">' + ICON_MIC + '</button>' +
         '<button class="xb-send" id="xbSend" aria-label="发送">' + ICON_SEND + '</button>' +
       '</div>' +
       '<div class="xb-set" id="xbSet">' +
-        '<h4>小布设置</h4>' +
+        '<h4>小步设置</h4>' +
         '<p>默认用本地规则理解你的话，离线也能用。填了大模型 Key 后，先问模型、再执行同样的动作。</p>' +
         '<div class="xb-row2"><div><div class="lb">AI 增强</div><div class="sb">OpenAI 兼容接口</div></div>' +
           '<div class="xb-seg" id="xbAiSeg"><button data-ai="off" class="on">关闭</button><button data-ai="on">开启</button></div></div>' +
@@ -3685,7 +3691,7 @@ try{
     if (m.r === 'u') return '<div class="xb-row me"><div class="xb-bb">' + esc(m.t) + '</div></div>';
     var inner = esc(m.t).replace(/\n/g, '<br>');
     if (m.card) inner += cardHTML(m.card);
-    return '<div class="xb-row"><div class="xb-mini">布</div><div class="xb-bb">' + inner + '</div></div>';
+    return '<div class="xb-row"><div class="xb-mini">步</div><div class="xb-bb">' + inner + '</div></div>';
   }
 
   function cardHTML(c) {
@@ -3720,7 +3726,7 @@ try{
     var d = document.createElement('div');
     d.className = 'xb-row';
     d.id = 'xbTyping';
-    d.innerHTML = '<div class="xb-mini">布</div><div class="xb-typing"><i></i><i></i><i></i></div>';
+    d.innerHTML = '<div class="xb-mini">步</div><div class="xb-typing"><i></i><i></i><i></i></div>';
     body.appendChild(d);
     body.scrollTop = body.scrollHeight;
   }
@@ -3740,7 +3746,7 @@ try{
     return text;
   }
 
-  var GREET = '我是小布。\n记事情、改时间、查今天，直接说就行——\n我不是只回话，我会真的动手改。';
+  var GREET = '我是小步。\n记事情、改时间、查今天，直接说就行——\n我不是只回话，我会真的动手改。';
   function greet(force) {
     if (!force && S.msgs.length) { render(); return; }
     S.msgs = [{ r: 'b', t: GREET, card: null }];
@@ -4258,7 +4264,7 @@ try{
     var reply;
     if (/^(你好|在吗|hi|hello|嗨|早上好|晚上好)/i.test(t)) reply = '在的。今天想先记哪一件？';
     else if (/谢谢|辛苦|厉害/.test(t)) reply = '不客气，到点我会提醒你。';
-    else if (/你是谁|你叫什么/.test(t)) reply = '我是小布，住在这个 App 里，替你记事、替你改时间。';
+    else if (/你是谁|你叫什么/.test(t)) reply = '我是小步，住在这个 App 里，替你记事、替你改时间。';
     else reply = CHAT[Math.floor(Math.random() * CHAT.length)];
     if (aiFailed) reply = '（AI 没连上，先用本地规则处理）\n' + reply;
     say(reply, null, ['明天 9 点提醒我交作业', '我今天还有几件事']);
@@ -4277,7 +4283,7 @@ try{
   }
   function sysPrompt() {
     var s = snapshot();
-    return '你是「小布」，中文提醒应用里的助手。语气短、具体、像真人。\n' +
+    return '你是「小步」，中文提醒应用里的助手。语气短、具体、像真人。\n' +
       '现在是 ' + s.now + '（星期' + s.weekday + '）。\n' +
       '用户待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
       '只输出 JSON：{"reply":"给用户看的话","action":null}\n' +
@@ -4392,6 +4398,203 @@ try{
     }
   }
 
+  /* ══════════════════════════════════════════════════════════
+     系统通知：安卓上必须走 ServiceWorkerRegistration.showNotification
+     （new Notification 在安卓 Chrome 会直接抛错，等于不弹）
+     ══════════════════════════════════════════════════════════ */
+  function notifyOpts(t, extra) {
+    var lv = t.lv || 1;
+    var vib = lv === 3 ? [0, 180, 90, 180, 90, 320] : lv === 2 ? [0, 140, 80, 140] : [0, 90];
+    var body = ft(t.ts) + ' · ' + lvName(lv) + (t.note ? '\n' + t.note : '');
+    var o = {
+      body: body,
+      tag: 'task-' + (t.id || 'x'),
+      renotify: true,
+      requireInteraction: lv === 3,
+      vibrate: vib,
+      icon: 'icon.svg',
+      badge: 'icon.svg',
+      silent: false,
+      data: { id: t.id, ts: t.ts },
+      actions: [
+        { action: 'done', title: '完成' },
+        { action: 'later', title: '推迟 10 分钟' }
+      ]
+    };
+    if (extra) Object.assign(o, extra);
+    return o;
+  }
+
+  function swReady() {
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) return navigator.serviceWorker.ready;
+    } catch (e) {}
+    return null;
+  }
+
+  function notifyNow(t) {
+    var title = '小步 · ' + (t.title || '提醒');
+    var opts = notifyOpts(t);
+    var reg = swReady();
+    if (reg && reg.then) {
+      return reg.then(function (r) { return r.showNotification(title, opts); })
+        .catch(function () { try { new Notification(title, opts); } catch (e) {} });
+    }
+    try { new Notification(title, opts); } catch (e) {}
+  }
+
+  /* 通知被点（完成 / 推迟 / 打开）后统一走这里 */
+  function applyAct(act, id) {
+    var arr = T();
+    var t = id ? arr.filter(function (x) { return x.id === id; })[0] : null;
+    if (act === 'open') {
+      if (t) { try { openModal(t.id, true); } catch (e) {} }
+      return;
+    }
+    if (!t) { doToast('这条提醒已经处理过了'); return; }
+    if (act === 'done') {
+      var ok = false;
+      try { toggleDone(id, true); ok = true; } catch (e) {}
+      if (!ok) { t.done = true; doSave(); doRender(); }
+      doToast('已完成 · ' + t.title, 'success');
+      return;
+    }
+    if (act === 'later') {
+      t.ts = Date.now() + 600000;
+      t.notified = false; t.escalateCount = 0; t.lastShownAt = 0;
+      doSave(); doRender();
+      doToast('已推迟 10 分钟', 'undo');
+      return;
+    }
+  }
+
+  function handleActParam() {
+    try {
+      var q = new URLSearchParams(location.search);
+      var act = q.get('act');
+      if (!act) return;
+      var id = q.get('id');
+      history.replaceState(null, '', location.pathname + location.hash);
+      applyAct(act, id);
+    } catch (e) {}
+  }
+
+  function initNotify() {
+    if (typeof Notification === 'undefined') return;
+
+    // 覆盖 App 自带的 showNotify：改走 SW
+    window.showNotify = function (t) {
+      if (Notification.permission !== 'granted') return;
+      notifyNow(t);
+    };
+
+    // 覆盖 ensureNotify：授权后顺手发一条"已就绪"
+    window.ensureNotify = function () {
+      if (Notification.permission === 'denied') {
+        doToast('通知被拒绝了，去浏览器设置里打开');
+        return;
+      }
+      Notification.requestPermission().then(function (p) {
+        try { window.refreshNotifyStatus(); } catch (e) {}
+        if (p === 'granted') {
+          doToast('通知已开启 · 刷别的 App 也会弹');
+          var reg = swReady();
+          if (reg && reg.then) {
+            reg.then(function (r) {
+              return r.showNotification('小步 · 通知已就绪', {
+                body: '到点会从系统通知栏提醒你，可以先发一条测试看看',
+                tag: 'hello', icon: 'icon.svg', badge: 'icon.svg'
+              });
+            }).catch(function () {});
+          }
+        } else {
+          doToast('未授权，页面内提醒仍然可用');
+        }
+      }).catch(function () { doToast('授权失败'); });
+    };
+
+    // 覆盖 refreshNotifyStatus：文案更准 + 提示安装
+    window.refreshNotifyStatus = function () {
+      var el = X$('notifyStatus'); if (!el) return;
+      var p = Notification.permission;
+      var standalone = false;
+      try {
+        standalone = window.matchMedia('(display-mode: standalone)').matches || !!window.navigator.standalone;
+      } catch (e) {}
+      var base = p === 'granted' ? '已开启 · 刷抖音时也会弹'
+        : p === 'denied' ? '已被拒绝 · 去浏览器设置里改'
+          : '未授权 · 点这里开启';
+      el.textContent = base + (standalone ? '（已按主屏应用运行）' : '（建议添加到主屏）');
+    };
+
+    // 测试按钮
+    var card = X$('notifyCard');
+    if (card && !X$('notifyTest')) {
+      var b = document.createElement('button');
+      b.className = 'mini-btn';
+      b.id = 'notifyTest';
+      b.textContent = '发一条测试通知';
+      b.style.marginTop = '9px';
+      card.appendChild(b);
+      b.onclick = function (e) {
+        e.stopPropagation();
+        if (Notification.permission !== 'granted') { window.ensureNotify(); return; }
+        doToast('3 秒后弹出，现在切到别的 App 试试');
+        setTimeout(function () {
+          notifyNow({
+            id: 'demo-' + Date.now(),
+            title: '到点了：喝一杯水',
+            ts: Date.now(),
+            lv: 3,
+            note: '这就是你在刷抖音时看到的样子'
+          });
+        }, 3000);
+      };
+    }
+
+    // SW 回传的动作（App 在前台时）
+    try {
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener('message', function (e) {
+          var d = e.data || {};
+          if (d.type === 'xb-act') applyAct(d.act, d.id);
+        });
+      }
+    } catch (e) {}
+
+    try { window.refreshNotifyStatus(); } catch (e) {}
+    setTimeout(handleActParam, 400);
+  }
+
+  /* 精确计时：页面在后台时，到点立刻发通知，不必等 60 秒轮询 */
+  var armTimer = null, armedId = null, armedAt = 0;
+  function armNotify() {
+    try {
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      var arr = T().filter(function (t) { return !t.done && !t.notified && t.ts > Date.now(); })
+        .sort(function (a, b) { return a.ts - b.ts; });
+      var t = arr[0];
+      if (!t) { if (armTimer) { clearTimeout(armTimer); armTimer = null; } return; }
+      if (armedId === t.id && armedAt === t.ts && armTimer) return;
+      var wait = Math.min(t.ts - Date.now(), 3600000);   // 一小时重新校准一次
+      if (armTimer) clearTimeout(armTimer);
+      armedId = t.id; armedAt = t.ts;
+      armTimer = setTimeout(function () {
+        armTimer = null;
+        var cur = T().filter(function (x) { return x.id === t.id; })[0];
+        if (!cur || cur.done) { armNotify(); return; }
+        if (!cur.notified && cur.ts <= Date.now() + 1500) {
+          cur.notified = true;
+          cur.escalateCount = cur.escalateCount || 1;
+          cur.lastShownAt = Date.now();
+          doSave();
+          notifyNow(cur);
+        }
+        armNotify();
+      }, Math.max(300, wait));
+    } catch (e) {}
+  }
+
   /* ── 初始化 ───────────────────────────────────────────── */
   var inited = false;
   function boot() {
@@ -4403,12 +4606,18 @@ try{
     var btn = X$('xiaobuBtn');
     if (btn) {
       btn.onclick = function () { open(); };
-      btn.setAttribute('aria-label', '打开小布');
+      btn.setAttribute('aria-label', '打开小步');
     }
+    try { initNotify(); } catch (e) {}
+    try {
+      armNotify();
+      setInterval(armNotify, 30000);
+      document.addEventListener('visibilitychange', function () { if (!document.hidden) armNotify(); });
+    } catch (e) {}
     if (!S.msgs.length) greet(true); else render();
   }
 
-  window.XiaoBu = { open: open, close: close, boot: boot, say: say, _state: S };
+  window.XiaoBu = { open: open, close: close, boot: boot, say: say, notify: notifyNow, arm: armNotify, _state: S };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
