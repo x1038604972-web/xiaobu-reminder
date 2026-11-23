@@ -493,7 +493,10 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .lv-opt[data-lv="1"] .lv-ico{color:#C79A3A}
 .lv-opt.lv2 .lv-ico{color:var(--brand)}
 .lv-opt.lv3 .lv-ico{color:var(--alert)}
-.lv-opt.on small{opacity:.85}
+.lv-opt.on small{color:#FFFBF2;opacity:.95}
+.lv-opt.on .lv-ico{color:#FFFBF2;opacity:1}
+html[data-mode="dark"] .lv-opt.on small,
+html[data-mode="dark"] .lv-opt.on .lv-ico{color:#FFFBF2;opacity:1}
 .lv-opt.on.lv2{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
 .lv-opt.on.lv3{background:var(--alert);border-color:var(--alert);color:#FFFBF2}
 .tag.lv1{background:#F6ECD2;color:#8A6A1E}
@@ -3289,7 +3292,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-22').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-23').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
