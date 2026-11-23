@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>小步 · 说出来，就有人替你记住</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' rx='232' fill='%232F6E52'/%3E%3Cpath d='M320 510L450 640L770 300' fill='none' stroke='%23FFFBF2' stroke-width='136' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --paper:#F6F1E8;--bg:#F6F1E8;--surface:#FFFCF6;
+  --ink:#23201C;--ink2:#5B554C;--ink3:#948C80;
+  --line:#E5DED1;--line2:#F0EAE0;
+  --brand:#2F6E52;--brand-press:#245740;--brand-soft:#E5F0EA;--brand-ink:#265443;
+  --safe:#1F4D3C;--safe-soft:#DCEAE3;
+  --r:16px;--shadow:0 2px 14px rgba(35,32,28,.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:#E8E1D5;color:var(--ink);display:flex;align-items:center;justify-content:center;
+  min-height:100vh;overflow:hidden;
+}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+
+.phone{
+  position:relative;width:390px;height:844px;background:var(--bg);
+  border-radius:46px;overflow:hidden;box-shadow:0 24px 70px rgba(35,32,28,.2),0 0 0 10px #1C1E20,0 0 0 11px #383B3E;
+}
+@media(max-width:520px){
+  body{background:var(--bg)}
+  .phone{width:100vw;height:100dvh;border-radius:0;box-shadow:none}
+}
+
+.app{display:flex;flex-direction:column;height:100%;position:relative}
+
+.top{padding:34px 24px 14px;flex:none}
+.top-row{display:flex;align-items:center;justify-content:space-between}
+.hello{font-size:25px;font-weight:750;letter-spacing:-.5px;line-height:1.25}
+.date{font-size:12.5px;color:var(--ink3);margin-top:4px;letter-spacing:.3px}
+.ring{width:54px;height:54px;position:relative;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.summary{margin-top:16px;font-size:12.5px;color:var(--ink2);display:flex;align-items:center;gap:7px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--brand)}
+.summary b{font-weight:700;color:var(--ink)}
+
+.scroll{flex:1;overflow-y:auto;padding:8px 20px 150px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.view{display:none;animation:fade .22s ease}
+.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.sec{margin-top:20px}
+.sec-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 9px}
+.sec-title{font-size:12px;font-weight:700;color:var(--ink3);letter-spacing:.12em}
+.sec-count{font-size:11px;color:var(--ink3)}
+.empty{text-align:center;padding:54px 20px;color:var(--ink3)}
+.empty svg{opacity:.4;margin-bottom:12px}
+.empty p{font-size:13px;line-height:1.6}
+
+.card{
+  background:var(--surface);border-radius:var(--r);padding:15px 16px;margin-bottom:10px;
+  box-shadow:var(--shadow);display:flex;align-items:flex-start;gap:13px;
+  transition:transform .12s ease,box-shadow .12s ease;position:relative;overflow:hidden;
+}
+.card:active{transform:scale(.985)}
+.card.done{opacity:.62}
+.card.done .title{text-decoration:line-through;color:var(--ink3)}
+.check{
+  width:24px;height:24px;border-radius:50%;border:2px solid #CFC7B9;flex:none;margin-top:2px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s ease;
+}
+.check svg{opacity:0;transform:scale(.5);transition:all .18s cubic-bezier(.2,1.6,.4,1)}
+.card.done .check{background:var(--safe);border-color:var(--safe)}
+.card.done .check svg{opacity:1;transform:scale(1)}
+.body{flex:1;min-width:0}
+.title{font-size:15px;font-weight:600;line-height:1.45;word-break:break-word}
+.meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.tag{font-size:11px;padding:3px 9px;border-radius:999px;background:var(--line2);color:var(--ink2);font-weight:500}
+.tag.lv2{background:var(--brand-soft);color:var(--brand-ink)}
+.tag.lv3{background:var(--brand);color:#FFFBF2}
+.tag.over{background:var(--brand-soft);color:var(--brand-ink)}
+.act{display:flex;align-items:center;gap:2px;flex:none}
+.icon-btn{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--ink3);transition:background .12s}
+.icon-btn:active{background:var(--line2)}
+.icon-btn.del:active{background:var(--brand-soft);color:var(--brand)}
+.detail{
+  max-height:0;overflow:hidden;transition:max-height .25s ease,margin .25s ease,padding .25s ease;
+  font-size:12.5px;color:var(--ink2);line-height:1.6;
+}
+.card.open .detail{max-height:120px;margin-top:11px;padding-top:11px;border-top:1px solid var(--line2)}
+
+.bottom{position:absolute;left:0;right:0;bottom:0;z-index:10}
+.quick{
+  margin:0 20px 10px;background:var(--surface);border-radius:14px;box-shadow:0 4px 20px rgba(35,32,28,.1);
+  display:flex;align-items:center;gap:10px;padding:8px 8px 8px 16px;border:1px solid var(--line);
+}
+.quick input{flex:1;border:none;outline:none;background:transparent;font-size:14px;min-width:0}
+.quick input::placeholder{color:var(--ink3)}
+.add-btn{
+  background:var(--brand);color:#FFFBF2;border-radius:10px;height:38px;padding:0 15px;font-size:13px;font-weight:650;
+  display:flex;align-items:center;gap:5px;transition:transform .12s,background .12s;flex:none;
+}
+.add-btn:active{transform:scale(.94);background:var(--brand-press)}
+.tabbar{
+  height:70px;background:rgba(246,241,232,.94);backdrop-filter:blur(16px);border-top:1px solid var(--line);
+  display:flex;align-items:flex-start;padding-top:9px;
+}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink3);font-size:10px;font-weight:600;transition:color .15s}
+.tab svg{transition:transform .2s}
+.tab.on{color:var(--brand)}
+.tab.on svg{transform:translateY(-1px)}
+.home-ind{width:120px;height:5px;border-radius:5px;background:var(--ink);opacity:.8;margin:0 auto 8px}
+
+.sheet-mask,.modal-mask{position:absolute;inset:0;background:rgba(35,32,28,.34);z-index:40;opacity:0;pointer-events:none;transition:opacity .22s}
+.sheet-mask.on,.modal-mask.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;background:var(--surface);z-index:41;
+  border-radius:24px 24px 0 0;padding:12px 22px 26px;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.85,.3,1);
+  max-height:92%;overflow-y:auto;
+}
+.sheet.on{transform:translateY(0)}
+.grab{width:38px;height:4px;border-radius:4px;background:#D8D0C2;margin:0 auto 18px}
+.sheet h2{font-size:19px;font-weight:700;margin-bottom:16px}
+.field-label{font-size:11px;font-weight:700;color:var(--ink3);letter-spacing:.1em;margin:18px 0 9px}
+.big-input{
+  width:100%;border:none;border-bottom:2px solid var(--line);padding:10px 2px 12px;font-size:18px;font-weight:600;outline:none;background:transparent;
+}
+.big-input:focus{border-color:var(--brand)}
+.big-input::placeholder{color:#BEB5A6;font-weight:500}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  padding:9px 13px;border-radius:11px;background:var(--line2);font-size:12.5px;font-weight:600;color:var(--ink2);
+  transition:all .12s;border:1.5px solid transparent;
+}
+.chip:active{transform:scale(.95)}
+.chip.on{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-ink)}
+.chip.on.lv3{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
+.note-toggle{font-size:12px;color:var(--brand);font-weight:600;margin-top:16px;display:inline-flex;align-items:center;gap:4px}
+.note-box{display:none;margin-top:8px}
+.note-box.on{display:block;animation:fade .2s}
+.note-box textarea{
+  width:100%;min-height:66px;resize:none;border:1px solid var(--line);border-radius:11px;padding:11px 12px;
+  font-size:13px;outline:none;background:#FDFAF3;line-height:1.5;
+}
+.note-box textarea:focus{border-color:var(--brand)}
+.save{
+  width:100%;background:var(--brand);color:#FFFBF2;border-radius:14px;height:52px;font-size:15px;font-weight:700;margin-top:24px;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,background .12s;
+}
+.save:active{transform:scale(.98);background:var(--brand-press)}
+
+.modal-wrap{position:absolute;inset:0;z-index:41;display:flex;align-items:center;justify-content:center;padding:26px;pointer-events:none}
+.modal{
+  width:100%;background:var(--surface);border-radius:22px;padding:24px 22px 20px;
+  box-shadow:0 18px 60px rgba(35,32,28,.22);transform:scale(.9) translateY(18px);opacity:0;
+  transition:all .28s cubic-bezier(.2,1.2,.3,1);pointer-events:none;
+}
+.modal.on{transform:none;opacity:1;pointer-events:auto}
+.modal-top{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.modal-mark{width:26px;height:26px;flex:none}
+.modal-lv{font-size:11px;font-weight:700;letter-spacing:.1em;padding:4px 10px;border-radius:999px;display:inline-block;background:var(--line2);color:var(--ink2)}
+.modal-lv.lv2{background:var(--brand-soft);color:var(--brand-ink)}
+.modal-lv.lv3{background:var(--brand);color:#FFFBF2}
+.modal h3{font-size:21px;font-weight:700;line-height:1.4;margin-bottom:8px}
+.modal-time{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.modal-note{font-size:12.5px;color:var(--ink2);background:var(--bg);border-radius:10px;padding:10px 12px;margin-top:14px;line-height:1.6}
+.modal-btns{display:flex;gap:9px;margin-top:22px}
+.mbtn{flex:1;height:46px;border-radius:12px;font-size:13.5px;font-weight:650;transition:transform .12s}
+.mbtn:active{transform:scale(.96)}
+.mbtn.ghost{background:var(--line2);color:var(--ink2)}
+.mbtn.main{background:var(--brand);color:#FFFBF2;flex:1.3}
+.modal-hint{font-size:11px;color:var(--ink3);text-align:center;margin-top:14px}
+
+.brand-block{background:var(--surface);border-radius:var(--r);padding:18px;margin-bottom:12px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px}
+.brand-mark{width:54px;height:54px;flex:none}
+.wordmark{font-size:24px;font-weight:900;letter-spacing:.1em;line-height:1.1}
+.slogan{font-size:11.5px;color:var(--ink2);margin-top:6px;letter-spacing:.02em}
+.set-card{background:var(--surface);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--shadow)}
+.set-title{font-size:14px;font-weight:650;display:flex;align-items:center;gap:8px}
+.set-desc{font-size:12.5px;color:var(--ink2);line-height:1.65;margin-top:9px}
+.set-detail{max-height:0;overflow:hidden;transition:max-height .25s ease;font-size:12px;color:var(--ink2);line-height:1.7}
+.set-card.open .set-detail{max-height:300px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line2)}
+.chev{transition:transform .2s;color:var(--ink3)}
+.set-card.open .chev{transform:rotate(90deg)}
+.demo-btn{
+  width:100%;background:var(--brand);color:#FFFBF2;border-radius:14px;height:50px;font-size:14px;font-weight:700;margin-top:6px;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,background .12s;
+}
+.demo-btn:active{transform:scale(.98);background:var(--brand-press)}
+
+.toast{
+  position:absolute;left:50%;bottom:148px;transform:translate(-50%,16px);background:var(--ink);color:#FFFBF2;
+  border-radius:12px;padding:11px 18px;font-size:12.5px;font-weight:600;z-index:60;opacity:0;pointer-events:none;
+  transition:all .25s;white-space:nowrap;box-shadow:0 6px 24px rgba(35,32,28,.24);display:flex;align-items:center;gap:12px;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast button{color:#A9CFC1;font-size:12px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="app">
+
+  <div class="top">
+    <div class="top-row">
+      <div>
+        <div class="hello" id="greet">今天</div>
+        <div class="date" id="dateTxt"></div>
+      </div>
+      <div class="ring">
+        <svg width="54" height="54">
+          <circle cx="27" cy="27" r="23" fill="none" stroke="#E5DED1" stroke-width="5"/>
+          <circle id="ringFill" cx="27" cy="27" r="23" fill="none" stroke="#2F6E52" stroke-width="5" stroke-linecap="round" stroke-dasharray="144.5" stroke-dashoffset="144.5" style="transition:stroke-dashoffset .4s ease"/>
+        </svg>
+        <div class="ring-num" id="ringNum">0/0</div>
+      </div>
+    </div>
+    <div class="summary"><span class="dot"></span><span id="summaryTxt">正在加载…</span></div>
+  </div>
+
+  <div class="scroll">
+    <section class="view on" id="view-today">
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">待 办</span><span class="sec-count" id="todoCount"></span></div>
+        <div id="todoList"></div>
+      </div>
+      <div class="sec" id="doneSec">
+        <div class="sec-head"><span class="sec-title">已完成</span><span class="sec-count" id="doneCount"></span></div>
+        <div id="doneList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-alerts">
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">即 将 到 来</span><span class="sec-count" id="alertCount"></span></div>
+        <div id="alertList"></div>
+      </div>
+      <div class="sec">
+        <div class="set-card">
+          <div class="set-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2F6E52" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+            三级干预，不打扰也不漏掉
+          </div>
+          <div class="set-desc">轻：只浮一张卡片 · 普通：卡片 + 轻震动 · 重要：全屏提醒，直到你处理。</div>
+        </div>
+        <button class="demo-btn" id="demoBtn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          演示一条提醒干预
+        </button>
+      </div>
+    </section>
+
+    <section class="view" id="view-me">
+      <div class="sec" style="margin-top:8px">
+        <div class="brand-block">
+          <svg class="brand-mark" viewBox="0 0 1024 1024" aria-label="小步图形标">
+            <rect width="1024" height="1024" rx="232" fill="#2F6E52"/>
+            <path d="M320 510L450 640L770 300" fill="none" stroke="#FFFBF2" stroke-width="112" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="brand-words">
+            <div class="wordmark">小步</div>
+            <div class="slogan">说出来，就有人替你记住</div>
+          </div>
+        </div>
+        <div class="set-card open" data-set>
+          <div class="set-title">为什么是「小步」<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          <div class="set-desc">不用一次做完所有事。说出要做的那一件，到点提醒你，做完划掉——每走一小步都算数。</div>
+          <div class="set-detail">名字沿用「小步」：不用一次走完，走一小步就算数。图形标是一个勾——勾表示这件事做完了，向右上抬也表示又走了一步。松绿底、奶油白笔画。</div>
+        </div>
+        <div class="set-card" data-set>
+          <div class="set-title">怎么记最快<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          <div class="set-desc">在底部说一句话，点「记下」就好。时间、提醒强度都是可选项，先说出来最重要。</div>
+          <div class="set-detail">时间提供常用选项，不用自己想格式；提醒强度默认「轻」，需要更强调时再改。设置都收在展开面板里，主界面始终干净。</div>
+        </div>
+        <div class="set-card" data-set>
+          <div class="set-title">关于你的数据<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          <div class="set-desc">所有事项只保存在你当前这台设备上，不会上传。</div>
+          <div class="set-detail">这是原型演示版，数据存在浏览器本地存储中。清空浏览器数据会一并清除。</div>
+        </div>
+        <div class="set-card" data-set>
+          <div class="set-title">界面遵循的设计原则<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+          <div class="set-desc">8 条原则：尼尔森可用性、格式塔、希克定律、菲茨定律、雅各布定律、认知负荷、渐进式呈现、反馈与可供性。</div>
+          <div class="set-detail">· 底部大按钮放在拇指区（菲茨）<br>· 每页只有一个主操作（希克）<br>· 详情点开才出现（渐进式）<br>· 删除后可撤销、点击有回应（尼尔森 / 反馈）<br>· 常用布局沿用习惯（雅各布）<br>· 卡片分组、间距区分（格式塔）<br>· 一次只看今天（认知负荷）<br>· 松绿主色，深绿只标完成（品牌规范）</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="bottom">
+    <div class="quick">
+      <input id="quickInput" type="text" placeholder="说出来，我替你记住…" maxlength="60">
+      <button class="add-btn" id="quickAdd">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+        记下
+      </button>
+    </div>
+    <div class="tabbar">
+      <button class="tab on" data-tab="today"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 15l2.5 2.5L16 12"/></svg>今日</button>
+      <button class="tab" data-tab="alerts"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>提醒</button>
+      <button class="tab" data-tab="me"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>我的</button>
+    </div>
+    <div class="home-ind"></div>
+  </div>
+
+  <div class="sheet-mask" id="sheetMask"></div>
+  <div class="sheet" id="sheet">
+    <div class="grab"></div>
+    <h2>说出要做的那件事</h2>
+    <input class="big-input" id="titleInput" type="text" placeholder="要做什么？" maxlength="60">
+    <div class="field-label">什么时候提醒</div>
+    <div class="chips" id="timeChips"></div>
+    <div class="field-label">提醒强度</div>
+    <div class="chips" id="lvChips">
+      <button class="chip" data-lv="1">轻提醒</button>
+      <button class="chip" data-lv="2">普通</button>
+      <button class="chip lv3" data-lv="3">重要</button>
+    </div>
+    <button class="note-toggle" id="noteToggle">＋ 添加备注</button>
+    <div class="note-box" id="noteBox"><textarea id="noteInput" placeholder="补充细节（选填）"></textarea></div>
+    <button class="save" id="saveBtn">记下来 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  </div>
+
+  <div class="modal-mask" id="modalMask"></div>
+  <div class="modal-wrap"><div class="modal" id="modal">
+    <div class="modal-top">
+      <svg class="modal-mark" viewBox="0 0 1024 1024" aria-hidden="true">
+        <rect width="1024" height="1024" rx="232" fill="#2F6E52"/>
+        <path d="M320 510L450 640L770 300" fill="none" stroke="#FFFBF2" stroke-width="136" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="modal-lv" id="modalLv">轻提醒</div>
+    </div>
+    <h3 id="modalTitle"></h3>
+    <div class="modal-time"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="modalTime"></span></div>
+    <div class="modal-note" id="modalNote" style="display:none"></div>
+    <div class="modal-btns">
+      <button class="mbtn ghost" id="mLater">推迟10分钟</button>
+      <button class="mbtn ghost" id="mKnown">知道了</button>
+      <button class="mbtn main" id="mDone">去完成</button>
+    </div>
+    <div class="modal-hint" id="modalHint">提醒会在到点时自动出现</div>
+  </div></div>
+
+  <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo" style="display:none">撤销</button></div>
+</div>
+</div>
+
+<script>
+const KEY='qingji_tasks_demo_v1';
+const LV={1:{n:'轻提醒',c:'lv1'},2:{n:'普通',c:'lv2'},3:{n:'重要',c:'lv3'}};
+let tasks=[],pendingTime=0,pendingLv=1,modalId=null,lastDeleted=null,toastTimer=null;
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+function atTime(h,m){const d=new Date();d.setHours(h,m,0,0);return d.getTime()}
+function presetTime(i){if(i===0)return Date.now();if(i===1)return atTime(18,0);if(i===2){const d=new Date();d.setDate(d.getDate()+1);d.setHours(9,0,0,0);return d.getTime()}const d=new Date();d.setDate(d.getDate()+1);d.setHours(20,0,0,0);return d.getTime()}
+function dayStr(ts){const d=new Date(ts),n=new Date();const a=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),b=new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();if(a===b)return'今天';if(a===b+86400000)return'明天';if(a===b+172800000)return'后天';return(d.getMonth()+1)+'月'+d.getDate()+'日'}
+function timeStr(ts){const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())}
+function fullTime(ts){return dayStr(ts)+' '+timeStr(ts)}
+function isOver(ts){return ts<Date.now()-60000}
+
+function load(){
+  try{const v=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(v)){tasks=v;return}}catch(e){}
+  tasks=[
+    {id:'s1',title:'交课程作业',ts:atTime(15,0),lv:2,done:false,note:'第 3 章习题，提交到学习通',created:Date.now()},
+    {id:'s2',title:'给家里回个电话',ts:atTime(19,30),lv:1,done:false,note:'',created:Date.now()},
+    {id:'s3',title:'整理明天开会要用的资料',ts:presetTime(2),lv:3,done:false,note:'带上季度数据和上周会议纪要',created:Date.now()},
+    {id:'s4',title:'午休后去取快递',ts:atTime(12,30),lv:1,done:true,note:'',created:Date.now()}
+  ];
+  save();
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(tasks))}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+function greet(){const h=new Date().getHours();return h<6?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好'}
+function renderTop(){
+  $('greet').textContent=greet();
+  const d=new Date(),wk='日一二三四五六'[d.getDay()];
+  $('dateTxt').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+wk;
+  const total=tasks.filter(t=>dayStr(t.ts)==='今天'||t.ts<Date.now()).length;
+  const done=tasks.filter(t=>t.done&&(dayStr(t.ts)==='今天'||t.ts<Date.now())).length;
+  const pct=total?done/total:0;
+  $('ringFill').style.strokeDashoffset=144.5*(1-pct);
+  $('ringNum').textContent=done+'/'+total;
+  const left=tasks.filter(t=>!t.done).length;
+  const urgent=tasks.filter(t=>!t.done&&t.lv===3).length;
+  $('summaryTxt').innerHTML=left===0?'今天都安排好了，休息一下':('还有 <b>'+left+'</b> 件事'+(urgent?'，其中 <b>'+urgent+'</b> 件重要':'，走一小步就好'));
+}
+function cardHTML(t){
+  const over=!t.done&&isOver(t.ts);
+  return '<div class="card'+(t.done?' done':'')+'" data-id="'+t.id+'">'+
+    '<button class="check" data-act="check" aria-label="完成"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFBF2" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg></button>'+
+    '<div class="body" data-act="open"><div class="title">'+esc(t.title)+'</div>'+
+    '<div class="meta"><span class="tag'+(over?' over':'')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+
+    '<span class="tag '+LV[t.lv].c+'">'+LV[t.lv].n+'</span></div>'+
+    (t.note?'<div class="detail">'+esc(t.note)+'</div>':'')+'</div>'+
+    '<div class="act"><button class="icon-btn" data-act="remind" aria-label="预览提醒"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg></button>'+
+    '<button class="icon-btn del" data-act="del" aria-label="删除"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div></div>';
+}
+function render(){
+  renderTop();
+  const todo=tasks.filter(t=>!t.done).sort((a,b)=>a.ts-b.ts);
+  const done=tasks.filter(t=>t.done).sort((a,b)=>b.ts-a.ts);
+  $('todoCount').textContent=todo.length?todo.length+' 件':'';
+  $('doneCount').textContent=done.length?done.length+' 件':'';
+  $('todoList').innerHTML=todo.length?todo.map(cardHTML).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#948C80" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p></div>';
+  $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
+  $('doneSec').style.display=done.length?'block':'none';
+  const soon=todo.filter(t=>t.ts<Date.now()+86400000).sort((a,b)=>a.ts-b.ts);
+  $('alertCount').textContent=soon.length?soon.length+' 条':'';
+  $('alertList').innerHTML=soon.length?soon.map(cardHTML).join(''):'<div class="empty"><p>未来一天没有安排<br>可以安心做点别的</p></div>';
+}
+
+function toast(msg,undo){
+  clearTimeout(toastTimer);
+  $('toastMsg').textContent=msg;
+  $('toastUndo').style.display=undo?'inline':'none';
+  $('toast').classList.add('on');
+  toastTimer=setTimeout(()=>$('toast').classList.remove('on'),3200);
+}
+function openSheet(){
+  $('sheet').classList.add('on');$('sheetMask').classList.add('on');
+  setTimeout(()=>$('titleInput').focus(),280);
+}
+function closeSheet(){$('sheet').classList.remove('on');$('sheetMask').classList.remove('on')}
+function buildTimeChips(){
+  const labels=['现在','今天 18:00','明天 09:00','明天 20:00'];
+  $('timeChips').innerHTML=labels.map((l,i)=>'<button class="chip'+(i===1?' on':'')+'" data-i="'+i+'">'+l+'</button>').join('');
+  pendingTime=presetTime(1);
+}
+function resetSheet(){
+  $('titleInput').value='';$('noteInput').value='';$('noteBox').classList.remove('on');$('noteToggle').textContent='＋ 添加备注';
+  pendingLv=1;
+  document.querySelectorAll('#lvChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.lv==='1'));
+  buildTimeChips();
+}
+function addTask(){
+  const title=$('titleInput').value.trim();
+  if(!title){$('titleInput').focus();toast('先说出来要做什么');return}
+  const ts=pendingTime;
+  tasks.unshift({id:'t'+Date.now()+Math.random().toString(36).slice(2,5),title,ts,lv:pendingLv,done:false,note:$('noteInput').value.trim(),created:Date.now()});
+  save();render();closeSheet();resetSheet();toast('已记下 · '+fullTime(ts));
+}
+function toggleDone(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  t.done=!t.done;save();render();
+  if(t.done){if(navigator.vibrate)navigator.vibrate(18);toast('走了一小步 ✓')}
+}
+function delTask(id){
+  const i=tasks.findIndex(x=>x.id===id);if(i<0)return;
+  lastDeleted={task:tasks[i],index:i};tasks.splice(i,1);save();render();
+  toast('已删除','undo');
+}
+function openModal(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;
+  modalId=id;
+  const lv=$('modalLv');lv.className='modal-lv '+LV[t.lv].c;lv.textContent=LV[t.lv].n;
+  $('modalTitle').textContent=t.title;
+  $('modalTime').textContent=fullTime(t.ts)+(isOver(t.ts)?' · 已过时间':'');
+  $('modalNote').style.display=t.note?'block':'none';$('modalNote').textContent=t.note||'';
+  $('modalHint').textContent=t.lv===3?'这件事标记为重要，会一直提醒到你处理':'提醒会在到点时自动出现';
+  $('modalMask').classList.add('on');$('modal').classList.add('on');
+  if(navigator.vibrate)navigator.vibrate(t.lv===3?[30,60,30]:15);
+}
+function closeModal(){$('modalMask').classList.remove('on');$('modal').classList.remove('on');modalId=null}
+
+$('quickAdd').onclick=()=>{
+  const v=$('quickInput').value.trim();if(!v){$('quickInput').focus();return}
+  $('quickInput').value='';resetSheet();openSheet();$('titleInput').value=v;
+};
+$('quickInput').onkeydown=e=>{if(e.key==='Enter')$('quickAdd').click()};
+$('titleInput').onkeydown=e=>{if(e.key==='Enter')$('saveBtn').click()};
+$('saveBtn').onclick=addTask;
+$('sheetMask').onclick=closeSheet;
+$('timeChips').onclick=e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  document.querySelectorAll('#timeChips .chip').forEach(c=>c.classList.remove('on'));
+  b.classList.add('on');pendingTime=presetTime(+b.dataset.i);
+};
+$('lvChips').onclick=e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  document.querySelectorAll('#lvChips .chip').forEach(c=>c.classList.toggle('on',c===b));
+  pendingLv=+b.dataset.lv;
+};
+$('noteToggle').onclick=()=>{
+  const on=$('noteBox').classList.toggle('on');
+  $('noteToggle').textContent=on?'－ 收起备注':'＋ 添加备注';
+  if(on)$('noteInput').focus();
+};
+document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('view-'+tab.dataset.tab).classList.add('on');
+  document.querySelector('.scroll').scrollTop=0;
+});
+document.querySelectorAll('[data-set]').forEach(c=>c.onclick=()=>{
+  c.classList.toggle('open');
+});
+document.addEventListener('click',e=>{
+  const card=e.target.closest('.card');if(!card)return;
+  const act=e.target.closest('[data-act]');if(!act)return;
+  const id=card.dataset.id;
+  if(act.dataset.act==='check')toggleDone(id);
+  else if(act.dataset.act==='del')delTask(id);
+  else if(act.dataset.act==='remind')openModal(id);
+  else if(act.dataset.act==='open'){card.classList.toggle('open')}
+});
+$('toastUndo').onclick=()=>{
+  if(!lastDeleted)return;
+  tasks.splice(lastDeleted.index,0,lastDeleted.task);save();render();lastDeleted=null;
+  $('toast').classList.remove('on');toast('已恢复');
+};
+$('modalMask').onclick=closeModal;
+$('mDone').onclick=()=>{if(modalId)toggleDone(modalId);closeModal()};
+$('mKnown').onclick=()=>{closeModal();toast('知道了')};
+$('mLater').onclick=()=>{
+  if(modalId){const t=tasks.find(x=>x.id===modalId);if(t){t.ts=Date.now()+600000;t.notified=false;save();render()}}
+  closeModal();toast('已推迟 10 分钟');
+};
+$('demoBtn').onclick=()=>{
+  const t=tasks.filter(x=>!x.done).sort((a,b)=>a.ts-b.ts)[0];
+  if(!t){toast('还没有待办，先记一件吧');return}
+  openModal(t.id);
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeSheet()}});
+
+function checkReminders(){
+  const now=Date.now();
+  const due=tasks.find(t=>!t.done&&!t.notified&&t.ts<=now&&t.ts>now-120000);
+  if(due){due.notified=true;save();openModal(due.id)}
+}
+load();buildTimeChips();render();
+setInterval(()=>{renderTop();checkReminders()},30000);
+</script>
+<script>setTimeout(function(){try{var b=document.getElementById('loginSkip');if(b)b.click();var g=document.getElementById('guideSkip');if(g)g.click();var tt=document.getElementById('toast');if(tt){tt.classList.remove('on');}}catch(e){}},600);</script></body>
+</html>

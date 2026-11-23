@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>轻记 · 小步 —— 一个提醒 App 的五天</title>
+<meta name="description" content="从一句话到一个会对话的提醒 App：37 个版本、13 条 AI 指令、12 条真实反馈的完整设计过程。">
+<link rel="icon" href="assets/mascot-icon.png">
+<style>
+:root{
+  --paper:#F6F1E8; --surface:#FFFCF6; --ink:#23201C; --ink2:#5B554C; --ink3:#8A8175;
+  --line:#E5DED1; --line2:#F0EAE0;
+  --brand:#2F6E52; --brand-press:#245740; --brand-soft:#E5F0EA; --brand-ink:#265443;
+  --amber:#B7791F; --amber-soft:#FBF1DC;
+  --alert:#B5453C; --alert-soft:#F8E7E3;
+  --r:18px; --shadow:0 2px 14px rgba(35,32,28,.06);
+  --shadow-lg:0 24px 60px rgba(35,32,28,.12);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --maxw:1120px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"微软雅黑","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+@media(max-width:640px){.wrap{padding:0 18px}}
+
+/* ── 顶栏 ── */
+.nav{position:fixed;inset:0 0 auto 0;height:64px;z-index:60;
+  background:rgba(246,241,232,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;transition:border-color .3s,background .3s}
+.nav.on{border-bottom-color:var(--line);background:rgba(246,241,232,.94)}
+.nav .wrap{height:100%;display:flex;align-items:center;gap:14px}
+.nav-logo{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:.5px}
+.nav-logo img{width:30px;height:30px;border-radius:10px;box-shadow:0 3px 10px rgba(47,110,82,.2)}
+.nav-logo small{font-weight:600;color:var(--ink3);font-size:12px;letter-spacing:2px}
+.nav-links{margin-left:auto;display:flex;gap:4px}
+.nav-links a{font-size:13px;color:var(--ink2);padding:7px 11px;border-radius:9px;transition:.2s}
+.nav-links a:hover{background:var(--brand-soft);color:var(--brand-ink)}
+@media(max-width:860px){.nav-links{display:none}}
+.progress{position:fixed;top:0;left:0;height:2px;background:var(--brand);z-index:61;width:0;transition:width .1s linear}
+
+/* ── 首屏 ── */
+.hero{position:relative;padding:132px 0 76px;overflow:hidden;
+  background:
+    radial-gradient(640px 640px at 86% -8%, rgba(47,110,82,.15), transparent 70%),
+    radial-gradient(520px 520px at 2% 104%, rgba(183,121,31,.10), transparent 72%)}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;position:relative;z-index:1}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;gap:34px}}
+.kicker{display:inline-flex;align-items:center;gap:9px;font-size:12px;letter-spacing:3px;
+  color:var(--brand);font-weight:700;margin-bottom:18px}
+.kicker i{width:26px;height:2px;background:var(--brand);display:block}
+h1{font-size:clamp(38px,5.2vw,60px);line-height:1.1;margin:0 0 20px;font-weight:800;letter-spacing:-.5px}
+h1 em{font-style:normal;color:var(--brand)}
+.lede{font-size:clamp(15px,1.5vw,18px);color:var(--ink2);max-width:33em;margin:0 0 26px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 22px;border-radius:14px;
+  font-size:14.5px;font-weight:700;border:1px solid var(--line);background:var(--surface);cursor:pointer;
+  transition:transform .16s var(--ease),box-shadow .2s}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.btn.primary{background:var(--brand);border-color:transparent;color:#FFF9EF;
+  box-shadow:0 8px 22px rgba(47,110,82,.24)}
+.btn.primary:hover{background:var(--brand-press)}
+.stats{display:flex;gap:26px;margin-top:44px;flex-wrap:wrap}
+.stat b{display:block;font-size:30px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+.stat span{font-size:12px;color:var(--ink3);letter-spacing:1.5px}
+.stat b em{font-style:normal;font-size:15px;color:var(--ink3);font-weight:700;margin-left:2px}
+
+/* 手机壳 */
+.phone{position:relative;width:100%;max-width:300px;margin:0 auto;aspect-ratio:390/844;
+  background:#1E1C19;border-radius:40px;padding:9px;box-shadow:var(--shadow-lg);transform:rotate(-1.2deg)}
+.phone::after{content:"";position:absolute;left:50%;transform:translateX(-50%);bottom:14px;
+  width:104px;height:4px;border-radius:2px;background:rgba(255,255,255,.28)}
+.phone .screen{width:100%;height:100%;border-radius:32px;overflow:hidden;background:var(--surface);position:relative}
+.phone .screen img{width:100%;height:100%;object-fit:cover}
+.phone-float{position:absolute;width:92px;left:-46px;bottom:-18px;filter:drop-shadow(0 12px 24px rgba(35,32,28,.2));
+  animation:float 4.2s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media(max-width:900px){.phone-float{width:74px;left:auto;right:-8px}}
+
+/* ── 通用区块 ── */
+.sec{padding:88px 0;position:relative}
+.sec + .sec{border-top:1px solid var(--line2)}
+.sec-head{max-width:760px;margin-bottom:44px}
+.sec-no{font-size:12px;letter-spacing:3px;color:var(--ink3);font-weight:700;margin-bottom:10px}
+h2{font-size:clamp(26px,3.2vw,36px);line-height:1.24;margin:0 0 14px;font-weight:800;letter-spacing:-.3px}
+.sec-head p{margin:0;color:var(--ink2);font-size:15.5px;max-width:44em}
+
+/* 卡片 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.card h3{margin:0 0 8px;font-size:16.5px;font-weight:800}
+.card p{margin:0;color:var(--ink2);font-size:14px}
+
+/* 起点 */
+.start{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:center}
+@media(max-width:860px){.start{grid-template-columns:1fr}}
+.rules{display:grid;gap:12px}
+.rule{display:flex;gap:13px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.rule .n{flex:0 0 auto;width:24px;height:24px;border-radius:8px;background:var(--brand-soft);
+  color:var(--brand-ink);font-size:12px;font-weight:800;display:grid;place-items:center}
+.rule b{font-size:14.5px}
+.rule span{display:block;font-size:13px;color:var(--ink3);margin-top:3px}
+
+/* 指令集 */
+.phase-tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.ptab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;
+  font-size:13px;font-weight:700;color:var(--ink2);cursor:pointer;transition:.2s}
+.ptab.on{background:var(--brand);color:#FFF9EF;border-color:transparent}
+.orders{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:820px){.orders{grid-template-columns:1fr}}
+.order{padding:18px 20px;border-radius:14px;border:1px solid var(--line);background:var(--surface);
+  display:flex;gap:14px;transition:transform .18s var(--ease),box-shadow .2s,border-color .2s}
+.order:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#D8D0C2}
+.order .idx{flex:0 0 auto;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+  font-size:12px;font-weight:800;background:var(--brand-soft);color:var(--brand-ink)}
+.order.p0 .idx{background:var(--alert-soft);color:var(--alert)}
+.order.p2 .idx{background:var(--amber-soft);color:var(--amber)}
+.order h4{margin:0 0 5px;font-size:14.8px;font-weight:800;line-height:1.4}
+.order p{margin:0;font-size:12.8px;color:var(--ink3);line-height:1.55}
+
+/* 总控指令代码块 */
+.master{background:#22201D;color:#EDE7DC;border-radius:16px;padding:22px 24px;margin-bottom:26px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.6px;line-height:1.85;overflow:auto}
+.master .c{color:#7E9B8B}
+.master b{color:#E9C87A;font-weight:700}
+.master .tag{display:inline-block;margin-bottom:12px;font-size:11px;letter-spacing:2px;color:#9DBFAE;
+  font-family:"微软雅黑",sans-serif;font-weight:700}
+
+/* 时间轴 */
+.tl-days{display:grid;gap:26px}
+.day{border-left:2px solid var(--line);padding-left:24px;position:relative}
+.day::before{content:"";position:absolute;left:-7px;top:6px;width:12px;height:12px;border-radius:50%;
+  background:var(--surface);border:2px solid var(--brand)}
+.day-h{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.day-h b{font-size:15px}
+.day-h span{font-size:12px;color:var(--ink3)}
+.vers{display:grid;gap:7px}
+.ver{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;
+  padding:7px 10px;border-radius:10px;transition:.16s}
+.ver:hover{background:var(--surface);box-shadow:var(--shadow)}
+.ver .t{font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.ver .nm{font-size:13.5px;display:flex;align-items:center;gap:8px;min-width:0}
+.ver .nm i{width:5px;height:5px;border-radius:50%;background:var(--line);flex:0 0 auto}
+.ver.key .nm{font-weight:800;color:var(--brand-ink)}
+.ver.key .nm i{background:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.ver .sz{font-size:11px;color:var(--ink3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{grid-column:1/-1;height:3px;border-radius:2px;background:var(--line2);overflow:hidden;margin-top:-3px}
+.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--brand-soft),var(--brand));border-radius:2px}
+
+/* 访谈 */
+.quotes{display:grid;gap:14px}
+.q{display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:0;border:1px solid var(--line);
+  border-radius:14px;overflow:hidden;background:var(--surface)}
+.q > div{padding:16px 18px}
+.q .said{border-right:1px solid var(--line2);font-size:14px;font-weight:700;color:var(--alert)}
+.q .real{border-right:1px solid var(--line2);font-size:13.5px;color:var(--ink2)}
+.q .fix{font-size:13.5px;color:var(--brand-ink);background:var(--brand-soft)}
+@media(max-width:820px){
+  .q{grid-template-columns:1fr}
+  .q .said,.q .real{border-right:0;border-bottom:1px solid var(--line2)}
+}
+.q .lb{display:block;font-size:10px;letter-spacing:2px;color:var(--ink3);margin-bottom:5px;font-weight:700}
+
+/* 版本对比 */
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+@media(max-width:880px){.three{grid-template-columns:1fr;gap:30px}}
+.vcard{text-align:center}
+.vcard .mini-phone{position:relative;border-radius:26px;overflow:hidden;border:1px solid var(--line);
+  background:#1E1C19;padding:6px;box-shadow:var(--shadow);cursor:zoom-in;transition:transform .2s var(--ease)}
+.vcard .mini-phone:hover{transform:translateY(-4px)}
+.vcard .mini-phone img{border-radius:21px}
+.vcard .tag{display:inline-block;margin:14px 0 6px;font-size:11px;letter-spacing:2px;font-weight:800;
+  color:var(--brand-ink);background:var(--brand-soft);padding:4px 10px;border-radius:999px}
+.vcard .tag.old{color:#8A5A2B;background:var(--amber-soft)}
+.vcard h4{margin:0 0 4px;font-size:15px}
+.vcard p{margin:0;font-size:12.5px;color:var(--ink3)}
+.vcard a.play{display:inline-block;margin-top:9px;font-size:12.5px;color:var(--brand);font-weight:700;
+  border-bottom:1px dashed var(--brand)}
+
+/* 前后细节 */
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
+@media(max-width:720px){.ba{grid-template-columns:1fr}}
+.ba .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;border:1px solid var(--line);
+  border-radius:16px;padding:12px;background:var(--surface)}
+.ba .pair figure{margin:0}
+.ba .pair img{border-radius:10px;border:1px solid var(--line)}
+.ba .pair figcaption{font-size:11px;color:var(--ink3);text-align:center;margin-top:6px;letter-spacing:1px}
+.ba .cap{grid-column:1/-1;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.ba .cap b{color:var(--brand-ink)}
+
+/* 角色 */
+.mascot-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:start}
+@media(max-width:860px){.mascot-grid{grid-template-columns:1fr}}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px}
+.steps{display:grid;gap:12px;margin-top:18px}
+.step{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:14px;
+  border:1px solid var(--line);background:var(--surface)}
+.step img{width:56px;height:56px;object-fit:contain;flex:0 0 auto;border-radius:12px;background:var(--paper)}
+.step b{display:block;font-size:14px}
+.step span{font-size:12.5px;color:var(--ink3)}
+.place{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:34px}
+@media(max-width:820px){.place{grid-template-columns:repeat(2,1fr)}}
+.place figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px}
+.place img{border-radius:9px}
+.place figcaption{font-size:11.5px;color:var(--ink3);text-align:center;padding:7px 0 2px}
+
+/* AI 架构 */
+.arch{display:grid;gap:10px;margin:8px 0 26px}
+.layer{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:center;
+  padding:18px 20px;border-radius:14px;border:1px solid var(--line);background:var(--surface)}
+.layer.hi{background:var(--brand-soft);border-color:#CFE2D7}
+.layer b{font-size:14px}
+.layer span{font-size:13px;color:var(--ink2)}
+@media(max-width:720px){.layer{grid-template-columns:1fr;gap:6px}}
+
+/* 通知 */
+.split{display:grid;grid-template-columns:.9fr 1.1fr;gap:38px;align-items:center}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.shot{border-radius:20px;border:1px solid var(--line);overflow:hidden;background:#1E1C19;padding:6px;
+  box-shadow:var(--shadow);cursor:zoom-in}
+.shot img{border-radius:15px}
+.points{display:grid;gap:12px}
+.point{display:flex;gap:12px;font-size:13.8px;color:var(--ink2)}
+.point i{flex:0 0 auto;width:20px;height:20px;border-radius:7px;background:var(--brand-soft);
+  color:var(--brand-ink);display:grid;place-items:center;font-size:11px;font-style:normal;font-weight:800;margin-top:2px}
+.point b{color:var(--ink)}
+
+/* 结尾 */
+.end{position:relative;padding:96px 0 72px;text-align:center;overflow:hidden}
+.end{background:radial-gradient(680px 420px at 50% 108%, rgba(47,110,82,.16), transparent 72%)}
+.end img{width:120px;margin:0 auto 22px;animation:float 4.6s ease-in-out infinite;position:relative}
+.end h2{position:relative}
+.end p{position:relative;color:var(--ink2);max-width:34em;margin:0 auto 26px}
+.foot{border-top:1px solid var(--line);padding:26px 0 40px;font-size:12px;color:var(--ink3)}
+.foot .wrap{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+
+/* 放大 */
+#lb{position:fixed;inset:0;background:rgba(24,22,19,.86);z-index:200;display:none;place-items:center;
+  padding:30px;cursor:zoom-out;backdrop-filter:blur(6px)}
+#lb.on{display:grid}
+#lb img{max-height:92vh;width:auto;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+
+/* 滚动淡入 */
+.rev{opacity:0;transform:translateY(18px);transition:opacity .6s var(--ease),transform .6s var(--ease)}
+.rev.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  .rev{opacity:1;transform:none;transition:none}
+  .phone-float,.end img{animation:none}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="prog"></div>
+
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <a class="nav-logo" href="#top"><img src="assets/mascot-icon.png" alt=""><span>轻记 · 小步</span><small>PROCESS</small></a>
+    <div class="nav-links">
+      <a href="#start">起点</a>
+      <a href="#orders">指令集</a>
+      <a href="#timeline">版本</a>
+      <a href="#feedback">反馈</a>
+      <a href="#compare">对比</a>
+      <a href="#mascot">角色</a>
+      <a href="#ai">小布</a>
+      <a href="#notify">通知</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ───────────────── 首屏 ───────────────── -->
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="kicker"><i></i>产品设计过程 · 2026.11.18 — 11.23</div>
+      <h1>一个提醒 App<br>的<em>五天</em></h1>
+      <p class="lede">
+        从一句「说出来，就有人替你记住」，到 37 个版本、13 条写给 AI 的开发指令，
+        再到一只能听懂话、会动手改数据的小布。<br>
+        这里放的是过程，不是结论。
+      </p>
+      <div class="hero-actions">
+        <a class="btn primary" href="#start">从头看 ↓</a>
+        <a class="btn" href="https://x1038604972-web.github.io/xiaobu-reminder/" target="_blank" rel="noopener">打开在线版 ↗</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>37<em>个</em></b><span>版本快照</span></div>
+        <div class="stat"><b>13<em>条</em></b><span>AI 开发指令</span></div>
+        <div class="stat"><b>12<em>条</em></b><span>真实反馈</span></div>
+        <div class="stat"><b>7<em>处</em></b><span>界面重做</span></div>
+      </div>
+    </div>
+    <div style="position:relative">
+      <div class="phone">
+        <div class="screen"><img src="assets/now-home.png" alt="小步 App 当前界面"></div>
+        <img class="phone-float" src="assets/mascot-front.png" alt="小步角色">
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ───────────────── 第 0 章 ───────────────── -->
+<section class="sec" id="start">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 00 · 起点</div>
+      <h2>先让它跑起来，再谈好不好用</h2>
+      <p>第一天做出来的东西很朴素：一个列表、一个输入框、三个 tab。但有三条硬约束从第一天就定死了，后面所有的改动都在这三条里做。</p>
+    </div>
+    <div class="start rev">
+      <figure style="margin:0">
+        <div class="mini-phone" style="max-width:300px;margin:0 auto;cursor:zoom-in"><img src="assets/ver-v0.png" alt="首版界面"></div>
+        <figcaption style="text-align:center;font-size:12px;color:var(--ink3);margin-top:12px">首版 · 11-18 08:58 · 30.9 KB</figcaption>
+      </figure>
+      <div class="rules">
+        <div class="rule"><span class="n">1</span><div><b>全部代码在一个 index.html 里</b><span>HTML + style + script，不拆文件、不引外部库。改完直接丢上去就能跑。</span></div></div>
+        <div class="rule"><span class="n">2</span><div><b>数据只存在 localStorage</b><span>key 是 <code>qingji_tasks_v1</code>，不能改——改了用户的事就全没了。</span></div></div>
+        <div class="rule"><span class="n">3</span><div><b>视觉只用一套变量</b><span>纸质米色 + 松绿，颜色写在 <code>:root</code> 里，改动必须沿用，不许新造配色。</span></div></div>
+        <div class="rule" style="background:var(--brand-soft);border-color:#CFE2D7"><span class="n" style="background:var(--surface)">✓</span><div><b>好处是：</b><span>每次改完都能立刻在手机上试；坏处是：一个文件到后期已经 25 万字符，改错一行就全白。</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 1 章 · 指令集 ───────────────── -->
+<section class="sec" id="orders">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 01 · 方法</div>
+      <h2>我是怎么"指挥"AI 写这个 App 的</h2>
+      <p>不是"帮我把这个 App 做出来"，而是把它拆成 13 条可以验收的指令：先说清 bug 的表现，再说要改成什么样，最后写验收标准。下面这段是每次对话开头都要粘的总控指令。</p>
+    </div>
+
+    <div class="master rev">
+      <div class="tag">总控指令 · 每次对话开头</div>
+你是我的前端开发搭档。项目是「小步」——一个单文件 HTML 的提醒 App。<br><br>
+<b>技术约束（必须遵守）</b><br>
+1. 全部代码在 <span class="c">index.html</span> 里，不要拆文件、不要引入外部库或 CDN。<br>
+2. 数据存在 localStorage，key 是 <span class="c">qingji_tasks_v1</span>，不能改。<br>
+3. 视觉是「纸质米色 + 松绿」，变量在 <span class="c">:root</span>，改动必须沿用。<br>
+4. 外层 <span class="c">.phone</span> 是 390×844 手机壳，不要拆掉。<br><br>
+<b>工作方式</b><br>
+· 每次只做我要求的那一处改动，告诉我改了哪几行、怎么验证、有没有副作用。<br>
+· 改完必须自查：加一条 → 勾选 → 删除 → 切三个 tab，都不能报错。<br>
+· 输出只贴改动涉及的那几段，不要整份重发。
+    </div>
+
+    <div class="phase-tabs rev" id="ptabs">
+      <button class="ptab on" data-p="all">全部 13 条</button>
+      <button class="ptab" data-p="P0">P0 · 先修真 bug</button>
+      <button class="ptab" data-p="P1">P1 · 把好用补上</button>
+      <button class="ptab" data-p="P2">P2 · 打磨与加分</button>
+    </div>
+    <div class="orders" id="orderList"></div>
+
+    <div class="card rev" style="margin-top:26px;background:var(--brand-soft);border-color:#CFE2D7">
+      <h3>为什么每条都要写"验收"？</h3>
+      <p>比如指令 1：「造一条 1 小时前到点的任务，刷新 → 必须弹出来；连续刷新 3 次 → 只弹一次；3 条逾期 → 只弹 1 个汇总窗」。
+      写不出验收标准，说明我还没想清楚要什么——这时候让 AI 动手，只会得到一个"看起来改了"的版本。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 2 章 · 版本 ───────────────── -->
+<section class="sec" id="timeline">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 02 · 版本</div>
+      <h2>37 个版本，是"退"出来的</h2>
+      <p>每次让 AI 动手之前，先把 index.html 复制一份，文件名写清这次要改什么。改坏了就退回去。
+      下面每一条都是一次改动前留下的存档，条形的长度是当时的文件体积。</p>
+    </div>
+    <div class="tl-days rev" id="timelineList"></div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 3 章 · 反馈 ───────────────── -->
+<section class="sec" id="feedback">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 03 · 反馈</div>
+      <h2>别人一用，问题才浮出来</h2>
+      <p>两组访谈、12 条吐槽。真正有用的不是"他说了什么"，而是把吐槽翻译成病因——同一个病因可能对应好几条抱怨。</p>
+    </div>
+    <div class="quotes rev" id="quoteList"></div>
+    <div class="card rev" style="margin-top:22px">
+      <h3>最扎心的一条</h3>
+      <p>「帧率低了。」——不是手机差，是我给液态玻璃主题上了大面积 backdrop-filter，还叠了完成粒子特效。
+      这条反馈逼着我加了「性能优先」开关，也让我第一次意识到：好看是要付性能税的。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 4 章 · 对比 ───────────────── -->
+<section class="sec" id="compare">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 04 · 对比</div>
+      <h2>三个版本，摆在一起看</h2>
+      <p>左边是首版，中间是拿到反馈之后、还没动手改的样子，右边是现在。下面两个是这次改动里最难的两处：提醒强度和时间解析。</p>
+    </div>
+    <div class="three rev">
+      <div class="vcard">
+        <div class="mini-phone"><img src="assets/ver-v0.png" alt="首版"></div>
+        <div class="tag old">V0 · 首版</div>
+        <h4>能记，但只能记</h4>
+        <p>3 个 tab、4 个固定时间、一个「记下」按钮</p>
+        <a class="play" href="versions/v0.html" target="_blank" rel="noopener">打开这一版试试 ↗</a>
+      </div>
+      <div class="vcard">
+        <div class="mini-phone"><img src="assets/ver-v1.png" alt="改进前"></div>
+        <div class="tag old">V1 · 拿到反馈时</div>
+        <h4>功能齐了，但不好懂</h4>
+        <p>有重复、有语音、有引导，可「轻提醒/重要」看不出区别</p>
+        <a class="play" href="versions/v1.html" target="_blank" rel="noopener">打开这一版试试 ↗</a>
+      </div>
+      <div class="vcard">
+        <div class="mini-phone"><img src="assets/now-home.png" alt="现在"></div>
+        <div class="tag">现在</div>
+        <h4>会说话，也会动手</h4>
+        <p>下一条高亮、强度可视化、每周几、小布对话</p>
+        <a class="play" href="https://x1038604972-web.github.io/xiaobu-reminder/" target="_blank" rel="noopener">打开现在这版 ↗</a>
+      </div>
+    </div>
+
+    <div class="ba rev">
+      <div class="pair">
+        <figure><img src="assets/ba-level-before.png" alt="改进前的提醒强度"><figcaption>改进前</figcaption></figure>
+        <figure><img src="assets/ba-level-after.png" alt="改进后的提醒强度"><figcaption>改进后</figcaption></figure>
+        <div class="cap"><b>提醒强度</b>：原来三档长得一模一样，用户以为区别是音量大小。现在每档下面直接写「弹 1 次 / 10 分钟后再弹 / 每 5 分钟追最多 4 次」。</div>
+      </div>
+      <div class="pair">
+        <figure><img src="assets/ba-parse-before.png" alt="改进前的时间解析"><figcaption>改进前</figcaption></figure>
+        <figure><img src="assets/ba-parse-after.png" alt="改进后的时间解析"><figcaption>改进后</figcaption></figure>
+        <div class="cap"><b>时间解析</b>：说「明天9点」没写上午下午，原来会静默套用当前时间；现在边输边回显「已识别 · 明天 09:00」，有歧义给两个胶囊让你一点即定。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 5 章 · 角色 ───────────────── -->
+<section class="sec" id="mascot">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 05 · 形象</div>
+      <h2>给它一张脸</h2>
+      <p>助手叫「小步」，但一开始它只是气泡旁边一个「布」字。后来画了三视图：围巾上的对勾是 App 的完成符号，围巾的绿就是品牌色。这样它看起来本来就属于这个产品。</p>
+    </div>
+    <div class="mascot-grid rev">
+      <div class="sheet"><img src="assets/mascot-sheet.png" alt="角色三视图原稿"></div>
+      <div>
+        <div class="steps">
+          <div class="step"><img src="assets/mascot-sheet.png" alt=""><div><b>① 抠图</b><span>从三视图里泛洪去底 + 只留最大连通块，顺手清掉脚下阴影和标签文字</span></div></div>
+          <div class="step"><img src="assets/mascot-ava.png" alt=""><div><b>② 圆形头像</b><span>按围巾上缘裁出头肩，套圆形蒙版，24px 小气泡里也认得出</span></div></div>
+          <div class="step"><img src="assets/mascot-icon.png" alt=""><div><b>③ 变成图标</b><span>绿底圆角 + 全身，做成桌面图标、favicon、通知图标</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="place rev">
+      <figure><img src="assets/ai-hero.png" alt=""><figcaption>首次打开：欢迎卡</figcaption></figure>
+      <figure><img src="assets/ai-chat.png" alt=""><figcaption>对话：头像 + 结果卡</figcaption></figure>
+      <figure><img src="assets/ai-modal.png" alt=""><figcaption>到点提醒：换成它的脸</figcaption></figure>
+      <figure><img src="assets/mascot-icon.png" alt="" style="background:var(--paper);padding:18px"><figcaption>桌面 / 通知图标</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 6 章 · 小布 ───────────────── -->
+<section class="sec" id="ai">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 06 · 对话</div>
+      <h2>从"能记"到"会聊"</h2>
+      <p>小布不是把聊天框贴在 App 上，它得能真的改数据。所以做成三层：本地先判断你要干什么，判不出来才问大模型，最后由同一套执行器落地——模型再聪明也改不坏数据。</p>
+    </div>
+    <div class="arch rev">
+      <div class="layer"><b>① 本地意图引擎</b><span>关键词 + 正则识别「记 / 查 / 改 / 完成 / 删除 / 设置」，复用 App 自己的时间解析，离线可用、零成本</span></div>
+      <div class="layer"><b>② 大模型（可选）</b><span>DeepSeek / Kimi / 通义，浏览器直连；只负责把绕的说法翻成动作 JSON，Key 存在本机</span></div>
+      <div class="layer hi"><b>③ 执行器</b><span>模型和本地共用一个执行器：真的写 tasks、重渲染、弹 toast、给「撤销」；不确定就问，不乱改</span></div>
+    </div>
+    <div class="split rev">
+      <div class="shot"><img src="assets/ai-chat.png" alt="小布对话"></div>
+      <div class="points">
+        <div class="point"><i>1</i><div><b>「明天9点提醒我交作业」</b> → 真写入列表，卡片给「改时间 / 撤销」</div></div>
+        <div class="point"><i>2</i><div><b>「提醒我背单词」</b> → 缺时间会反问，补一句「明天7点」就落库（多轮槽位）</div></div>
+        <div class="point"><i>3</i><div><b>「每周三四早上喝牛奶」</b> → 解析成 weekMask，列表显示「每周 三、四」</div></div>
+        <div class="point"><i>4</i><div><b>「删掉牛奶」</b>（有两条相似）→ 追问「要动哪一条」+ 序号胶囊</div></div>
+        <div class="point"><i>5</i><div><b>「我明天忙不忙」</b> → 报明天的量；<b>「打开适老化」</b> → 直接改设置</div></div>
+        <div class="shot" style="margin-top:6px"><img src="assets/ai-settings.png" alt="模型设置"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 第 7 章 · 通知 ───────────────── -->
+<section class="sec" id="notify">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <div class="sec-no">CHAPTER 07 · 通知</div>
+      <h2>提醒要能追到人</h2>
+      <p>提醒只在 App 里弹，等于没提醒。但网页画不到别的 App 上面——能做的是系统通知：它会从任何界面顶部滑下来。</p>
+    </div>
+    <div class="split rev">
+      <div class="shot"><img src="assets/notify.png" alt="通知设置"></div>
+      <div class="points">
+        <div class="point"><i>1</i><div><b>安卓必须走 Service Worker</b>：页面里 <code>new Notification()</code> 会直接抛错，之前一直是静默失败的</div></div>
+        <div class="point"><i>2</i><div><b>通知里就能处理</b>：「完成」「推迟 10 分钟」两个动作，重要档常驻不消失 + 长震动</div></div>
+        <div class="point"><i>3</i><div><b>点完能回写</b>：App 没开着也能通过 URL 参数把这条标记完成 / 推迟</div></div>
+        <div class="point"><i>4</i><div><b>边界也说清楚</b>：App 被系统杀掉后网页醒不过来，要真闹钟级别得上原生封装或服务器推送</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────── 结尾 ───────────────── -->
+<section class="end">
+  <div class="wrap">
+    <img src="assets/mascot-front.png" alt="小步">
+    <h2>它不是被"生成"出来的，是被一条条改出来的</h2>
+    <p>37 个备份、13 条指令、12 条吐槽、7 次重做——这条路上最有用的不是 AI 有多强，
+    而是每一步都能退回去、都能验收、都能在手机上说给自己听。</p>
+    <div class="hero-actions" style="justify-content:center">
+      <a class="btn primary" href="https://x1038604972-web.github.io/xiaobu-reminder/" target="_blank" rel="noopener">用一下小步 ↗</a>
+      <a class="btn" href="#top">回到开头</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>轻记 · 小步 ｜ 产品设计过程记录</span>
+    <span>37 版本 · 13 指令 · 2026.11</span>
+  </div>
+</footer>
+
+<div class="lb" id="lb"><img alt=""></div>
+
+<script src="versions.js"></script>
+<script src="orders.js"></script>
+<script>
+(function(){
+  /* ── 版本时间轴 ── */
+  var V = window.VERSIONS || [];
+  var maxKB = Math.max.apply(null, V.map(function(v){return v.kb;}));
+  var byDay = {};
+  V.forEach(function(v){ (byDay[v.date] = byDay[v.date] || []).push(v); });
+  var tl = document.getElementById('timelineList');
+  tl.innerHTML = Object.keys(byDay).map(function(d){
+    var list = byDay[d];
+    var rows = list.map(function(v){
+      var w = Math.max(4, Math.round(v.kb / maxKB * 100));
+      return '<div class="ver' + (v.key ? ' key' : '') + '">' +
+        '<div class="t">' + v.time + '</div>' +
+        '<div class="nm"><i></i>' + v.change + '</div>' +
+        '<div class="sz">' + v.kb + ' KB</div>' +
+        '<div class="bar"><span style="width:' + w + '%"></span></div>' +
+      '</div>';
+    }).join('');
+    return '<div class="day"><div class="day-h"><b>' + d + '</b><span>' + list.length + ' 个版本</span></div>' +
+      '<div class="vers">' + rows + '</div></div>';
+  }).join('');
+
+  /* ── 指令卡片 ── */
+  var O = window.ORDERS || [];
+  var list = document.getElementById('orderList');
+  function renderOrders(p){
+    list.innerHTML = O.filter(function(o){ return p === 'all' || o.phase.indexOf(p) === 0; })
+      .map(function(o){
+        var cls = o.phase.indexOf('P0') === 0 ? 'p0' : (o.phase.indexOf('P2') === 0 ? 'p2' : 'p1');
+        return '<div class="order ' + cls + '"><div class="idx">' + o.n + '</div><div>' +
+          '<h4>' + o.title + '</h4><p>' + (o.problem || '') + '</p></div></div>';
+      }).join('');
+  }
+  renderOrders('all');
+  document.getElementById('ptabs').addEventListener('click', function(e){
+    var b = e.target.closest('.ptab'); if(!b) return;
+    [].forEach.call(this.children, function(x){ x.classList.toggle('on', x === b); });
+    renderOrders(b.dataset.p);
+  });
+
+  /* ── 反馈表 ── */
+  var QUOTES = [
+    ['帧率低了。', '液态玻璃的 blur 是性能税', '性能优先开关 + 低端机自动降级'],
+    ['轻度提醒和重要提醒有啥区别啊？我以为是声音一个大一个小。', '三级干预只写在首页，创建时看不见', '每档就地解释 + 颜色 / 声音 / 震动联动'],
+    ['推迟能不能自定义时间？一键就推到八点了都。', '固定四档等于替用户做决定', '快捷档 + 自定义时间 + 记住上次'],
+    ['删除的时候给个确定吧。', '确认不指名，撤销不说是哪条', '指名确认 + 指名撤销 + 回到原位'],
+    ['最近的那个任务可以放大一点、放红一点。', '所有卡片视觉权重一样', '下一条放大 + 红框 + 倒计时'],
+    ['给我妈他们用了一下，觉得有点找不到。', '功能树 4 层深，第一次必迷路', '首次分步引导 + 适老化模式'],
+    ['或者用那个语音助手什么的。', '语音早做了，但入口太隐蔽', '麦克风加标签 + 识别结果先回显'],
+    ['重复功能加上具体星期几，我要周三、周四。', '「每周」表达不了「周三四」', '自定义星期 7 选多 + 周掩码'],
+  ];
+  document.getElementById('quoteList').innerHTML = QUOTES.map(function(q){
+    return '<div class="q"><div class="said"><span class="lb">用户说的</span>' + q[0] + '</div>' +
+      '<div class="real"><span class="lb">其实是</span>' + q[1] + '</div>' +
+      '<div class="fix"><span class="lb">我们改的</span>' + q[2] + '</div></div>';
+  }).join('');
+
+  /* ── 图片放大 ── */
+  var lb = document.getElementById('lb');
+  document.addEventListener('click', function(e){
+    var img = e.target.closest('.mini-phone img, .shot img, .sheet img');
+    if (img){ lb.querySelector('img').src = img.src; lb.classList.add('on'); }
+    else if (e.target === lb || e.target.parentNode === lb){ lb.classList.remove('on'); }
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') lb.classList.remove('on'); });
+
+  /* ── 滚动淡入 / 导航 / 进度 ── */
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(en){ if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, { threshold: .12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.rev').forEach(function(el){ io.observe(el); });
+
+  var nav = document.getElementById('nav'), prog = document.getElementById('prog');
+  function onScroll(){
+    var y = window.scrollY, h = document.documentElement.scrollHeight - innerHeight;
+    prog.style.width = (h > 0 ? (y / h * 100) : 0) + '%';
+    nav.classList.toggle('on', y > 20);
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>
