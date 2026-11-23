@@ -486,17 +486,18 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .chip.on{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
 .chip.on.lv3{background:var(--brand-press);border-color:var(--brand-press);color:#FFFBF2}
 .lv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.lv-opt{flex-direction:column;align-items:flex-start;gap:3px;padding:11px 10px;line-height:1.25;text-align:left}
-.lv-opt .lv-ico{font-size:16px;line-height:1;opacity:.85}
+.lv-opt{display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:11px 10px;line-height:1.25;text-align:left}
+.lv-row{display:flex;align-items:center;gap:7px;min-height:16px}
+.lv-ico{width:14px;height:14px;border-radius:50%;display:inline-block;flex:none;box-sizing:border-box;border:2px solid #C79A3A;background:transparent}
+.lv-opt.lv2 .lv-ico{border-color:var(--brand);background:linear-gradient(90deg,var(--brand) 50%,transparent 50%)}
+.lv-opt.lv3 .lv-ico{border-color:var(--alert);background:var(--alert)}
 .lv-opt b{font-size:12.5px;font-weight:800}
-.lv-opt small{font-size:10px;font-weight:500;color:var(--ink3);line-height:1.35}
-.lv-opt[data-lv="1"] .lv-ico{color:#C79A3A}
-.lv-opt.lv2 .lv-ico{color:var(--brand)}
-.lv-opt.lv3 .lv-ico{color:var(--alert)}
+.lv-opt small{font-size:10px;font-weight:500;color:var(--ink3);line-height:1.35;padding-left:21px}
 .lv-opt.on small{color:#FFFBF2;opacity:.95}
-.lv-opt.on .lv-ico{color:#FFFBF2;opacity:1}
-html[data-mode="dark"] .lv-opt.on small,
-html[data-mode="dark"] .lv-opt.on .lv-ico{color:#FFFBF2;opacity:1}
+.lv-opt.on .lv-ico{border-color:#FFFBF2}
+.lv-opt.on.lv2 .lv-ico{background:linear-gradient(90deg,#FFFBF2 50%,transparent 50%)}
+.lv-opt.on.lv3 .lv-ico{background:#FFFBF2}
+html[data-mode="dark"] .lv-opt.on small{color:#FFFBF2;opacity:1}
 .lv-opt.on.lv2{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
 .lv-opt.on.lv3{background:var(--alert);border-color:var(--alert);color:#FFFBF2}
 .tag.lv1{background:#F6ECD2;color:#8A6A1E}
@@ -1143,9 +1144,9 @@ html[data-mode="dark"] .toast button{color:#245740}
     <div class="custom-time" id="customTime" style="display:none"><input type="datetime-local" id="customInput" aria-label="自定义提醒时间"></div>
     <div class="field-label">提醒强度</div>
     <div class="chips lv-grid" id="lvChips">
-      <button class="chip lv-opt on" data-lv="1"><span class="lv-ico">○</span><b>轻提醒</b><small>弹 1 次</small></button>
-      <button class="chip lv-opt lv2" data-lv="2"><span class="lv-ico">◐</span><b>普通</b><small>10 分钟后再弹 1 次</small></button>
-      <button class="chip lv-opt lv3" data-lv="3"><span class="lv-ico">●</span><b>重要</b><small>每 5 分钟追，最多 4 次</small></button>
+      <button class="chip lv-opt on" data-lv="1"><span class="lv-row"><span class="lv-ico"></span><b>轻提醒</b></span><small>弹 1 次</small></button>
+      <button class="chip lv-opt lv2" data-lv="2"><span class="lv-row"><span class="lv-ico"></span><b>普通</b></span><small>10 分钟后再弹 1 次</small></button>
+      <button class="chip lv-opt lv3" data-lv="3"><span class="lv-row"><span class="lv-ico"></span><b>重要</b></span><small>每 5 分钟追，最多 4 次</small></button>
     </div>
     <div class="field-label">重复</div>
     <div class="chips" id="repeatChips">
@@ -3292,7 +3293,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-23').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-24').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
