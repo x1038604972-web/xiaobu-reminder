@@ -845,6 +845,178 @@ html[data-mode="dark"] .toast button{color:#245740}
   html[data-mode="auto"] .toast.success{background:#D9EAD8;border-color:rgba(17,17,17,.18)}
   html[data-mode="auto"] .toast button{color:#245740}
 }
+
+
+
+
+
+/* ==== XIAOBU CSS START ==== */
+/* ═══════════════════════════════════════════════
+   小布 · AI 助手
+   与主界面共用变量，自动跟随深浅色 / 适老化 / 性能优先
+   ═══════════════════════════════════════════════ */
+.xb-mask{position:absolute;inset:0;background:rgba(35,32,28,.36);z-index:139;
+  opacity:0;pointer-events:none;transition:opacity .22s}
+.xb-mask.on{opacity:1;pointer-events:auto}
+html[data-mode="dark"] .xb-mask{background:rgba(0,0,0,.52)}
+
+.xb{position:absolute;left:0;right:0;bottom:0;height:88%;z-index:140;
+  display:flex;flex-direction:column;background:var(--surface);
+  border-radius:26px 26px 0 0;box-shadow:var(--glass-shadow);
+  transform:translateY(103%);transition:transform .36s cubic-bezier(.2,.85,.3,1);
+  will-change:transform}
+.xb.on{transform:translateY(0)}
+html[data-perf="on"] .xb{box-shadow:0 -8px 30px rgba(35,32,28,.18)}
+
+/* ── 顶栏 ── */
+.xb-head{display:flex;align-items:center;gap:10px;padding:13px 15px 11px;
+  border-bottom:1px solid var(--line2);flex:0 0 auto}
+.xb-ava{width:38px;height:38px;border-radius:13px;flex:0 0 auto;display:grid;place-items:center;
+  color:#FFF9EF;background:linear-gradient(150deg,var(--brand),var(--brand-press));
+  box-shadow:0 6px 16px rgba(47,110,82,.26);position:relative}
+.xb-ava svg{width:21px;height:21px}
+.xb-ava i{position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;
+  background:#57C98A;border:2px solid var(--surface)}
+.xb-ava.busy i{background:#E9B44A;animation:xbPulse 1s infinite}
+@keyframes xbPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.xb-id{flex:1;min-width:0}
+.xb-id b{display:block;font-size:15.5px;font-weight:800;color:var(--ink);letter-spacing:.3px}
+.xb-id span{display:block;font-size:11.5px;color:var(--ink3);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xb-ico{width:32px;height:32px;flex:0 0 auto;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink2);display:grid;place-items:center;cursor:pointer;
+  font-size:13px;line-height:1;transition:transform .15s}
+.xb-ico:active{transform:scale(.92)}
+
+/* ── 消息区 ── */
+.xb-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:14px 15px 8px;display:flex;flex-direction:column;gap:11px;
+  -webkit-overflow-scrolling:touch}
+.xb-row{display:flex;align-items:flex-end;gap:7px;animation:xbIn .28s var(--ease)}
+@keyframes xbIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.xb-row.me{flex-direction:row-reverse}
+.xb-mini{width:24px;height:24px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;
+  background:var(--brand-soft);color:var(--brand-ink);font-size:11px;font-weight:800}
+.xb-row.me .xb-mini{display:none}
+.xb-bb{max-width:80%;padding:10px 13px;border-radius:16px;border-bottom-left-radius:5px;
+  font-size:13.8px;line-height:1.55;color:var(--ink);background:var(--paper);
+  border:1px solid var(--line2);white-space:pre-wrap;word-break:break-word}
+.xb-row.me .xb-bb{background:var(--brand);color:#FFF9EF;border-color:transparent;
+  border-radius:16px;border-bottom-right-radius:5px}
+.xb-bb em{font-style:normal;color:var(--brand-ink);font-weight:700}
+.xb-row.me .xb-bb em{color:#FFF9EF}
+
+/* 结果卡 */
+.xb-card{margin-top:9px;padding:10px 11px;border-radius:13px;
+  background:var(--surface);border:1px solid var(--line)}
+.xb-card-h{display:flex;align-items:center;gap:7px}
+.xb-card-h .k{width:20px;height:20px;border-radius:7px;display:grid;place-items:center;
+  background:var(--brand-soft);color:var(--brand-ink);font-size:11px;flex:0 0 auto}
+.xb-card-t{font-size:13.5px;font-weight:700;color:var(--ink);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xb-card-m{font-size:11.5px;color:var(--ink3);margin-top:4px;padding-left:27px}
+.xb-card-b{display:flex;gap:7px;margin-top:9px;padding-left:27px;flex-wrap:wrap}
+.xb-card-b button{font-size:11.5px;padding:5px 11px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);color:var(--brand-ink);transition:transform .14s}
+.xb-card-b button:active{transform:scale(.95)}
+.xb-card-b button.p{background:var(--brand);border-color:transparent;color:#FFF9EF}
+
+/* 正在输入 */
+.xb-typing{display:flex;gap:4px;padding:12px 14px;background:var(--paper);
+  border:1px solid var(--line2);border-radius:16px;border-bottom-left-radius:5px;width:fit-content}
+.xb-typing i{width:6px;height:6px;border-radius:50%;background:var(--ink3);animation:xbDot 1.1s infinite}
+.xb-typing i:nth-child(2){animation-delay:.15s}
+.xb-typing i:nth-child(3){animation-delay:.3s}
+@keyframes xbDot{0%,60%,100%{opacity:.28;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* ── 快捷短语 ── */
+.xb-chips{flex:0 0 auto;display:flex;gap:7px;padding:2px 15px 9px;overflow-x:auto;
+  scrollbar-width:none;-ms-overflow-style:none}
+.xb-chips::-webkit-scrollbar{display:none}
+.xb-chips:empty{display:none}
+.xb-chip{flex:0 0 auto;font-size:12.2px;padding:7px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:var(--surface);color:var(--brand-ink);white-space:nowrap;
+  transition:transform .14s,background .18s}
+.xb-chip:active{transform:scale(.96);background:var(--brand-soft)}
+
+/* ── 输入栏 ── */
+.xb-input{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 13px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line2);background:var(--surface)}
+.xb-input input{flex:1;min-width:0;height:42px;border-radius:14px;border:1px solid var(--line);
+  background:var(--paper);padding:0 13px;font-size:14px;color:var(--ink);outline:none}
+.xb-input input::placeholder{color:var(--ink3)}
+.xb-input input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.xb-mic,.xb-send{flex:0 0 auto;width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
+  border:1px solid var(--line);background:var(--paper);color:var(--brand-ink);cursor:pointer;
+  transition:transform .14s}
+.xb-mic svg,.xb-send svg{width:18px;height:18px}
+.xb-mic.rec{background:var(--alert-soft);border-color:var(--alert);color:var(--alert);animation:xbPulse 1s infinite}
+.xb-send{background:var(--brand);border-color:transparent;color:#FFF9EF}
+.xb-mic:active,.xb-send:active{transform:scale(.93)}
+
+/* ── 设置抽屉 ── */
+.xb-set{position:absolute;inset:0;z-index:2;background:var(--surface);border-radius:26px 26px 0 0;
+  padding:14px 16px 20px;display:flex;flex-direction:column;gap:11px;
+  transform:translateY(101%);transition:transform .3s var(--ease);overflow-y:auto}
+.xb-set.on{transform:translateY(0)}
+.xb-set h4{margin:0;font-size:15px;font-weight:800;color:var(--ink)}
+.xb-set p{margin:0;font-size:12px;color:var(--ink3);line-height:1.6}
+.xb-field{display:flex;flex-direction:column;gap:5px}
+.xb-field label{font-size:11.5px;color:var(--ink2);font-weight:700}
+.xb-field input{height:40px;border-radius:12px;border:1px solid var(--line);background:var(--paper);
+  padding:0 12px;font-size:13px;color:var(--ink);outline:none}
+.xb-field input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.xb-row2{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 0;border-top:1px solid var(--line2)}
+.xb-row2 .lb{font-size:13px;color:var(--ink);font-weight:700}
+.xb-row2 .sb{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.xb-seg{display:flex;background:var(--paper);border-radius:11px;padding:3px;border:1px solid var(--line)}
+.xb-seg button{border:0;background:transparent;font-size:12px;padding:6px 11px;border-radius:8px;
+  color:var(--ink2);cursor:pointer;font-weight:700}
+.xb-seg button.on{background:var(--brand);color:#FFF9EF}
+.xb-actions{display:flex;gap:9px;margin-top:auto;padding-top:12px}
+.xb-actions button{flex:1;height:44px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.xb-actions button.p{background:var(--brand);border-color:transparent;color:#FFF9EF}
+
+/* ── 适老化 ── */
+html[data-elder="on"] .xb-bb{font-size:15.5px}
+html[data-elder="on"] .xb-id b{font-size:17px}
+html[data-elder="on"] .xb-id span{font-size:12.5px}
+html[data-elder="on"] .xb-input input{height:48px;font-size:16px}
+html[data-elder="on"] .xb-mic,html[data-elder="on"] .xb-send{width:48px;height:48px}
+html[data-elder="on"] .xb-chip{font-size:13.5px;padding:9px 14px}
+html[data-elder="on"] .xb-card-t{font-size:15px}
+html[data-elder="on"] .xb-card-b button{font-size:13px;padding:7px 13px}
+
+/* ── 深色模式对比度修正 ── */
+html[data-mode="dark"] .xb-chip,
+html[data-mode="dark"] .xb-card-b button{color:#CFE6DA;border-color:#3C4C44;background:#20241F}
+html[data-mode="dark"] .xb-chip:active{background:#26302A}
+html[data-mode="dark"] .xb-bb{background:#21251F;border-color:#333A31}
+html[data-mode="dark"] .xb-bb em,
+html[data-mode="dark"] .xb-card-t{color:#EAF3EC}
+html[data-mode="dark"] .xb-card{background:#1B1F1A;border-color:#39443B}
+html[data-mode="dark"] .xb-card-b button.p{background:var(--brand);color:#0E1512;border-color:transparent}
+html[data-mode="dark"] .xb-row.me .xb-bb{color:#0E1512;font-weight:600}
+html[data-mode="dark"] .xb-input input{background:#20241F;border-color:#39443B;color:#EFE9DE}
+html[data-mode="dark"] .xb-mic{background:#20241F;border-color:#39443B;color:#CFE6DA}
+html[data-mode="dark"] .xb-ico{background:#20241F;border-color:#39443B;color:#CFE6DA}
+html[data-mode="dark"] .xb-set{background:var(--surface)}
+html[data-mode="dark"] .xb-field input{background:#20241F;border-color:#39443B;color:#EFE9DE}
+html[data-mode="dark"] .xb-seg{background:#20241F;border-color:#39443B}
+html[data-mode="dark"] .xb-seg button{color:#A9BDB0}
+html[data-mode="dark"] .xb-set .xb-actions button{background:#20241F;border-color:#39443B;color:#EFE9DE}
+
+@media (prefers-color-scheme:dark){
+  html[data-mode="auto"] .xb-chip,
+  html[data-mode="auto"] .xb-card-b button{color:#CFE6DA;border-color:#3C4C44;background:#20241F}
+  html[data-mode="auto"] .xb-bb{background:#21251F;border-color:#333A31}
+  html[data-mode="auto"] .xb-card{background:#1B1F1A;border-color:#39443B}
+  html[data-mode="auto"] .xb-input input{background:#20241F;border-color:#39443B;color:#EFE9DE}
+  html[data-mode="auto"] .xb-ico,html[data-mode="auto"] .xb-mic{background:#20241F;border-color:#39443B;color:#CFE6DA}
+}
+/* ==== XIAOBU CSS END ==== */
 </style>
 </head>
 <body>
@@ -3293,10 +3465,958 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-24').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261123-xb1').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
+</script>
+
+
+
+
+
+<script>
+/* ==== XIAOBU JS START ==== */
+/* ═══════════════════════════════════════════════════════════════
+   小布 · 会动手的提醒助手
+   ─ 本地意图引擎（默认，离线可用，确定性执行）
+   ─ 可选大模型（填 API Key 后走 chat/completions，返回 JSON 动作）
+   说明：主脚本用 let 声明 tasks / undoAction / elderMode 等，
+        这里一律用「裸标识符 + try 包装」访问，避免 window 取不到。
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var KEY = 'qingji_xiaobu_v1';
+  var AIKEY = 'qingji_xiaobu_ai_v1';
+  var MAXMSG = 40;
+
+  function X$(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  /* ── 主脚本访问包装 ───────────────────────────────────── */
+  function T() { try { return tasks; } catch (e) { return []; } }
+  function doSave() { try { save(); } catch (e) {} }
+  function doRender() { try { render(); } catch (e) {} }
+  function doToast(m, k) { try { toast(m, k); } catch (e) {} }
+  function ft(ts) { try { return fullTime(ts); } catch (e) { return new Date(ts).toLocaleString(); } }
+  function cdown(ts) { try { return countdown(ts); } catch (e) { return ''; } }
+  function repLabelOf(t) { try { return repeatLabel(t); } catch (e) { return ''; } }
+  function parseWhenX(s) { try { return parseWhen(s); } catch (e) { return null; } }
+  function parseSmartX(s) { try { return parseSmart(s); } catch (e) { return null; } }
+  function nextTsX(t) { try { return nextTs(t); } catch (e) { return (t.ts || Date.now()) + 86400000; } }
+  function hist(t, rep) { try { recordHistory(t, rep); } catch (e) {} }
+  function highlight(id) { try { highlightTask(id); } catch (e) {} }
+  function openEditX(id) { try { openEdit(id); } catch (e) {} }
+  function canAdd() { try { return canAddTask(); } catch (e) { return true; } }
+  function lvName(lv) { try { return LV[lv].n; } catch (e) { return '提醒'; } }
+  function streakNum() { try { return meta.streak || 1; } catch (e) { return 1; } }
+  function playVibe() { try { playDoneVibe(doneVibe); } catch (e) {} }
+  function setUndo(fn) { try { undoAction = fn; } catch (e) {} }
+  function undoNow() {
+    try {
+      if (typeof undoAction === 'function') { undoAction(); undoAction = null; return true; }
+    } catch (e) {}
+    return false;
+  }
+  function hasUndo() { try { return typeof undoAction === 'function'; } catch (e) { return false; } }
+
+  function setElder(v) {
+    try { elderMode = v; } catch (e) {}
+    try { applyElder(); } catch (e) {}
+    try { localStorage.setItem(ELDER_KEY, JSON.stringify({ mode: v })); } catch (e) {}
+  }
+  function setPerf(v) {
+    try { perfMode = v; } catch (e) {}
+    try { applyVisualStyle(); } catch (e) {}
+    try { localStorage.setItem(PERF_KEY, JSON.stringify({ mode: v })); } catch (e) {}
+  }
+  function setMode(v) {
+    try { modePref = v; } catch (e) {}
+    try { applyTheme(); } catch (e) {}
+    try { localStorage.setItem(THEME_KEY, JSON.stringify({ theme: themeKey, mode: v })); } catch (e) {}
+  }
+
+  /* ── 状态 ─────────────────────────────────────────────── */
+  var S = {
+    open: false, busy: false,
+    msgs: [],
+    pending: null,
+    chips: [],
+    ai: { on: false, base: 'https://api.deepseek.com/v1', key: '', model: 'deepseek-chat' },
+    rec: null
+  };
+
+  function loadState() {
+    try {
+      var v = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (v && Array.isArray(v.msgs)) S.msgs = v.msgs.slice(-MAXMSG);
+    } catch (e) {}
+    try {
+      var a = JSON.parse(localStorage.getItem(AIKEY) || 'null');
+      if (a && typeof a === 'object') S.ai = Object.assign(S.ai, a);
+    } catch (e) {}
+  }
+  function saveState() {
+    try { localStorage.setItem(KEY, JSON.stringify({ msgs: S.msgs.slice(-MAXMSG), at: Date.now() })); } catch (e) {}
+  }
+  function saveAI() { try { localStorage.setItem(AIKEY, JSON.stringify(S.ai)); } catch (e) {} }
+
+  /* ── 界面 ─────────────────────────────────────────────── */
+  var ICON_ROBOT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="4"/><path d="M12 4v4M9 14h.01M15 14h.01M9.5 17h5"/></svg>';
+  var ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8.5 21h7"/></svg>';
+  var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>';
+  var ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.6v2.6M12 18.8v2.6M4.2 7.1l2.2 1.3M17.6 15.6l2.2 1.3M4.2 16.9l2.2-1.3M17.6 8.4l2.2-1.3"/></svg>';
+
+  function build() {
+    if (X$('xb')) return;
+    var host = document.querySelector('.phone') || document.body;
+
+    var mask = document.createElement('div');
+    mask.className = 'xb-mask';
+    mask.id = 'xbMask';
+
+    var box = document.createElement('section');
+    box.className = 'xb';
+    box.id = 'xb';
+    box.setAttribute('aria-label', '小布助手');
+    box.innerHTML =
+      '<div class="xb-head">' +
+        '<div class="xb-ava" id="xbAva">' + ICON_ROBOT + '<i></i></div>' +
+        '<div class="xb-id"><b>小布</b><span id="xbSub">会记事，也会替你动手</span></div>' +
+        '<button class="xb-ico" id="xbSetBtn" aria-label="设置">' + ICON_GEAR + '</button>' +
+        '<button class="xb-ico" id="xbClose" aria-label="关闭">✕</button>' +
+      '</div>' +
+      '<div class="xb-body" id="xbBody"></div>' +
+      '<div class="xb-chips" id="xbChips"></div>' +
+      '<div class="xb-input">' +
+        '<input id="xbText" type="text" maxlength="80" autocomplete="off" placeholder="跟小布说：明天 9 点提醒我交作业">' +
+        '<button class="xb-mic" id="xbMic" aria-label="语音">' + ICON_MIC + '</button>' +
+        '<button class="xb-send" id="xbSend" aria-label="发送">' + ICON_SEND + '</button>' +
+      '</div>' +
+      '<div class="xb-set" id="xbSet">' +
+        '<h4>小布设置</h4>' +
+        '<p>默认用本地规则理解你的话，离线也能用。填了大模型 Key 后，先问模型、再执行同样的动作。</p>' +
+        '<div class="xb-row2"><div><div class="lb">AI 增强</div><div class="sb">OpenAI 兼容接口</div></div>' +
+          '<div class="xb-seg" id="xbAiSeg"><button data-ai="off" class="on">关闭</button><button data-ai="on">开启</button></div></div>' +
+        '<div class="xb-field"><label>接口地址</label><input id="xbAiBase" placeholder="https://api.deepseek.com/v1"></div>' +
+        '<div class="xb-field"><label>API Key</label><input id="xbAiKey" type="password" placeholder="sk-..."></div>' +
+        '<div class="xb-field"><label>模型</label><input id="xbAiModel" placeholder="deepseek-chat"></div>' +
+        '<p>Key 只存在这台设备的 localStorage。</p>' +
+        '<div class="xb-row2"><div><div class="lb">清空对话</div><div class="sb">不影响你的待办</div></div>' +
+          '<button class="xb-ico" id="xbClear" style="width:auto;padding:0 12px;height:32px;font-size:12px">清空</button></div>' +
+        '<div class="xb-actions"><button id="xbSetBack">返回</button><button class="p" id="xbSetSave">保存</button></div>' +
+      '</div>';
+
+    host.appendChild(mask);
+    host.appendChild(box);
+
+    X$('xbMask').addEventListener('click', close);
+    X$('xbClose').addEventListener('click', close);
+    X$('xbSend').addEventListener('click', send);
+    X$('xbText').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); send(); }
+    });
+    X$('xbMic').addEventListener('click', mic);
+    X$('xbChips').addEventListener('click', function (e) {
+      var b = e.target.closest('.xb-chip');
+      if (b) { X$('xbText').value = b.dataset.q || b.textContent; send(); }
+    });
+    X$('xbBody').addEventListener('click', onBodyClick);
+    X$('xbSetBtn').addEventListener('click', function () { X$('xbSet').classList.add('on'); fillSetForm(); });
+    X$('xbSetBack').addEventListener('click', function () { X$('xbSet').classList.remove('on'); });
+    X$('xbClear').addEventListener('click', function () {
+      S.msgs = []; S.pending = null; saveState();
+      X$('xbSet').classList.remove('on');
+      greet(true);
+    });
+    X$('xbSetSave').addEventListener('click', function () {
+      S.ai.base = (X$('xbAiBase').value || '').trim() || 'https://api.deepseek.com/v1';
+      S.ai.key = (X$('xbAiKey').value || '').trim();
+      S.ai.model = (X$('xbAiModel').value || '').trim() || 'deepseek-chat';
+      saveAI(); updateSub(); X$('xbSet').classList.remove('on');
+      say('设置已保存。' + (S.ai.on ? (S.ai.key ? 'AI 增强已开启。' : '不过 Key 还是空的，先走本地规则。') : '继续用本地规则。'));
+    });
+    X$('xbAiSeg').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      S.ai.on = b.dataset.ai === 'on';
+      [].forEach.call(X$('xbAiSeg').children, function (x) { x.classList.toggle('on', x === b); });
+      saveAI(); updateSub();
+    });
+  }
+
+  function fillSetForm() {
+    if (!X$('xbAiBase')) return;
+    X$('xbAiBase').value = S.ai.base || '';
+    X$('xbAiKey').value = S.ai.key || '';
+    X$('xbAiModel').value = S.ai.model || '';
+    [].forEach.call(X$('xbAiSeg').children, function (x) {
+      x.classList.toggle('on', (x.dataset.ai === 'on') === !!S.ai.on);
+    });
+    updateSub();
+  }
+
+  function updateSub() {
+    var sub = X$('xbSub'); if (!sub) return;
+    sub.textContent = (S.ai.on && S.ai.key)
+      ? 'AI 模式 · ' + (S.ai.model || 'deepseek-chat')
+      : '本地模式 · 会记事，也会替你动手';
+  }
+
+  /* ── 渲染 ─────────────────────────────────────────────── */
+  function render() {
+    var body = X$('xbBody'); if (!body) return;
+    var html = '';
+    S.msgs.forEach(function (m) { html += msgHTML(m); });
+    body.innerHTML = html;
+    renderChips();
+    // 等 chips 布局完成后再贴底，避免长消息被快捷短语挡住
+    requestAnimationFrame(function () {
+      body.scrollTop = body.scrollHeight;
+      requestAnimationFrame(function () { body.scrollTop = body.scrollHeight; });
+    });
+  }
+
+  function msgHTML(m) {
+    if (m.r === 'u') return '<div class="xb-row me"><div class="xb-bb">' + esc(m.t) + '</div></div>';
+    var inner = esc(m.t).replace(/\n/g, '<br>');
+    if (m.card) inner += cardHTML(m.card);
+    return '<div class="xb-row"><div class="xb-mini">布</div><div class="xb-bb">' + inner + '</div></div>';
+  }
+
+  function cardHTML(c) {
+    var acts = (c.acts || []).map(function (a) {
+      return '<button class="' + (a.p ? 'p' : '') + '" data-xb-act="' + a.k + '"' +
+        (c.id ? ' data-id="' + esc(c.id) + '"' : '') + '>' + esc(a.t) + '</button>';
+    }).join('');
+    return '<div class="xb-card">' +
+      '<div class="xb-card-h"><span class="k">' + esc(c.k || '·') + '</span>' +
+      '<span class="xb-card-t">' + esc(c.title) + '</span></div>' +
+      (c.meta ? '<div class="xb-card-m">' + esc(c.meta) + '</div>' : '') +
+      (acts ? '<div class="xb-card-b">' + acts + '</div>' : '') +
+      '</div>';
+  }
+
+  function renderChips() {
+    var box = X$('xbChips'); if (!box) return;
+    box.innerHTML = (S.chips || []).map(function (c) {
+      var t = typeof c === 'string' ? c : c.t;
+      var q = typeof c === 'string' ? c : (c.q || c.t);
+      return '<button class="xb-chip" data-q="' + esc(q) + '">' + esc(t) + '</button>';
+    }).join('');
+  }
+  function setChips(list) { S.chips = list || []; renderChips(); }
+
+  function typing(on) {
+    var body = X$('xbBody'); if (!body) return;
+    var old = X$('xbTyping');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    X$('xbAva').classList.toggle('busy', !!on);
+    if (!on) return;
+    var d = document.createElement('div');
+    d.className = 'xb-row';
+    d.id = 'xbTyping';
+    d.innerHTML = '<div class="xb-mini">布</div><div class="xb-typing"><i></i><i></i><i></i></div>';
+    body.appendChild(d);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function push(role, text, card) {
+    S.msgs.push({ r: role, t: text, card: card || null });
+    if (S.msgs.length > MAXMSG) S.msgs = S.msgs.slice(-MAXMSG);
+    saveState();
+    render();
+  }
+  function me(text) { push('u', text); }
+  function say(text, card, chips) {
+    typing(false);
+    S.busy = false;
+    push('b', text, card);
+    if (chips) setChips(chips);
+    return text;
+  }
+
+  var GREET = '我是小布。\n记事情、改时间、查今天，直接说就行——\n我不是只回话，我会真的动手改。';
+  function greet(force) {
+    if (!force && S.msgs.length) { render(); return; }
+    S.msgs = [{ r: 'b', t: GREET, card: null }];
+    saveState(); render();
+    setChips(['明天 9 点提醒我交作业', '我今天还有几件事', '把喝牛奶推迟到明早 8 点', '开启适老化模式']);
+  }
+
+  function open() {
+    boot();
+    X$('xbMask').classList.add('on');
+    X$('xb').classList.add('on');
+    S.open = true;
+    if (!S.msgs.length) greet(true); else render();
+    updateSub();
+    setTimeout(function () { try { X$('xbText').focus(); } catch (e) {} }, 320);
+  }
+  function close() {
+    X$('xbMask').classList.remove('on');
+    X$('xb').classList.remove('on');
+    X$('xbSet').classList.remove('on');
+    S.open = false;
+  }
+
+  function send() {
+    var inp = X$('xbText');
+    var text = (inp.value || '').trim();
+    if (!text || S.busy) return;
+    inp.value = '';
+    me(text);
+    setChips([]);
+    typing(true);
+    S.busy = true;
+    setTimeout(function () {
+      try { handle(text); }
+      catch (e) {
+        S.busy = false;
+        typing(false);
+        say('我刚才卡了一下，再说一次？');
+      }
+      if (S.busy && !(S.ai.on && S.ai.key)) S.busy = false;
+    }, 240);
+  }
+
+  /* ── 语音 ─────────────────────────────────────────────── */
+  function mic() {
+    var R = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!R) { say('这个浏览器不支持语音输入，用键盘说也一样。'); return; }
+    if (S.rec) { try { S.rec.stop(); } catch (e) {} S.rec = null; X$('xbMic').classList.remove('rec'); return; }
+    var r = new R();
+    r.lang = 'zh-CN'; r.interimResults = false; r.maxAlternatives = 1;
+    S.rec = r;
+    X$('xbMic').classList.add('rec');
+    r.onresult = function (ev) {
+      var t = ev.results[0][0].transcript;
+      X$('xbText').value = t;
+      X$('xbMic').classList.remove('rec'); S.rec = null;
+      send();
+    };
+    r.onerror = function () { X$('xbMic').classList.remove('rec'); S.rec = null; say('没听清，再说一次？'); };
+    r.onend = function () { X$('xbMic').classList.remove('rec'); S.rec = null; };
+    try { r.start(); } catch (e) { say('麦克风没打开，检查下权限。'); }
+  }
+
+  /* ── 工具 ─────────────────────────────────────────────── */
+  function nowList() { return T().filter(function (t) { return !t.done; }); }
+  function allList() { return T(); }
+  function todayEnd() { var d = new Date(); d.setHours(23, 59, 59, 999); return d.getTime(); }
+  function todayTodo() {
+    var end = todayEnd();
+    return nowList().filter(function (t) {
+      if (t.repeat && t.repeat !== 'none' && t.ts > end) return false;  // 重复任务只看今天这一次
+      if (t.ts > end) return false;                                     // 明天的事不算「今天还有」
+      return true;
+    }).sort(function (a, b) { return a.ts - b.ts; });
+  }
+
+  function grams(s) {
+    var a = []; s = String(s || '').replace(/\s/g, '');
+    for (var i = 0; i < s.length - 1; i++) a.push(s.slice(i, i + 2));
+    return a;
+  }
+
+  function findTasks(raw) {
+    var pool = nowList();
+    if (!pool.length) return [];
+    var q = String(raw || '').replace(/\s/g, '');
+    var qg = grams(q);
+    var scored = pool.map(function (t) {
+      var title = String(t.title || '').replace(/\s/g, '');
+      var sc = 0;
+      if (!q || !title) return { t: t, s: 0 };
+      if (q.indexOf(title) >= 0) sc = 100 + title.length;
+      else if (title.indexOf(q) >= 0) sc = 92 + q.length;
+      else {
+        var tg = grams(title), hit = 0;
+        tg.forEach(function (g) { if (qg.indexOf(g) >= 0) hit++; });
+        sc = tg.length ? Math.round(hit * 100 / tg.length) : 0;
+        if (sc < 34) sc = 0;
+      }
+      return { t: t, s: sc };
+    }).filter(function (x) { return x.s > 0; });
+    scored.sort(function (a, b) { return b.s - a.s; });
+    return scored;
+  }
+
+  /* ── 解析 ─────────────────────────────────────────────── */
+  var R = {
+    undo: /^(撤销|撤回|恢复|反悔|恢复原样)/,
+    cancel: /^(算了|取消|不用了|不用|不记了|没事|没|不|错|不对|不要)/,
+    yes: /^(好|好的|好啊|行|可以|对|对的|是|是的|嗯|嗯嗯|没错|确认|就它|ok|okay|yes)/i,
+    no: /^(不|不是|不对|错了|不是这个|no)/i,
+    help: /(你会什么|能做什么|能干什么|会干什么|帮助|怎么用|使用说明|你是谁|你是什么|介绍.*自己)/,
+    stats: /(这周|本周|一周|统计|完成了几|完成了多少|做了几|坚持|连续|打卡|成绩|进度)/,
+    list: /(有什么|哪些|几件|几条|还有|待办|清单|列出|列一下|看看|看一下|安排|日程|今天.*(做|干|要|该)|明天.*(做|干|要))/,
+    done: /(完成|做完了|做完|搞定|勾掉|打勾|弄完|做掉|已办)/,
+    del: /(删除|删掉|删了|去掉|移除|清掉)/,
+    post: /(推迟|延后|晚一点|晚点|缓一缓|拖到|挪到|改到|推到|换到|往后)/
+  };
+
+  function parseRemember(text) {
+    if (/每天|每日|天天/.test(text)) return { repeat: 'daily', weekMask: 0 };
+    // 「每周三四」「周一二」：一次抓连续多个星期字符
+    var wd = [], m;
+    var re = /(?:周|星期)([一二三四五六日天]+)/g;
+    while ((m = re.exec(text))) {
+      m[1].split('').forEach(function (c) { if (wd.indexOf(c) < 0) wd.push(c); });
+    }
+    var every = /每(周|星期|个周|个星期)/.test(text);
+    if (wd.length >= 2 || (every && wd.length >= 1)) {
+      var map = { '一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6 };
+      var mask = 0;
+      wd.forEach(function (c) { mask |= (1 << map[c]); });
+      return { repeat: 'custom', weekMask: mask };
+    }
+    if (every) return { repeat: 'weekly', weekMask: 0 };
+    return { repeat: 'none', weekMask: 0 };
+  }
+
+  /* 自己清洗标题：比 parseSmart 更狠地剥掉「提醒我 / 每周三四 / 明天9点」 */
+  function cleanTitle(text) {
+    var s = String(text || '');
+    s = s.replace(/^(请|麻烦你?|帮我|给我|帮个忙|我要|我想|要|得|记得|别忘了)/, '');
+    s = s.replace(/(提醒我|提醒|提示我|提示|记一下|记下|记住|添加|新建|加一条|加一个|安排一下|安排|定个|设个|帮我记|存一下|一下)/g, '');
+    s = s.replace(/每(周|星期)[一二三四五六日天]+/g, '');   // 每周三四
+    s = s.replace(/每(周|星期|天|日|个月)/g, '');
+    s = s.replace(/(今天|明天|后天|大后天|今晚|明早|明晚|上午|中午|下午|晚上|早上|早晨|凌晨|周末|月底|这周|下周)/g, '');
+    s = s.replace(/(下?)(周|星期)[一二三四五六日天]/g, '');
+    s = s.replace(/\d{1,2}月\d{1,2}[号日]/g, '');
+    s = s.replace(/(\d{1,2}|[零一二两三四五六七八九十]{1,3})(点|时)(半|分)?/g, '');
+    s = s.replace(/\d{1,2}:\d{2}/g, '');
+    s = s.replace(/(\d+|[零一二两三四五六七八九十]+)个?(天|小时|分钟|钟头)(后|以后|之后)?/g, '');
+    s = s.replace(/半(个)?(小时|钟头)(后|以后)?/g, '');
+    s = s.replace(/[，,。.！!？?、~～]/g, '');
+    s = s.replace(/^(我|要|得|去|把)/, '');
+    s = s.replace(/(的|了|吧|呢|啊|呀|嘛|哦)$/, '');
+    return s.replace(/\s+/g, '').trim();
+  }
+
+  function parseDraft(text) {
+    var sp = parseSmartX(text) || { title: text, ts: null, lv: 1 };
+    var rep = parseRemember(text);
+    var clean = cleanTitle(text);
+    // 只有 parseSmart 真的剥掉了东西（结果 ≠ 原句）才肯用它兜底，
+    // 否则「后天下午三点」这种纯时间句会被当成任务名。
+    var fallback = (sp.title && sp.title !== String(text).trim()) ? String(sp.title).trim() : '';
+    var title = clean || fallback;
+    // 强度：只有明确说「重要/紧急」才升档，默认沿用 App 的轻提醒
+    var lv = 1;
+    if (/(重要|必须|一定要|千万|紧急|急事|不能忘)/.test(text)) lv = 3;
+    else if (/(普通|记得|注意|留意)/.test(text)) lv = 2;
+    return {
+      title: title,
+      ts: sp.ts || null,
+      lv: lv,
+      repeat: rep.repeat,
+      weekMask: rep.weekMask
+    };
+  }
+
+  /* ── 主处理 ───────────────────────────────────────────── */
+  function handle(text) {
+    if (S.pending && fillSlot(text)) return;
+
+    var s = text.replace(/\s/g, '');
+    if (R.undo.test(s)) { doUndo(); return; }
+    if (R.help.test(text)) { doHelp(); return; }
+    if (R.stats.test(text)) { doStats(); return; }
+
+    if (R.del.test(text)) { doDelete(text); return; }
+    if (R.done.test(text)) { doDone(text); return; }
+    if (R.post.test(text)) { doPostpone(text); return; }
+    if (R.list.test(text)) { doList(); return; }
+
+    var draft = parseDraft(text);
+    var wantCreate = /(提醒|记一下|记下|记住|添加|新建|加一条|加一个|安排|别忘|要记|帮我记|定个|设个|存一下)/.test(text);
+    if (wantCreate || draft.ts) { doCreate(text, draft); return; }
+
+    if (R.cancel.test(s)) { say('好，那这件先不记。'); return; }
+
+    doChat(text);
+  }
+
+  function fillSlot(text) {
+    var p = S.pending;
+    if (!p) return false;
+    var s = text.replace(/\s/g, '');
+
+    if (p.kind === 'time') {
+      if (R.cancel.test(s)) { S.pending = null; say('好，那先不设时间。'); return true; }
+      var ts = parseWhenX(text);
+      if (ts) { S.pending = null; createTask(p.title, ts, p.lv, p.repeat, p.weekMask); return true; }
+      S.pending = null;
+      say('没听出具体时间。重来一次可以说「明天 9 点提醒我' + p.title + '」。');
+      return true;
+    }
+
+    if (p.kind === 'post') {
+      if (R.cancel.test(s)) { S.pending = null; say('好，时间不动。'); return true; }
+      var pts = parseWhenX(text);
+      var t1 = allList().filter(function (x) { return x.id === p.id; })[0];
+      if (!t1) { S.pending = null; say('这条已经不在了。'); return true; }
+      if (pts) { S.pending = null; doPostponeOn(t1, pts); return true; }
+      S.pending = null;
+      say('时间没听清。可以说「1 小时后」「今晚 8 点」。');
+      return true;
+    }
+
+    if (p.kind === 'pick') {
+      var idx = -1;
+      var m = s.match(/^(第)?([1-9])(个|条|件)?$/);
+      if (m) idx = parseInt(m[2], 10) - 1;
+      if (idx >= 0 && idx < p.list.length) {
+        var t2 = allList().filter(function (x) { return x.id === p.list[idx]; })[0];
+        S.pending = null;
+        if (!t2) { say('这条刚被处理掉了，再看看列表？'); return true; }
+        return runAction(p.action, t2, p.ts);
+      }
+      if (R.cancel.test(s)) { S.pending = null; say('好，先放着。'); return true; }
+      say('回个序号就行，比如「1」。');
+      return true;
+    }
+
+    if (p.kind === 'confirm') {
+      if (R.yes.test(s)) {
+        var t3 = allList().filter(function (x) { return x.id === p.id; })[0];
+        S.pending = null;
+        if (t3) return runAction(p.action, t3, p.ts);
+        say('这条已经不在了。'); return true;
+      }
+      if (R.no.test(s)) { S.pending = null; say('那我再等等，你随时说。'); return true; }
+      S.pending = null;
+      return false;
+    }
+    return false;
+  }
+
+  function runAction(action, t, ts) {
+    if (action === 'done') return doDoneOn(t) || true;
+    if (action === 'delete') return doDeleteOn(t) || true;
+    if (action === 'postpone') return doPostponeOn(t, ts) || true;
+    return false;
+  }
+
+  /* ── 新建 ─────────────────────────────────────────────── */
+  function doCreate(text, draft) {
+    if (!draft.title) {
+      say('要记的是什么事？比如「明天 9 点提醒我交作业」。');
+      return;
+    }
+    if (!draft.ts) {
+      S.pending = { kind: 'time', title: draft.title, lv: draft.lv, repeat: draft.repeat, weekMask: draft.weekMask };
+      say('好，几点提醒你「' + draft.title + '」？', null, ['今天 18:00', '明天 09:00', '一小时后', '明早 09:00']);
+      return;
+    }
+    createTask(draft.title, draft.ts, draft.lv, draft.repeat, draft.weekMask);
+  }
+
+  function createTask(title, ts, lv, repeat, weekMask) {
+    if (!canAdd()) { say('未完成事项到上限了，先完成几条再记。'); return; }
+    var rolled = false;
+    if (ts < Date.now() - 60000) { ts += 86400000; rolled = true; }  // 说的时间已过 → 顺延到明天同一时刻
+    var id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
+    var task = {
+      id: id, title: title, ts: ts, lv: lv || 1, done: false, note: '',
+      repeat: repeat || 'none', weekMask: (repeat === 'custom' ? (weekMask || 0) : 0),
+      completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
+    };
+    T().unshift(task);
+    doSave(); doRender(); highlight(id);
+
+    setUndo(function () {
+      var arr = T(), i = arr.findIndex(function (x) { return x.id === id; });
+      if (i >= 0) { arr.splice(i, 1); doSave(); doRender(); doToast('已撤销'); }
+    });
+    doToast('已记下 · ' + ft(ts), 'undo');
+
+    var meta2 = ft(ts) + ' · ' + lvName(task.lv) + (task.repeat !== 'none' ? ' · ' + repLabelOf(task) : '');
+    say(rolled ? '那个点已经过了，我顺延到明天同一时间。到点叫你。' : '记好了，到点我叫你。', {
+      k: '✓', title: title, meta: meta2, id: id,
+      acts: [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
+    }, ['再说一件', '看看今天剩下的']);
+  }
+
+  /* ── 查询 ─────────────────────────────────────────────── */
+  function doList() {
+    var list = todayTodo();
+    if (!list.length) {
+      var doneToday = allList().filter(function (t) { return t.done && t.ts >= todayEnd() - 86400000; }).length;
+      say('今天的待办清空了' + (doneToday ? '，已经走完 ' + doneToday + ' 步。' : '。') + '要不要现在记一件？',
+        null, ['明天 9 点提醒我复盘', '看看这周的成绩']);
+      return;
+    }
+    var over = list.filter(function (t) { return t.ts < Date.now(); });
+    var lines = list.slice(0, 4).map(function (t) {
+      return (t.ts < Date.now() ? '⚠ ' : '') + ft(t.ts) + ' · ' + t.title + '（' + cdown(t.ts) + '）';
+    });
+    if (list.length > 4) lines.push('…还有 ' + (list.length - 4) + ' 件');
+    var head = '今天还有 ' + list.length + ' 件' + (over.length ? '，其中 ' + over.length + ' 件过点了' : '') + '：';
+    say(head + '\n' + lines.join('\n'), null, ['把最早一件推迟 1 小时', '完成第一件', '再说一件']);
+  }
+
+  /* ── 完成 ─────────────────────────────────────────────── */
+  function doDone(text) {
+    var t = pick(text, 'done');
+    if (t) doDoneOn(t);
+  }
+  function doDoneOn(t) {
+    if (t.done) { say('「' + t.title + '」已经是完成状态了。'); return true; }
+    var repeat = t.repeat && t.repeat !== 'none';
+    if (repeat) {
+      t.completedCount = (t.completedCount || 0) + 1;
+      hist(t, true);
+      var nx = nextTsX(t);
+      var next = Object.assign({}, t, {
+        id: 't' + Date.now() + Math.random().toString(36).slice(2, 5),
+        ts: nx, done: false, notified: false, escalateCount: 0, lastShownAt: 0, created: Date.now()
+      });
+      T().unshift(next);
+      t.done = true; t.notified = true;
+      doSave(); doRender();
+      setUndo(function () {
+        var arr = T(), i = arr.findIndex(function (x) { return x.id === next.id; });
+        if (i >= 0) arr.splice(i, 1);
+        t.done = false; t.notified = false;
+        t.completedCount = Math.max(0, (t.completedCount || 1) - 1);
+        doSave(); doRender(); doToast('已恢复');
+      });
+      say('「' + t.title + '」完成 ✓ 重复的，下次排到 ' + ft(nx) + '。', {
+        k: '✓', title: t.title, meta: '已完成 · 下次 ' + ft(nx), id: t.id, acts: [{ k: 'undo', t: '撤销' }]
+      });
+      return true;
+    }
+    t.done = true;
+    hist(t, false);
+    doSave(); doRender(); playVibe();
+    setUndo(function () {
+      t.done = false; doSave(); doRender(); doToast('已恢复未完成');
+    });
+    var doneToday = allList().filter(function (x) { return x.done && x.ts >= todayEnd() - 86400000; }).length;
+    say('「' + t.title + '」打勾了。今天第 ' + doneToday + ' 件 ✓', {
+      k: '✓', title: t.title, meta: '已完成 · ' + ft(t.ts), id: t.id, acts: [{ k: 'undo', t: '撤销' }]
+    });
+    return true;
+  }
+
+  /* ── 删除 ─────────────────────────────────────────────── */
+  function doDelete(text) {
+    var t = pick(text, 'delete');
+    if (t) doDeleteOn(t);
+  }
+  function doDeleteOn(t) {
+    var arr = T();
+    var i = arr.findIndex(function (x) { return x.id === t.id; });
+    if (i < 0) { say('这条找不到了。'); return true; }
+    arr.splice(i, 1);
+    doSave(); doRender();
+    setUndo(function () {
+      T().splice(Math.min(i, T().length), 0, t);
+      doSave(); doRender(); doToast('已恢复');
+    });
+    doToast('已删除 · 「' + t.title + '」', 'undo');
+    say('删掉了「' + t.title + '」。后悔就说「撤销」。', {
+      k: '✕', title: t.title, meta: ft(t.ts), id: t.id, acts: [{ k: 'undo', t: '撤销删除' }]
+    });
+    return true;
+  }
+
+  /* ── 推迟 / 改时间 ────────────────────────────────────── */
+  function doPostpone(text) {
+    var ts = parseWhenX(text);
+    var t = pick(text, 'postpone');
+    if (!t) return;
+    if (!ts) {
+      S.pending = { kind: 'post', id: t.id, title: t.title };
+      say('「' + t.title + '」推到什么时候？', null, ['1 小时后', '今晚 20:00', '明早 09:00', '后天同一时间']);
+      return;
+    }
+    doPostponeOn(t, ts);
+  }
+  function doPostponeOn(t, ts) {
+    if (!ts) {
+      S.pending = { kind: 'post', id: t.id, title: t.title };
+      say('「' + t.title + '」推到什么时候？', null, ['1 小时后', '今晚 20:00', '明早 09:00']);
+      return true;
+    }
+    var old = t.ts;
+    t.ts = ts;
+    t.postponeCount = (t.postponeCount || 0) + 1;
+    t.notified = false; t.escalateCount = 0; t.lastShownAt = 0;
+    doSave(); doRender();
+    setUndo(function () { t.ts = old; doSave(); doRender(); doToast('已恢复原时间'); });
+    doToast('推迟到 ' + ft(ts), 'undo');
+    say('推到 ' + ft(ts) + ' 了。', {
+      k: '→', title: t.title,
+      meta: ft(ts) + (t.postponeCount ? ' · 第 ' + t.postponeCount + ' 次推迟' : ''),
+      id: t.id, acts: [{ k: 'undo', t: '恢复原时间' }]
+    });
+    return true;
+  }
+
+  /* ── 目标定位 ─────────────────────────────────────────── */
+  function pick(text, action) {
+    var cands = findTasks(text);
+    if (!cands.length) {
+      var pool = nowList();
+      if (pool.length === 1) {
+        S.pending = { kind: 'confirm', action: action, id: pool[0].id };
+        say('你是说「' + pool[0].title + '」吗？', {
+          k: '?', title: pool[0].title, meta: ft(pool[0].ts), id: pool[0].id,
+          acts: [{ k: 'yes-' + action, t: '对，就是它', p: true }, { k: 'no', t: '不是' }]
+        });
+        return null;
+      }
+      say('没找到叫这个名字的待办。先看看今天有什么？', null, ['我今天还有几件事']);
+      return null;
+    }
+    if (cands.length > 1 && cands[0].s - cands[1].s < 18) {
+      var top = cands.slice(0, 3);
+      S.pending = { kind: 'pick', action: action, list: top.map(function (c) { return c.t.id; }) };
+      var lines = top.map(function (c, i) { return (i + 1) + ') ' + c.t.title + ' · ' + ft(c.t.ts); }).join('\n');
+      say('有几条像的，你要动哪一条？\n' + lines, null,
+        top.map(function (c, i) { return { t: (i + 1) + '. ' + c.t.title, q: String(i + 1) }; }));
+      return null;
+    }
+    return cands[0].t;
+  }
+
+  /* ── 撤销 / 统计 / 帮助 ───────────────────────────────── */
+  function doUndo() {
+    if (undoNow()) say('撤回了。');
+    else say('现在没有可撤销的操作。');
+  }
+
+  function doStats() {
+    var streak = streakNum();
+    var ws = new Date(); ws.setHours(0, 0, 0, 0);
+    var weekStart = ws.getTime() - ((ws.getDay() + 6) % 7) * 86400000;
+    var wk = 0;
+    allList().forEach(function (t) {
+      if (t.done && t.ts >= weekStart) wk++;
+      wk += (t.completedCount || 0);
+    });
+    var todayDone = allList().filter(function (t) { return t.done && t.ts >= todayEnd() - 86400000; }).length;
+    say('这周完成 ' + wk + ' 次，今天 ' + todayDone + ' 件，连续 ' + streak + ' 天。', null,
+      ['看看今天剩下的', '再说一件']);
+  }
+
+  function doHelp() {
+    say('我能做四件事：\n' +
+      '① 记 —— 「明天 9 点提醒我交作业」，每周几、重要程度都能带\n' +
+      '② 查 —— 「我今天还有几件事」，过点的会标出来\n' +
+      '③ 改 —— 「把喝牛奶推迟到明早 8 点」\n' +
+      '④ 收尾 —— 「完成交作业」「删掉喝牛奶」，都能撤销', null,
+      ['明天 9 点提醒我交作业', '我今天还有几件事', '开启适老化模式']);
+  }
+
+  /* ── 设置类意图 ───────────────────────────────────────── */
+  function doSetting(text) {
+    if (/适老化|大字|长辈|字体大/.test(text)) {
+      var off = /(关闭|关掉|关|取消|别|不要)/.test(text);
+      var v = off ? 'off' : 'on';
+      setElder(v);
+      say(v === 'on' ? '适老化模式开了：字更大、按钮更高、对比更强。' : '适老化模式关掉了。');
+      return true;
+    }
+    if (/性能|流畅|卡顿|掉帧|毛玻璃|粒子/.test(text)) {
+      var p = /(关闭|关掉|关|别|不要)/.test(text) ? 'off' : 'on';
+      setPerf(p);
+      say(p === 'on' ? '性能优先开了：毛玻璃和粒子关掉，低端机更顺。' : '性能模式切回自动了。');
+      return true;
+    }
+    if (/深色|夜间|黑/.test(text) || /浅色|白天/.test(text)) {
+      var dark = /深色|夜间|黑/.test(text);
+      setMode(dark ? 'dark' : 'light');
+      say(dark ? '换成深色了。' : '换成浅色了。');
+      return true;
+    }
+    return false;
+  }
+
+  /* ── 闲聊 / 兜底 ──────────────────────────────────────── */
+  var CHAT = [
+    '我在。要不要顺手记一件？',
+    '嗯，听着呢。说件事我就替你盯着。',
+    '这个我不太懂，但记事情我很在行。',
+    '试试「明天 9 点提醒我」这种说法？'
+  ];
+  function doChat(text) {
+    if (doSetting(text)) return;
+    if (S.ai.on && S.ai.key) { askLLM(text); return; }
+    localChat(text, false);
+  }
+  function localChat(text, aiFailed) {
+    var t = text.replace(/\s/g, '');
+    var reply;
+    if (/^(你好|在吗|hi|hello|嗨|早上好|晚上好)/i.test(t)) reply = '在的。今天想先记哪一件？';
+    else if (/谢谢|辛苦|厉害/.test(t)) reply = '不客气，到点我会提醒你。';
+    else if (/你是谁|你叫什么/.test(t)) reply = '我是小布，住在这个 App 里，替你记事、替你改时间。';
+    else reply = CHAT[Math.floor(Math.random() * CHAT.length)];
+    if (aiFailed) reply = '（AI 没连上，先用本地规则处理）\n' + reply;
+    say(reply, null, ['明天 9 点提醒我交作业', '我今天还有几件事']);
+  }
+
+  /* ── 大模型桥 ─────────────────────────────────────────── */
+  function snapshot() {
+    var now = new Date();
+    return {
+      now: ft(now.getTime()),
+      weekday: '日一二三四五六'[now.getDay()],
+      tasks: nowList().slice(0, 20).map(function (t) {
+        return { id: t.id, title: t.title, time: ft(t.ts), level: t.lv, repeat: t.repeat || 'none' };
+      })
+    };
+  }
+  function sysPrompt() {
+    var s = snapshot();
+    return '你是「小布」，中文提醒应用里的助手。语气短、具体、像真人。\n' +
+      '现在是 ' + s.now + '（星期' + s.weekday + '）。\n' +
+      '用户待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
+      '只输出 JSON：{"reply":"给用户看的话","action":null}\n' +
+      '需要动手时：\n' +
+      '{"reply":"...","action":{"type":"create","title":"喝牛奶","when":"明天9点","level":1}}\n' +
+      '{"reply":"...","action":{"type":"done","task_id":"..."}}\n' +
+      '{"reply":"...","action":{"type":"delete","task_id":"..."}}\n' +
+      '{"reply":"...","action":{"type":"postpone","task_id":"...","when":"明早8点"}}\n' +
+      '{"reply":"...","action":{"type":"list"}}\n' +
+      '只能引用 tasks 里存在的 task_id；时间用中文说法；不确定就反问并让 action 为 null。';
+  }
+
+  function askLLM(text) {
+    var base = (S.ai.base || '').replace(/\/+$/, '');
+    if (!/^https?:/.test(base)) { localChat(text, true); return; }
+    var hist = S.msgs.filter(function (m) { return m.t; }).slice(-8).map(function (m) {
+      return { role: m.r === 'u' ? 'user' : 'assistant', content: m.t };
+    });
+    hist.push({ role: 'user', content: text });
+
+    fetch(base + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
+      body: JSON.stringify({
+        model: S.ai.model || 'deepseek-chat',
+        temperature: 0.3,
+        messages: [{ role: 'system', content: sysPrompt() }].concat(hist)
+      })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      var txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      if (!txt) throw new Error('empty');
+      var obj = normJSON(txt);
+      var reply = (obj && obj.reply) || '我不太确定，再说一次？';
+      var act = obj && obj.action;
+      S.busy = false;
+      typing(false);
+      if (act && act.type && act.type !== 'none') {
+        var extra = execRemote(act);
+        if (!extra) say(reply || '已经处理好了。');
+      } else {
+        say(reply);
+      }
+    }).catch(function () {
+      S.busy = false;
+      typing(false);
+      localChat(text, true);
+    });
+  }
+
+  function normJSON(txt) {
+    try { return JSON.parse(txt); } catch (e) {}
+    var m = txt.match(/\{[\s\S]*\}/);
+    if (m) { try { return JSON.parse(m[0]); } catch (e) {} }
+    return null;
+  }
+
+  function execRemote(a) {
+    if (a.type === 'create') {
+      var ts = parseWhenX(a.when || '');
+      var draft = parseDraft((a.title || '') + ' ' + (a.when || ''));
+      var title = String(a.title || draft.title || '').trim();
+      if (!title) return '要记的事还差个名字。';
+      if (!ts) return '「' + title + '」的时间我没听清，说具体点？';
+      var id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
+      T().unshift({
+        id: id, title: title, ts: ts, lv: a.level || 1, done: false, note: '',
+        repeat: draft.repeat || 'none', weekMask: (draft.repeat === 'custom' ? draft.weekMask : 0),
+        completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
+      });
+      doSave(); doRender(); highlight(id);
+      setUndo(function () {
+        var arr = T(), i = arr.findIndex(function (x) { return x.id === id; });
+        if (i >= 0) { arr.splice(i, 1); doSave(); doRender(); }
+      });
+      doToast('已记下 · ' + ft(ts), 'undo');
+      say('记好了：' + title + '\n' + ft(ts) + ' · ' + lvName(a.level || 1), {
+        k: '✓', title: title, meta: ft(ts), id: id,
+        acts: [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
+      });
+      return 'done';
+    }
+    if (a.type === 'list') { doList(); return 'done'; }
+    var t = a.task_id ? allList().filter(function (x) { return x.id === a.task_id; })[0] : null;
+    if (!t) return '那条待办已经不在列表里了。';
+    if (a.type === 'done') { doDoneOn(t); return 'done'; }
+    if (a.type === 'delete') { doDeleteOn(t); return 'done'; }
+    if (a.type === 'postpone') { doPostponeOn(t, parseWhenX(a.when || '')); return 'done'; }
+    return '';
+  }
+
+  /* ── 卡片按钮 ─────────────────────────────────────────── */
+  function onBodyClick(e) {
+    var b = e.target.closest('[data-xb-act]');
+    if (!b) return;
+    var act = b.dataset.xbAct, id = b.dataset.id;
+    var t = id ? allList().filter(function (x) { return x.id === id; })[0] : null;
+
+    if (act === 'undo') { doUndo(); return; }
+    if (act === 'no') { S.pending = null; say('好，那你说个更准的名字。'); return; }
+    if (act === 'edit' && t) { close(); openEditX(t.id); return; }
+    if (act === 'done' && t) { doDoneOn(t); return; }
+    if (/^yes-(done|delete|postpone)$/.test(act) && t) {
+      var kind = act.slice(4);
+      S.pending = null;
+      if (kind === 'done') doDoneOn(t);
+      else if (kind === 'delete') doDeleteOn(t);
+      else doPostponeOn(t, null);
+      return;
+    }
+  }
+
+  /* ── 初始化 ───────────────────────────────────────────── */
+  var inited = false;
+  function boot() {
+    if (inited) return;
+    inited = true;
+    loadState();
+    build();
+    updateSub();
+    var btn = X$('xiaobuBtn');
+    if (btn) {
+      btn.onclick = function () { open(); };
+      btn.setAttribute('aria-label', '打开小布');
+    }
+    if (!S.msgs.length) greet(true); else render();
+  }
+
+  window.XiaoBu = { open: open, close: close, boot: boot, say: say, _state: S };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+/* ==== XIAOBU JS END ==== */
 </script>
 </body>
 </html>
