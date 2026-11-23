@@ -853,6 +853,9 @@ html[data-mode="dark"] .toast button{color:#245740}
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3481,6 +3484,9 @@ try{
 
 
 
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -3609,10 +3615,19 @@ try{
         '<p>默认用本地规则理解你的话，离线也能用。填了大模型 Key 后，先问模型、再执行同样的动作。</p>' +
         '<div class="xb-row2"><div><div class="lb">AI 增强</div><div class="sb">OpenAI 兼容接口</div></div>' +
           '<div class="xb-seg" id="xbAiSeg"><button data-ai="off" class="on">关闭</button><button data-ai="on">开启</button></div></div>' +
+        '<div class="xb-field"><label>模型预设</label>' +
+          '<div class="xb-seg" id="xbPreset">' +
+            '<button data-p="deepseek" class="on">DeepSeek</button>' +
+            '<button data-p="moonshot">Kimi</button>' +
+            '<button data-p="qwen">通义</button>' +
+            '<button data-p="custom">自定义</button>' +
+          '</div></div>' +
         '<div class="xb-field"><label>接口地址</label><input id="xbAiBase" placeholder="https://api.deepseek.com/v1"></div>' +
         '<div class="xb-field"><label>API Key</label><input id="xbAiKey" type="password" placeholder="sk-..."></div>' +
         '<div class="xb-field"><label>模型</label><input id="xbAiModel" placeholder="deepseek-chat"></div>' +
-        '<p>Key 只存在这台设备的 localStorage。</p>' +
+        '<div class="xb-row2"><div><div class="lb">测试连接</div><div class="sb" id="xbAiState">还没测过</div></div>' +
+          '<button class="xb-ico" id="xbAiTest" style="width:auto;padding:0 12px;height:32px;font-size:12px">测一下</button></div>' +
+        '<p>Key 只存在这台设备的 localStorage，不会上传到别处。DeepSeek / Kimi / 通义 都支持浏览器直连。</p>' +
         '<div class="xb-row2"><div><div class="lb">清空对话</div><div class="sb">不影响你的待办</div></div>' +
           '<button class="xb-ico" id="xbClear" style="width:auto;padding:0 12px;height:32px;font-size:12px">清空</button></div>' +
         '<div class="xb-actions"><button id="xbSetBack">返回</button><button class="p" id="xbSetSave">保存</button></div>' +
@@ -3652,6 +3667,78 @@ try{
       S.ai.on = b.dataset.ai === 'on';
       [].forEach.call(X$('xbAiSeg').children, function (x) { x.classList.toggle('on', x === b); });
       saveAI(); updateSub();
+      if (S.ai.on && !S.ai.key) setAiState('还差一个 Key，填完点「测一下」');
+    });
+
+    // 模型预设
+    var PRESETS = {
+      deepseek: { base: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+      moonshot: { base: 'https://api.moonshot.cn/v1', model: 'moonshot-v1-8k' },
+      qwen: { base: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-plus' }
+    };
+    X$('xbPreset').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      [].forEach.call(X$('xbPreset').children, function (x) { x.classList.toggle('on', x === b); });
+      var p = PRESETS[b.dataset.p];
+      if (p) {
+        X$('xbAiBase').value = p.base;
+        X$('xbAiModel').value = p.model;
+        setAiState('已填入 ' + p.model + '，接着填 Key');
+      } else {
+        setAiState('自己填地址和模型名');
+      }
+    });
+
+    // 测试连接
+    X$('xbAiTest').addEventListener('click', function () {
+      S.ai.base = (X$('xbAiBase').value || '').trim();
+      S.ai.key = (X$('xbAiKey').value || '').trim();
+      S.ai.model = (X$('xbAiModel').value || '').trim();
+      saveAI();
+      if (!S.ai.key) { setAiState('先填 API Key'); return; }
+      if (!/^https?:/.test(S.ai.base)) { setAiState('接口地址要以 https:// 开头'); return; }
+      setAiState('测试中…');
+      testAI().then(function (r) {
+        setAiState('连上了 · ' + (r.model || S.ai.model) + '（' + r.ms + 'ms）');
+      }).catch(function (err) {
+        setAiState('失败：' + err.message);
+      });
+    });
+  }
+
+  function setAiState(t) {
+    var el = X$('xbAiState');
+    if (el) el.textContent = t;
+  }
+
+  /* 用一句话打通链路，验证 Key / 模型名 / CORS / 网络 */
+  function testAI() {
+    var base = (S.ai.base || '').replace(/\/+$/, '');
+    var t0 = Date.now();
+    return fetch(base + '/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
+      body: JSON.stringify({
+        model: S.ai.model || 'deepseek-chat',
+        messages: [{ role: 'user', content: '回一个字：好' }],
+        max_tokens: 8,
+        temperature: 0
+      })
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw new Error('Key 无效或没权限（' + r.status + '）');
+      if (r.status === 404) throw new Error('模型名或地址不对（404）');
+      if (r.status === 429) throw new Error('额度用完或限流（429）');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      var txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      if (!txt) throw new Error('返回里没有内容');
+      return { model: j.model || S.ai.model, ms: Date.now() - t0 };
+    }).catch(function (e) {
+      if (e && e.message && e.message.indexOf('Failed to fetch') >= 0) {
+        throw new Error('连不上（网络或接口不允许跨域）');
+      }
+      throw e;
     });
   }
 
@@ -3855,16 +3942,80 @@ try{
   /* ── 解析 ─────────────────────────────────────────────── */
   var R = {
     undo: /^(撤销|撤回|恢复|反悔|恢复原样)/,
-    cancel: /^(算了|取消|不用了|不用|不记了|没事|没|不|错|不对|不要)/,
+    cancel: /^(算了|取消|不用了|不用|不记了|没事|没|错|不对|不要)/,
     yes: /^(好|好的|好啊|行|可以|对|对的|是|是的|嗯|嗯嗯|没错|确认|就它|ok|okay|yes)/i,
     no: /^(不|不是|不对|错了|不是这个|no)/i,
     help: /(你会什么|能做什么|能干什么|会干什么|帮助|怎么用|使用说明|你是谁|你是什么|介绍.*自己)/,
-    stats: /(这周|本周|一周|统计|完成了几|完成了多少|做了几|坚持|连续|打卡|成绩|进度)/,
-    list: /(有什么|哪些|几件|几条|还有|待办|清单|列出|列一下|看看|看一下|安排|日程|今天.*(做|干|要|该)|明天.*(做|干|要))/,
+    stats: /(这周|本周|一周|统计|完成了几|完成了多少|做了几|坚持了|连续|成绩|进度|打卡了几)/,
+    busy: /(忙不忙|有空吗|有没有空|忙吗|闲不闲|事情多不多|多不多)/,
+    setting: /(适老化|大字模式|深色模式|夜间模式|浅色模式|性能优先|毛玻璃|勿扰)/,
+    list: /(有什么|哪些|几件|几条|还有|待办|清单|列出|列一下|看看|看一下|日程|今天.*(做|干|要|该)|明天.*(做|干|要))/,
     done: /(完成|做完了|做完|搞定|勾掉|打勾|弄完|做掉|已办)/,
     del: /(删除|删掉|删了|去掉|移除|清掉)/,
     post: /(推迟|延后|晚一点|晚点|缓一缓|拖到|挪到|改到|推到|换到|往后)/
   };
+
+  /* 中文数字 → 阿拉伯数字 */
+  function cn2num(v) {
+    if (v == null) return null;
+    if (/^\d+$/.test(v)) return parseInt(v, 10);
+    var m = { '零': 0, '一': 1, '两': 2, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10,
+      '十一': 11, '十二': 12, '十三': 13, '十四': 14, '十五': 15, '十六': 16, '十七': 17, '十八': 18, '十九': 19, '二十': 20 };
+    return m[v] != null ? m[v] : null;
+  }
+
+  /* parseWhen 的补丁：相对时长 + 只有时段词的情况 */
+  function parseTimeExtra(s) {
+    s = String(s || '');
+    var m, n;
+    if ((m = s.match(/(\d+|[一二两三四五六七八九十]+)\s*个?\s*(分钟|分)(后|以后|之后)?/))) {
+      n = cn2num(m[1]); if (n != null) return Date.now() + n * 60000;
+    }
+    if (/一(个)?半(小时|钟头)/.test(s)) return Date.now() + 90 * 60000;
+    if (/半(个)?(小时|钟头)/.test(s)) return Date.now() + 30 * 60000;
+    if (/一刻钟/.test(s)) return Date.now() + 15 * 60000;
+    if ((m = s.match(/(\d+|[一二两三四五六七八九十]+)\s*个?\s*(小时|钟头)(后|以后|之后)?/))) {
+      n = cn2num(m[1]); if (n != null) return Date.now() + n * 3600000;
+    }
+    // 只有「早上 / 晚上 / 明天下午」这类时段词
+    var d = new Date();
+    if (/大后天/.test(s)) d.setDate(d.getDate() + 3);
+    else if (/后天/.test(s)) d.setDate(d.getDate() + 2);
+    else if (/明天|明早|明晚/.test(s)) d.setDate(d.getDate() + 1);
+    var hh = null;
+    if (/凌晨/.test(s)) hh = 1;
+    else if (/早上|早晨|上午|明早/.test(s)) hh = 8;
+    else if (/中午/.test(s)) hh = 12;
+    else if (/下午/.test(s)) hh = 15;
+    else if (/傍晚/.test(s)) hh = 18;
+    else if (/晚上|今晚|明晚|夜里/.test(s)) hh = 20;
+    if (hh == null) return null;
+    d.setHours(hh, 0, 0, 0);
+    if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+    return d.getTime();
+  }
+
+  /* 「第一件 / 最早 / 最后一条」 */
+  function pickByOrdinal(text) {
+    var arr = todayTodo();
+    if (!arr.length) arr = nowList().sort(function (a, b) { return a.ts - b.ts; });
+    var s = String(text || '').replace(/\s/g, '');
+    if (/第一|最先|最早|头一/.test(s)) return arr[0] || null;
+    if (/最后|最晚|末尾/.test(s)) return arr[arr.length - 1] || null;
+    var m = s.match(/第([一二三四五六七八九十\d]+)(个|条|件)/);
+    if (m) { var n = cn2num(m[1]); if (n && arr[n - 1]) return arr[n - 1]; }
+    return null;
+  }
+
+  /* 纯名词句，例如「喝牛奶」——当作「要记这件事，缺时间」 */
+  function looksLikeTask(text) {
+    var s = String(text || '').replace(/\s/g, '');
+    if (s.length < 2 || s.length > 14) return false;
+    if (/^(你好|在吗|嗨|hi|hello|谢谢|谢了|好的|嗯|晚安|早上好|晚上好)/i.test(s)) return false;
+    if (/[?？]/.test(s)) return false;
+    if (/^(你|我)(要|想|该)/.test(s)) return false;
+    return /^[一-龥a-zA-Z0-9]+$/.test(s);
+  }
 
   function parseRemember(text) {
     if (/每天|每日|天天/.test(text)) return { repeat: 'daily', weekMask: 0 };
@@ -3888,17 +4039,21 @@ try{
   /* 自己清洗标题：比 parseSmart 更狠地剥掉「提醒我 / 每周三四 / 明天9点」 */
   function cleanTitle(text) {
     var s = String(text || '');
-    s = s.replace(/^(请|麻烦你?|帮我|给我|帮个忙|我要|我想|要|得|记得|别忘了)/, '');
+    s = s.replace(/(别忘了|别忘记|别忘|要记得|记得)/g, '');
+    s = s.replace(/^(请|麻烦你?|帮我|给我|帮个忙|我要|我想|要|得)/, '');
     s = s.replace(/(提醒我|提醒|提示我|提示|记一下|记下|记住|添加|新建|加一条|加一个|安排一下|安排|定个|设个|帮我记|存一下|一下)/g, '');
     s = s.replace(/每(周|星期)[一二三四五六日天]+/g, '');   // 每周三四
     s = s.replace(/每(周|星期|天|日|个月)/g, '');
-    s = s.replace(/(今天|明天|后天|大后天|今晚|明早|明晚|上午|中午|下午|晚上|早上|早晨|凌晨|周末|月底|这周|下周)/g, '');
-    s = s.replace(/(下?)(周|星期)[一二三四五六日天]/g, '');
+    s = s.replace(/(大后天|后天|明天|今天|今晚|明早|明晚|上午|中午|下午|晚上|早上|早晨|凌晨|周末|月底|夜里|傍晚)/g, '');
+    s = s.replace(/(下下|下|这|本|上)(周|星期)[一二三四五六日天]/g, '');
+    s = s.replace(/(周|星期)[一二三四五六日天]/g, '');
     s = s.replace(/\d{1,2}月\d{1,2}[号日]/g, '');
     s = s.replace(/(\d{1,2}|[零一二两三四五六七八九十]{1,3})(点|时)(半|分)?/g, '');
     s = s.replace(/\d{1,2}:\d{2}/g, '');
     s = s.replace(/(\d+|[零一二两三四五六七八九十]+)个?(天|小时|分钟|钟头)(后|以后|之后)?/g, '');
+    s = s.replace(/一(个)?半(小时|钟头)(后|以后)?/g, '');
     s = s.replace(/半(个)?(小时|钟头)(后|以后)?/g, '');
+    s = s.replace(/一刻钟(后|以后)?/g, '');
     s = s.replace(/[，,。.！!？?、~～]/g, '');
     s = s.replace(/^(我|要|得|去|把)/, '');
     s = s.replace(/(的|了|吧|呢|啊|呀|嘛|哦)$/, '');
@@ -3919,7 +4074,7 @@ try{
     else if (/(普通|记得|注意|留意)/.test(text)) lv = 2;
     return {
       title: title,
-      ts: sp.ts || null,
+      ts: sp.ts || parseTimeExtra(text) || null,
       lv: lv,
       repeat: rep.repeat,
       weekMask: rep.weekMask
@@ -3938,6 +4093,8 @@ try{
     if (R.del.test(text)) { doDelete(text); return; }
     if (R.done.test(text)) { doDone(text); return; }
     if (R.post.test(text)) { doPostpone(text); return; }
+    if (R.setting.test(text)) { if (doSetting(text)) return; }
+    if (R.busy.test(text)) { doBusy(text); return; }
     if (R.list.test(text)) { doList(); return; }
 
     var draft = parseDraft(text);
@@ -3946,7 +4103,31 @@ try{
 
     if (R.cancel.test(s)) { say('好，那这件先不记。'); return; }
 
+    // 纯名词句（「喝牛奶」）→ 当成要记的事，反问时间
+    if (looksLikeTask(text)) {
+      doCreate(text, { title: cleanTitle(text) || text, ts: null, lv: 1, repeat: 'none', weekMask: 0 });
+      return;
+    }
+
     doChat(text);
+  }
+
+  /* 「我明天忙不忙」→ 报明天的量 */
+  function doBusy(text) {
+    var arr = nowList().slice().sort(function (a, b) { return a.ts - b.ts; });
+    var day = /大后天/.test(text) ? 3 : /后天/.test(text) ? 2 : /明天/.test(text) ? 1 : 0;
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0);
+    var start = d0.getTime() + day * 86400000, end = start + 86400000;
+    var list = arr.filter(function (t) { return t.ts >= start && t.ts < end; });
+    var name = day === 0 ? '今天' : day === 1 ? '明天' : day === 2 ? '后天' : '大后天';
+    if (!list.length) {
+      say(name + '是空的，可以安心安排点别的事。', null, ['帮我在' + name + '9 点记一件']);
+      return;
+    }
+    var lines = list.slice(0, 4).map(function (t) { return '· ' + ft(t.ts) + ' ' + t.title; });
+    var busy = list.length >= 3;
+    say(name + '有 ' + list.length + ' 件' + (busy ? '，算是比较满。' : '，还好。') + '\n' + lines.join('\n'),
+      null, ['看看今天剩下的']);
   }
 
   function fillSlot(text) {
@@ -4136,7 +4317,32 @@ try{
 
   /* ── 推迟 / 改时间 ────────────────────────────────────── */
   function doPostpone(text) {
-    var ts = parseWhenX(text);
+    var ts = parseWhenX(text) || parseTimeExtra(text);
+    var s = String(text || '').replace(/\s/g, '');
+
+    // 「过期的都推迟到今晚」→ 批量
+    var batch = /(都|全部|所有|过期|过时|全部的)/.test(s);
+    if (batch && ts) {
+      var all = nowList();
+      var overdue = all.filter(function (t) { return t.ts < Date.now(); });
+      var target = overdue.length ? overdue : all;
+      if (!target.length) { say('现在没有可推迟的待办。'); return; }
+      var olds = target.map(function (t) { return { t: t, ts: t.ts }; });
+      target.forEach(function (t) {
+        t.ts = ts; t.postponeCount = (t.postponeCount || 0) + 1;
+        t.notified = false; t.escalateCount = 0; t.lastShownAt = 0;
+      });
+      doSave(); doRender();
+      setUndo(function () {
+        olds.forEach(function (o) { o.t.ts = o.ts; });
+        doSave(); doRender(); doToast('已恢复');
+      });
+      doToast('已批量推迟 ' + target.length + ' 条', 'undo');
+      say('把 ' + target.length + ' 条' + (overdue.length ? '过期的' : '') + '都推到 ' + ft(ts) + ' 了。',
+        null, ['看看今天剩下的']);
+      return;
+    }
+
     var t = pick(text, 'postpone');
     if (!t) return;
     if (!ts) {
@@ -4169,6 +4375,10 @@ try{
 
   /* ── 目标定位 ─────────────────────────────────────────── */
   function pick(text, action) {
+    // 「第一件 / 最早 / 最后一条」直接按顺序取
+    var ord = pickByOrdinal(text);
+    if (ord) return ord;
+
     var cands = findTasks(text);
     if (!cands.length) {
       var pool = nowList();
@@ -4283,17 +4493,22 @@ try{
   }
   function sysPrompt() {
     var s = snapshot();
-    return '你是「小步」，中文提醒应用里的助手。语气短、具体、像真人。\n' +
+    return '你是「小步」，中文提醒应用里的助手。语气短、具体、像真人，别客套。\n' +
       '现在是 ' + s.now + '（星期' + s.weekday + '）。\n' +
       '用户待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
-      '只输出 JSON：{"reply":"给用户看的话","action":null}\n' +
-      '需要动手时：\n' +
-      '{"reply":"...","action":{"type":"create","title":"喝牛奶","when":"明天9点","level":1}}\n' +
-      '{"reply":"...","action":{"type":"done","task_id":"..."}}\n' +
-      '{"reply":"...","action":{"type":"delete","task_id":"..."}}\n' +
-      '{"reply":"...","action":{"type":"postpone","task_id":"...","when":"明早8点"}}\n' +
-      '{"reply":"...","action":{"type":"list"}}\n' +
-      '只能引用 tasks 里存在的 task_id；时间用中文说法；不确定就反问并让 action 为 null。';
+      '只输出 JSON，不要解释、不要代码块：{"reply":"给用户看的一句话","action":null}\n' +
+      '需要动手时 action 用下列之一：\n' +
+      '{"type":"create","title":"喝牛奶","when":"明天9点","level":1}\n' +
+      '{"type":"create","title":"打卡","when":"每天22点","level":1}\n' +
+      '{"type":"done","task_id":"…"}\n' +
+      '{"type":"delete","task_id":"…"}\n' +
+      '{"type":"postpone","task_id":"…","when":"明早8点"}\n' +
+      '{"type":"list"}\n' +
+      '规则：\n' +
+      '1) 只能引用 tasks 里真实存在的 task_id，拿不准就问，action 置 null；\n' +
+      '2) when 用中文说法（明天9点 / 后天下午3点 / 一小时后 / 每天22点 / 每周三四早上8点）；\n' +
+      '3) 用户说「重要/必须/不能忘」用 level 3，「普通」用 2，其余 1；\n' +
+      '4) reply 里不要重复 title 之外的多余内容，最多两句话。';
   }
 
   function askLLM(text) {
@@ -4595,6 +4810,34 @@ try{
     } catch (e) {}
   }
 
+  /* 调试/自检：只判断意图，不执行任何动作 */
+  function preview(text) {
+    var s = String(text || '').replace(/\s/g, '');
+    var pend = S.pending ? S.pending.kind : null;
+    if (R.undo.test(s)) return { intent: 'undo', pending: pend };
+    if (R.help.test(text)) return { intent: 'help', pending: pend };
+    if (R.stats.test(text)) return { intent: 'stats', pending: pend };
+    if (R.setting.test(text)) return { intent: 'setting', pending: pend };
+    if (R.busy.test(text)) return { intent: 'busy', pending: pend };
+    if (R.del.test(text)) return { intent: 'delete', pending: pend };
+    if (R.done.test(text)) return { intent: 'done', pending: pend };
+    if (R.post.test(text)) return { intent: 'postpone', pending: pend, ts: parseWhenX(text) || parseTimeExtra(text) };
+    if (R.list.test(text)) return { intent: 'list', pending: pend };
+    var draft = parseDraft(text);
+    var wantCreate = /(提醒|记一下|记下|记住|添加|新建|加一条|加一个|安排|别忘|要记|帮我记|定个|设个|存一下)/.test(text);
+    if (wantCreate || draft.ts) {
+      return {
+        intent: 'create', pending: pend,
+        draft: { title: draft.title, ts: draft.ts, lv: draft.lv, repeat: draft.repeat, weekMask: draft.weekMask }
+      };
+    }
+    if (R.cancel.test(s)) return { intent: 'cancel', pending: pend };
+    if (looksLikeTask(text)) {
+      return { intent: 'create', pending: pend, draft: { title: cleanTitle(text) || text, ts: null, lv: 1, repeat: 'none', weekMask: 0 } };
+    }
+    return { intent: 'chat', pending: pend };
+  }
+
   /* ── 初始化 ───────────────────────────────────────────── */
   var inited = false;
   function boot() {
@@ -4617,7 +4860,7 @@ try{
     if (!S.msgs.length) greet(true); else render();
   }
 
-  window.XiaoBu = { open: open, close: close, boot: boot, say: say, notify: notifyNow, arm: armNotify, _state: S };
+  window.XiaoBu = { open: open, close: close, boot: boot, say: say, notify: notifyNow, arm: armNotify, preview: preview, _state: S };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
