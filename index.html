@@ -9,7 +9,8 @@
 <title>小步 · 说出来，就有人替你记住</title>
 <link rel="manifest" href="manifest.webmanifest">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Crect width='1024' height='1024' rx='232' fill='%232F6E52'/%3E%3Cpath d='M320 510L450 640L770 300' fill='none' stroke='%23FFFBF2' stroke-width='136' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 :root{
   --paper:#F6F1E8;--bg:#F6F1E8;--surface:#FFFCF6;
@@ -856,6 +857,20 @@ html[data-mode="dark"] .toast button{color:#245740}
 
 
 
+
+/* ── 小步角色 ───────────────────────────────── */
+.empty-mascot{width:104px;height:auto;margin-bottom:6px;opacity:.96;
+  filter:drop-shadow(0 6px 14px rgba(35,32,28,.10))}
+html[data-elder="on"] .empty-mascot{width:124px}
+.modal-mark-img{width:42px;height:42px;border-radius:13px;object-fit:cover;
+  box-shadow:0 6px 16px rgba(35,32,28,.18);flex:0 0 auto}
+.boot-mascot{width:86px;height:auto;animation:bootBob 2.4s ease-in-out infinite}
+@keyframes bootBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -877,9 +892,10 @@ html[data-perf="on"] .xb{box-shadow:0 -8px 30px rgba(35,32,28,.18)}
 /* ── 顶栏 ── */
 .xb-head{display:flex;align-items:center;gap:10px;padding:13px 15px 11px;
   border-bottom:1px solid var(--line2);flex:0 0 auto}
-.xb-ava{width:38px;height:38px;border-radius:13px;flex:0 0 auto;display:grid;place-items:center;
-  color:#FFF9EF;background:linear-gradient(150deg,var(--brand),var(--brand-press));
-  box-shadow:0 6px 16px rgba(47,110,82,.26);position:relative}
+.xb-ava{width:40px;height:40px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  position:relative;background:transparent}
+.xb-ava img{width:40px;height:40px;border-radius:50%;object-fit:contain;
+  background:var(--paper);box-shadow:0 0 0 1px var(--line),0 4px 10px rgba(47,110,82,.18)}
 .xb-ava svg{width:21px;height:21px}
 .xb-ava i{position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;
   background:#57C98A;border:2px solid var(--surface)}
@@ -901,8 +917,10 @@ html[data-perf="on"] .xb{box-shadow:0 -8px 30px rgba(35,32,28,.18)}
 .xb-row{display:flex;align-items:flex-end;gap:7px;animation:xbIn .28s var(--ease)}
 @keyframes xbIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .xb-row.me{flex-direction:row-reverse}
-.xb-mini{width:24px;height:24px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;
-  background:var(--brand-soft);color:var(--brand-ink);font-size:11px;font-weight:800}
+.xb-mini{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:transparent}
+.xb-mini img{width:26px;height:26px;border-radius:50%;object-fit:contain;
+  background:var(--paper);box-shadow:0 0 0 1px var(--line2)}
 .xb-row.me .xb-mini{display:none}
 .xb-bb{max-width:80%;padding:10px 13px;border-radius:16px;border-bottom-left-radius:5px;
   font-size:13.8px;line-height:1.55;color:var(--ink);background:var(--paper);
@@ -1022,6 +1040,34 @@ html[data-mode="dark"] .xb-set .xb-actions button{background:#20241F;border-colo
   html[data-mode="auto"] .xb-input input{background:#20241F;border-color:#39443B;color:#EFE9DE}
   html[data-mode="auto"] .xb-ico,html[data-mode="auto"] .xb-mic{background:#20241F;border-color:#39443B;color:#CFE6DA}
 }
+
+/* ── 欢迎卡（角色上场） ─────────────────────────── */
+.xb-hero{display:flex;flex-direction:column;align-items:center;text-align:center;
+  padding:10px 18px 4px;animation:xbIn .34s var(--ease)}
+.xb-hero:only-child{margin:auto 0}
+.xb-hero-img{width:118px;height:auto;margin-bottom:2px;
+  filter:drop-shadow(0 10px 22px rgba(35,32,28,.16));animation:xbFloat 3.4s ease-in-out infinite}
+@keyframes xbFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.xb-hero-name{font-size:19px;font-weight:800;color:var(--ink);letter-spacing:1px}
+.xb-hero-sub{font-size:11px;color:var(--brand);letter-spacing:3px;margin-top:3px;font-weight:700}
+.xb-hero-tip{font-size:13px;color:var(--ink2);line-height:1.6;margin-top:9px;white-space:pre-line}
+html[data-elder="on"] .xb-hero-img{width:136px}
+html[data-elder="on"] .xb-hero-name{font-size:21px}
+html[data-elder="on"] .xb-hero-tip{font-size:15px}
+html[data-perf="on"] .xb-hero-img{animation:none}
+@media (prefers-reduced-motion: reduce){.xb-hero-img{animation:none}}
+
+
+/* ── 启动页：角色取代绿色方块 ───────────────── */
+.boot-mark{width:104px!important;height:104px!important;border-radius:32px!important;
+  background:transparent!important;box-shadow:none!important;overflow:visible!important}
+.boot-mascot{width:104px;height:104px;object-fit:contain;position:relative;z-index:1;
+  filter:drop-shadow(0 12px 22px rgba(36,87,64,.22));animation:bootBob 2.6s ease-in-out infinite}
+.boot-mark__sweep{display:none!important}
+.boot-mark__ring{inset:-10px!important;opacity:1!important;border-radius:50%!important;
+  background:repeating-conic-gradient(from 0deg,rgba(47,110,82,.34) 0deg 2.4deg,transparent 2.4deg 10deg)!important}
+html[data-mode=dark] .boot-mark__ring{background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.26) 0deg 2.4deg,transparent 2.4deg 10deg)!important}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -1037,9 +1083,7 @@ html[data-mode="dark"] .xb-set .xb-actions button{background:#20241F;border-colo
       <div class="boot-mark">
         <span class="boot-mark__ring" aria-hidden="true"></span>
         <span class="boot-mark__sweep" aria-hidden="true"></span>
-        <svg class="boot-mark__glyph" viewBox="0 0 1024 1024" aria-hidden="true">
-          <path d="M300 520L438 658L760 320" pathLength="1" fill="none" stroke="#FFFBF2" stroke-width="122" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img class="boot-mascot" src="body-320.png" alt="">
       </div>
       <div class="boot-word">小步</div>
       <div class="boot-slogan">说出来，就有人替你记住</div>
@@ -1352,10 +1396,7 @@ html[data-mode="dark"] .xb-set .xb-actions button{background:#20241F;border-colo
   <div class="modal-mask" id="modalMask"></div>
   <div class="modal-wrap"><div class="modal" id="modal">
     <div class="modal-top">
-      <svg class="modal-mark" viewBox="0 0 1024 1024" aria-hidden="true">
-        <rect width="1024" height="1024" rx="232" fill="var(--brand)"/>
-        <path d="M320 510L450 640L770 300" fill="none" stroke="#FFFBF2" stroke-width="136" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <img class="modal-mark-img" src="ava-96.png" alt="小步">
       <div class="modal-lv" id="modalLv">轻提醒</div>
     </div>
     <h3 id="modalTitle"></h3>
@@ -1374,10 +1415,7 @@ html[data-mode="dark"] .xb-set .xb-actions button{background:#20241F;border-colo
   <div class="sum-mask" id="sumMask"></div>
   <div class="sum-wrap"><div class="modal" id="sumModal">
     <div class="modal-top">
-      <svg class="modal-mark" viewBox="0 0 1024 1024" aria-hidden="true">
-        <rect width="1024" height="1024" rx="232" fill="var(--brand)"/>
-        <path d="M320 510L450 640L770 300" fill="none" stroke="#FFFBF2" stroke-width="136" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <img class="modal-mark-img" src="ava-96.png" alt="小步">
       <div class="modal-lv">过时间了</div>
     </div>
     <h3 id="sumTitle"></h3>
@@ -1841,7 +1879,7 @@ function render(){
   $('doneCount').textContent=done.length?done.length+' 件':'';
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
-  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
+  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ')}).join(''):'<div class="empty"><img class="empty-mascot" src="body-320.png" alt="小步" loading="lazy"><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
   $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
   $('doneSec').style.display=done.length?'block':'none';
   const soon=normal.filter(t=>t.ts<Date.now()+86400000).sort((a,b)=>a.ts-b.ts);
@@ -3471,11 +3509,15 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261123-xb2').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261123-xb3').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
+
 
 
 
@@ -3598,7 +3640,7 @@ try{
     box.setAttribute('aria-label', '小步助手');
     box.innerHTML =
       '<div class="xb-head">' +
-        '<div class="xb-ava" id="xbAva">' + ICON_ROBOT + '<i></i></div>' +
+        '<div class="xb-ava" id="xbAva"><img src="ava-96.png" alt="小步"><i></i></div>' +
         '<div class="xb-id"><b>小步</b><span id="xbSub">会记事，也会替你动手</span></div>' +
         '<button class="xb-ico" id="xbSetBtn" aria-label="设置">' + ICON_GEAR + '</button>' +
         '<button class="xb-ico" id="xbClose" aria-label="关闭">✕</button>' +
@@ -3775,10 +3817,18 @@ try{
   }
 
   function msgHTML(m) {
+    if (m.hero) {
+      return '<div class="xb-hero">' +
+        '<img class="xb-hero-img" src="body-320.png" alt="小步">' +
+        '<div class="xb-hero-name">小步</div>' +
+        '<div class="xb-hero-sub">智能提醒伙伴</div>' +
+        '<div class="xb-hero-tip">说出来，我就替你记住——\n也会替你把时间改好。</div>' +
+        '</div>';
+    }
     if (m.r === 'u') return '<div class="xb-row me"><div class="xb-bb">' + esc(m.t) + '</div></div>';
     var inner = esc(m.t).replace(/\n/g, '<br>');
     if (m.card) inner += cardHTML(m.card);
-    return '<div class="xb-row"><div class="xb-mini">步</div><div class="xb-bb">' + inner + '</div></div>';
+    return '<div class="xb-row"><div class="xb-mini"><img src="ava-64.png" alt=""></div><div class="xb-bb">' + inner + '</div></div>';
   }
 
   function cardHTML(c) {
@@ -3813,7 +3863,7 @@ try{
     var d = document.createElement('div');
     d.className = 'xb-row';
     d.id = 'xbTyping';
-    d.innerHTML = '<div class="xb-mini">步</div><div class="xb-typing"><i></i><i></i><i></i></div>';
+    d.innerHTML = '<div class="xb-mini"><img src="ava-64.png" alt=""></div><div class="xb-typing"><i></i><i></i><i></i></div>';
     body.appendChild(d);
     body.scrollTop = body.scrollHeight;
   }
@@ -3836,7 +3886,7 @@ try{
   var GREET = '我是小步。\n记事情、改时间、查今天，直接说就行——\n我不是只回话，我会真的动手改。';
   function greet(force) {
     if (!force && S.msgs.length) { render(); return; }
-    S.msgs = [{ r: 'b', t: GREET, card: null }];
+    S.msgs = [{ r: 'b', hero: true, t: '', card: null }];
     saveState(); render();
     setChips(['明天 9 点提醒我交作业', '我今天还有几件事', '把喝牛奶推迟到明早 8 点', '开启适老化模式']);
   }
@@ -4627,8 +4677,8 @@ try{
       renotify: true,
       requireInteraction: lv === 3,
       vibrate: vib,
-      icon: 'icon.svg',
-      badge: 'icon.svg',
+      icon: 'notify-icon.png',
+      badge: 'notify-icon.png',
       silent: false,
       data: { id: t.id, ts: t.ts },
       actions: [

@@ -1,5 +1,5 @@
-const CACHE='xiaobu-20261123-xb2';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg'];
+const CACHE='xiaobu-20261123-xb3';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon.svg','./ava-96.png','./body-320.png','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });
