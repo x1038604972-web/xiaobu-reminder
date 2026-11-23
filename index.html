@@ -102,6 +102,10 @@ button{cursor:pointer;border:none;background:none}
   .phone{width:100vw;height:100dvh;border-radius:0;box-shadow:none;background:radial-gradient(circle at 18% 0%,var(--brand-soft),transparent 30%),radial-gradient(circle at 85% 100%,var(--brand-soft),transparent 34%),var(--bg)}
 }
 html[data-elder="on"] .phone{font-size:17px}
+html[data-elder="on"] .hello{font-size:29px}
+html[data-elder="on"] .date,
+html[data-elder="on"] .summary{font-size:14px}
+html[data-elder="on"] .ring-num{font-size:15px}
 html[data-elder="on"] .title{font-size:18px}
 html[data-elder="on"] .quick input{font-size:17px}
 html[data-elder="on"] .card .check,
@@ -111,12 +115,71 @@ html[data-elder="on"] .tab{font-size:14px}
 html[data-elder="on"] .chip,
 html[data-elder="on"] .save,
 html[data-elder="on"] .wbtn,
-html[data-elder="on"] .mbtn{font-size:15px;min-height:48px}
+html[data-elder="on"] .mbtn,
+html[data-elder="on"] .seg button{font-size:14px;min-height:44px;padding-left:13px;padding-right:13px}
 html[data-elder="on"] .big-input{font-size:21px}
 html[data-elder="on"] .tag,
 html[data-elder="on"] .cd,
 html[data-elder="on"] .meta{font-size:13px}
 html[data-elder="on"] .lv-opt small{font-size:11.5px}
+html[data-elder="on"] .sec-title{font-size:14px}
+html[data-elder="on"] .mini-btn,
+html[data-elder="on"] .quick-more{font-size:13px;min-height:38px}
+html[data-elder="on"] .empty p{font-size:15px}
+html[data-elder="on"] .set-row{font-size:15px;padding:14px 0}
+html[data-elder="on"] .set-row .sub,
+html[data-elder="on"] .sw-name{font-size:12.5px}
+html[data-elder="on"] .set-title{font-size:16px}
+html[data-elder="on"] .set-desc{font-size:14px}
+html[data-elder="on"] .set-detail{font-size:13.5px}
+html[data-elder="on"] .set-desc.dnd-desc,
+html[data-elder="on"] .set-desc.dnd-desc label{font-size:13.5px}
+html[data-elder="on"] .stat-num{font-size:26px}
+html[data-elder="on"] .stat-lab{font-size:12.5px}
+html[data-elder="on"] .week .day .w{font-size:12.5px}
+html[data-elder="on"] .week .day .n{font-size:17px}
+html[data-elder="on"] .ach .badge,
+html[data-elder="on"] .hist-day,
+html[data-elder="on"] .hist-item{font-size:13px}
+html[data-elder="on"] .hist-item .hm{font-size:12.5px}
+html[data-elder="on"] .cal-title{font-size:19px}
+html[data-elder="on"] .cal-w{font-size:13px}
+html[data-elder="on"] .cal-cell{font-size:15px}
+html[data-elder="on"] .cal-day-title,
+html[data-elder="on"] .cal-nav button{font-size:14px}
+html[data-elder="on"] .member-title{font-size:18px}
+html[data-elder="on"] .member-desc,
+html[data-elder="on"] .member-link{font-size:13.5px}
+html[data-elder="on"] .member-badge{font-size:12px}
+html[data-elder="on"] .member-plan-name,
+html[data-elder="on"] .member-price,
+html[data-elder="on"] .member-benefit-row{font-size:14px}
+html[data-elder="on"] .member-plan-desc,
+html[data-elder="on"] .member-year,
+html[data-elder="on"] .member-note{font-size:12.5px}
+html[data-elder="on"] .guide-title,
+html[data-elder="on"] .guide-body,
+html[data-elder="on"] .guide-prev,
+html[data-elder="on"] .guide-next{font-size:14px}
+html[data-elder="on"] .auth-field label,
+html[data-elder="on"] .field-label,
+html[data-elder="on"] .input-hint,
+html[data-elder="on"] .modal-hint,
+html[data-elder="on"] .voice-hint{font-size:13px}
+html[data-elder="on"] .modal h3{font-size:19px}
+html[data-elder="on"] .modal-time,
+html[data-elder="on"] .modal-note{font-size:14px}
+html[data-elder="on"] .sum-item{font-size:14px}
+html[data-elder="on"] .toast{font-size:14px}
+html[data-elder="on"] .dnd-desc select,
+html[data-elder="on"] .vibe-label,
+html[data-elder="on"] .vibe-value,
+html[data-elder="on"] .guide-step,
+html[data-elder="on"] .auth-err,
+html[data-elder="on"] .cfg-field label,
+html[data-elder="on"] .cfg-note{font-size:13px}
+html[data-elder="on"] .vibe-test{font-size:13px;height:36px}
+html[data-elder="on"] .cfg-field input{font-size:15px;height:46px}
 html[data-mode="dark"] body,html[data-mode="auto"] body{background:var(--bg)}
 @media(prefers-color-scheme:dark){html[data-mode="auto"] body{background:var(--bg)}}
 html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #0D0C0B,0 0 0 11px #262320}
@@ -3238,7 +3301,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261120-20').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261120-21').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
