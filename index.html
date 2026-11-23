@@ -859,13 +859,10 @@ html[data-mode="dark"] .toast button{color:#245740}
 
 
 /* ── 小步角色 ───────────────────────────────── */
-.empty-mascot{width:104px;height:auto;margin-bottom:6px;opacity:.96;
-  filter:drop-shadow(0 6px 14px rgba(35,32,28,.10))}
-html[data-elder="on"] .empty-mascot{width:124px}
-.modal-mark-img{width:42px;height:42px;border-radius:13px;object-fit:cover;
+html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;object-fit:cover;
   box-shadow:0 6px 16px rgba(35,32,28,.18);flex:0 0 auto}
-.boot-mascot{width:86px;height:auto;animation:bootBob 2.4s ease-in-out infinite}
-@keyframes bootBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+50%{transform:translateY(-6px)}}
+
 
 
 
@@ -1058,15 +1055,7 @@ html[data-perf="on"] .xb-hero-img{animation:none}
 @media (prefers-reduced-motion: reduce){.xb-hero-img{animation:none}}
 
 
-/* ── 启动页：角色取代绿色方块 ───────────────── */
-.boot-mark{width:104px!important;height:104px!important;border-radius:32px!important;
-  background:transparent!important;box-shadow:none!important;overflow:visible!important}
-.boot-mascot{width:104px;height:104px;object-fit:contain;position:relative;z-index:1;
-  filter:drop-shadow(0 12px 22px rgba(36,87,64,.22));animation:bootBob 2.6s ease-in-out infinite}
-.boot-mark__sweep{display:none!important}
-.boot-mark__ring{inset:-10px!important;opacity:1!important;border-radius:50%!important;
-  background:repeating-conic-gradient(from 0deg,rgba(47,110,82,.34) 0deg 2.4deg,transparent 2.4deg 10deg)!important}
-html[data-mode=dark] .boot-mark__ring{background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.26) 0deg 2.4deg,transparent 2.4deg 10deg)!important}
+
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -1083,7 +1072,9 @@ html[data-mode=dark] .boot-mark__ring{background:repeating-conic-gradient(from 0
       <div class="boot-mark">
         <span class="boot-mark__ring" aria-hidden="true"></span>
         <span class="boot-mark__sweep" aria-hidden="true"></span>
-        <img class="boot-mascot" src="body-320.png" alt="">
+        <svg class="boot-mark__glyph" viewBox="0 0 1024 1024" aria-hidden="true">
+          <path d="M300 520L438 658L760 320" pathLength="1" fill="none" stroke="#FFFBF2" stroke-width="122" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
       <div class="boot-word">小步</div>
       <div class="boot-slogan">说出来，就有人替你记住</div>
@@ -1879,7 +1870,7 @@ function render(){
   $('doneCount').textContent=done.length?done.length+' 件':'';
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
-  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ')}).join(''):'<div class="empty"><img class="empty-mascot" src="body-320.png" alt="小步" loading="lazy"><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
+  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
   $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
   $('doneSec').style.display=done.length?'block':'none';
   const soon=normal.filter(t=>t.ts<Date.now()+86400000).sort((a,b)=>a.ts-b.ts);
@@ -3514,6 +3505,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
