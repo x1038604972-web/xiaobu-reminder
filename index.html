@@ -928,6 +928,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1729,8 +1732,8 @@ html[data-mode="dark"] .top .date,html[data-mode="dark"] .top .summary{text-shad
   <div class="sheet-mask" id="authMask"></div>
   <div class="sheet" id="authSheet">
     <div class="grab"></div>
-    <h2 id="authTitle">邮箱注册</h2>
-    <div class="auth-field"><label>邮箱</label><input id="authUser" type="email" maxlength="60" placeholder="name@example.com" autocomplete="email"></div>
+    <h2 id="authTitle">本地注册</h2>
+    <div class="auth-field"><label>邮箱或昵称</label><input id="authUser" type="text" maxlength="60" placeholder="邮箱或昵称都行" autocomplete="username"></div>
     <div class="auth-field"><label>密码</label><input id="authPass" type="password" maxlength="30" placeholder="至少 4 位" autocomplete="current-password"></div>
     <div class="auth-err" id="authErr"></div>
     <button class="save" id="authSubmit">注册</button>
@@ -1950,13 +1953,46 @@ function dayHint(){
   return h<11?'早上好，先挑一件最重要的走一小步':h<14?'中午了，别忘了给下午留点余地':h<18?'下午了，把要紧的事先收掉':'晚上了，剩下没做完的明天接着走';
 }
 
+function sanitizeTasks(arr){
+  // 旧版本数据 / 手改 localStorage / 半截写入，都可能让字段缺失或类型不对。
+  // 这里统一洗一遍：坏到无法挽救的条目直接丢掉，其余补齐默认值。
+  const out=[];
+  (Array.isArray(arr)?arr:[]).forEach(function(raw,idx){
+    if(!raw||typeof raw!=='object')return;
+    const title=(typeof raw.title==='string'?raw.title:String(raw.title==null?'':raw.title)).trim();
+    if(!title)return;
+    let ts=Number(raw.ts);
+    if(!isFinite(ts)||ts<=0)ts=Date.now()+3600000;
+    let lv=Number(raw.lv);
+    if(!isFinite(lv)||lv<1||lv>3)lv=1;
+    const reps=['none','daily','weekly','custom'];
+    const repeat=reps.indexOf(raw.repeat)>=0?raw.repeat:'none';
+    let mask=Number(raw.weekMask);if(!isFinite(mask)||mask<=0)mask=0;
+    out.push({
+      id:(typeof raw.id==='string'&&raw.id)||('t'+idx+Date.now().toString(36)),
+      title:title,
+      ts:ts,
+      lv:lv,
+      special:raw.special==='terminus'?'terminus':'',
+      done:!!raw.done,
+      note:typeof raw.note==='string'?raw.note:'',
+      repeat:repeat,
+      weekMask:mask,
+      completedCount:Number(raw.completedCount)||0,
+      escalateCount:Number(raw.escalateCount)||0,
+      notified:!!raw.notified,
+      created:Number(raw.created)||Date.now()
+    });
+  });
+  return out;
+}
 function load(){
   try{
     const raw=localStorage.getItem(KEY);
     if(raw){
       const v=JSON.parse(raw);
       const arr=Array.isArray(v)?v:(v&&Array.isArray(v.tasks)?v.tasks:null);
-      if(arr){tasks=arr;if(v&&v.meta&&typeof v.meta==='object'){
+      if(arr){tasks=sanitizeTasks(arr);if(v&&v.meta&&typeof v.meta==='object'){
         meta=Object.assign(meta,v.meta);
         meta.dnd=Object.assign({on:false,from:22,to:8},v.meta.dnd||{});
         if(!Array.isArray(meta.history))meta.history=[];
@@ -2149,7 +2185,7 @@ function cardHTML(t,opts){
       ? '<span class="tag terminus-tag">✦ 终焉</span><span class="terminus-when">公元 '+terminusYear(t.ts)+' 年 · 距今 10000 年</span>'+
         '<span class="terminus-days">第 '+Math.max(1,Math.floor((Date.now()-(t.created||Date.now()))/86400000)+1)+' 天</span>'
       : '<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd)+
-    '<span class="tag '+LV[t.lv].c+'">'+LV[t.lv].n+'</span></div>'+
+    '<span class="tag '+(LV[t.lv]||LV[1]).c+'">'+(LV[t.lv]||LV[1]).n+'</span></div>'+
     (t.note?'<div class="detail">'+esc(t.note)+'</div>':'')+
     '<span class="card-edit" data-act="edit">编辑</span></div>'+
     '<div class="act">'+((t.done||terminus)?'':'<button class="postpone-btn" data-act="postpone-one" aria-label="推迟">推迟</button>')+
@@ -2391,7 +2427,7 @@ function delTask(id){
 }
 function showNotify(t){
   if(!('Notification' in window)||Notification.permission!=='granted')return;
-  try{new Notification('小步 · '+t.title,{body:fullTime(t.ts)+' · '+LV[t.lv].n,tag:t.id})}catch(e){}
+  try{new Notification('小步 · '+t.title,{body:fullTime(t.ts)+' · '+(LV[t.lv]||LV[1]).n,tag:t.id})}catch(e){}
 }
 function fireReminder(t){
   t.notified=true;t.escalateCount=(t.escalateCount||0)+1;t.lastShownAt=Date.now();
@@ -2401,8 +2437,8 @@ function openModal(id,reminder){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   modalId=id;
   const lv=$('modalLv'),cnt=t.escalateCount||0;
-  lv.className='modal-lv '+(LV[t.lv].c||'');
-  lv.textContent=(reminder&&cnt>1&&cnt<99)?('第 '+cnt+' 次提醒 · '+LV[t.lv].n):LV[t.lv].n;
+  lv.className='modal-lv '+((LV[t.lv]||LV[1]).c||'');
+  lv.textContent=(reminder&&cnt>1&&cnt<99)?('第 '+cnt+' 次提醒 · '+(LV[t.lv]||LV[1]).n):(LV[t.lv]||LV[1]).n;
   $('modalTitle').textContent=t.title;
   $('modalTime').textContent=fullTime(t.ts)+(isOver(t.ts)?' · 已过时间':'');
   $('modalNote').style.display=t.note?'block':'none';$('modalNote').textContent=t.note||'';
@@ -2474,7 +2510,7 @@ function postponeOverdue(){
 }
 function openSummary(list){
   $('sumTitle').textContent='有 '+list.length+' 件已经过时间了';
-  $('sumList').innerHTML=list.map(t=>'<div class="sum-item">'+esc(t.title)+'<span>'+fullTime(t.ts)+' · '+LV[t.lv].n+'</span></div>').join('');
+  $('sumList').innerHTML=list.map(t=>'<div class="sum-item">'+esc(t.title)+'<span>'+fullTime(t.ts)+' · '+(LV[t.lv]||LV[1]).n+'</span></div>').join('');
   $('sumMask').classList.add('on');$('sumModal').classList.add('on');
 }
 function closeSummary(){$('sumMask').classList.remove('on');$('sumModal').classList.remove('on')}
@@ -2596,7 +2632,7 @@ function renderAccount(){
   });
 }
 function openAuth(mode){
-  authMode=mode;$('authTitle').textContent=mode==='register'?'邮箱注册':'邮箱登录';
+  authMode=mode;$('authTitle').textContent=mode==='register'?'本地注册':'本地登录';
   $('authSubmit').textContent=mode==='register'?'注册':'登录';
   $('authSwitch').textContent=mode==='register'?'已有账号？去登录':'没有账号？去注册';
   $('authUser').value='';$('authPass').value='';$('authErr').textContent='';
@@ -2606,17 +2642,18 @@ function openAuth(mode){
 function closeAuth(){$('authMask').classList.remove('on');$('authSheet').classList.remove('on')}
 function submitAuth(){
   const u=$('authUser').value.trim().toLowerCase(),p=$('authPass').value;
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u)){$('authErr').textContent='请输入正确的邮箱地址';return}
+  const isMail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u);
+  if(!isMail&&!/^[\w\u4e00-\u9fa5·._-]{2,20}$/.test(u)){$('authErr').textContent='请填写邮箱，或 2–20 字的昵称';return}
   if(p.length<4){$('authErr').textContent='密码至少 4 位';return}
   if(authMode==='register'){
-    if(accounts.some(a=>a.user===u)){$('authErr').textContent='该邮箱已注册，请直接登录';return}
+    if(accounts.some(a=>a.user===u)){$('authErr').textContent='这个账号已注册，请直接登录';return}
     accounts.push({user:u,pass:hashPass(p),data:snapshot(),created:Date.now()});
     localStorage.setItem(ACC_KEY,JSON.stringify(accounts));
     currentUser=u;localStorage.setItem(CUR_KEY,u);localStorage.setItem(KEY,snapshot());
     closeAuth();finishWelcome();render();renderAccount();toast('已注册并登录 · '+u);
   }else{
     const a=accounts.find(x=>x.user===u);
-    if(!a){$('authErr').textContent='该邮箱未注册，请先注册';return}
+    if(!a){$('authErr').textContent='这个账号还没注册，先注册一下';return}
     if(a.pass!==hashPass(p)){$('authErr').textContent='密码错误';return}
     closeAuth();finishWelcome();switchUser(u);toast('欢迎回来 · '+u);
   }
@@ -3618,7 +3655,30 @@ function openDetailFromQuick(){
 }
 $('quickAdd').onclick=openDetailFromQuick;
 $('xiaobuBtn').onclick=()=>{if(window.XiaoBu)window.XiaoBu.open();else toast('小步正在准备中')};
-$('quickInput').onkeydown=e=>{if(e.key==='Enter')openDetailFromQuick()};
+function quickCommit(){
+  const v=$('quickInput').value.trim();
+  if(!v){openDetailFromQuick();return}
+  const term=/终焉时刻|一万年后|一万年之后/.test(v);
+  const sp=parseSmart(v);
+  const ts=term?terminusTs():(quickTimeOverride||sp.ts);
+  if(!ts){openDetailFromQuick();return}          // 没解析出时间 → 让用户确认
+  if(!ensureTaskQuota())return;
+  const title=(sp.title||v).trim()||v;
+  const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
+  tasks.unshift({id:id,title:title,ts:ts,lv:term?1:(sp.lv||1),special:term?'terminus':'',done:false,note:'',
+    repeat:'none',weekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+  $('quickInput').value='';
+  const pp=$('parsePreview');if(pp){pp.classList.remove('on');pp.innerHTML=''}
+  quickTimeOverride=0;
+  save();render();highlightTask(id);lastQuickId=id;
+  undoAction=()=>{
+    const i=tasks.findIndex(x=>x.id===id);
+    if(i>=0){tasks.splice(i,1);save();render()}
+    toast('已撤销');
+  };
+  toast(toastMsgFor(ts,term?'terminus':''),'undo');
+}
+$('quickInput').onkeydown=e=>{if(e.key==='Enter')quickCommit()};
 $('titleInput').onkeydown=e=>{if(e.key==='Enter')$('saveBtn').click()};
 $('quickInput').oninput=e=>{
   renderParsePreview(e.target.value,'parsePreview',true);
@@ -3929,7 +3989,7 @@ $('calAdd').onclick=()=>{
   pendingTime=d.getTime();
   $('timeChips').innerHTML='<button class="chip on" data-i="4">'+fullTime(pendingTime)+'</button>';
   $('customTime').style.display='block';$('customInput').value=key+'T09:00';
-  openSheet();
+  openSheet();updateSheetSummary();
 };
 $('authMask').onclick=closeAuth;
 $('authSubmit').onclick=submitAuth;
@@ -3988,6 +4048,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
