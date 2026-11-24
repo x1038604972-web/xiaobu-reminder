@@ -914,6 +914,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1205,6 +1208,24 @@ html[data-elder="on"] .quick-more em{font-size:11px}
 .voice-type:active{background:var(--line2)}
 .voice-hint{line-height:1.6}
 html[data-elder="on"] .voice-type{font-size:14px;padding:11px 14px}
+
+
+/* ── 终焉：第 N 天 ───────────────────────────── */
+.terminus-days{
+  font-size:10.5px;letter-spacing:.08em;color:rgba(233,200,122,.62);
+  border:1px solid rgba(233,200,122,.26);border-radius:999px;padding:2px 8px;
+}
+html[data-elder="on"] .terminus-days{font-size:12px}
+
+/* ── 设置：连不上？看这里 ───────────────────── */
+.xb-trouble{margin:10px 0 2px;border-top:1px dashed var(--line);padding-top:10px}
+.xb-trouble summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--ink2);list-style:none}
+.xb-trouble summary::-webkit-details-marker{display:none}
+.xb-trouble summary::before{content:"▸ ";color:var(--ink3)}
+.xb-trouble[open] summary::before{content:"▾ "}
+.xb-trouble ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--ink3);line-height:1.75}
+.xb-trouble li{margin-bottom:3px}
+.xb-trouble b{color:var(--ink2);font-weight:700}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -1986,7 +2007,8 @@ function cardHTML(t,opts){
     '<div class="body-shift" style="display:flex;gap:13px;align-items:flex-start;width:100%">'+left+
     '<div class="body" data-act="open"><div class="title">'+esc(t.title)+'</div>'+
     '<div class="meta">'+nextTip+(terminus
-      ? '<span class="tag terminus-tag">✦ 终焉</span><span class="terminus-when">公元 '+terminusYear(t.ts)+' 年 · 距今 10000 年</span>'
+      ? '<span class="tag terminus-tag">✦ 终焉</span><span class="terminus-when">公元 '+terminusYear(t.ts)+' 年 · 距今 10000 年</span>'+
+        '<span class="terminus-days">第 '+Math.max(1,Math.floor((Date.now()-(t.created||Date.now()))/86400000)+1)+' 天</span>'
       : '<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd)+
     '<span class="tag '+LV[t.lv].c+'">'+LV[t.lv].n+'</span></div>'+
     (t.note?'<div class="detail">'+esc(t.note)+'</div>':'')+
@@ -2150,15 +2172,16 @@ function addTask(){
   if(!title){$('titleInput').focus();toast('先说出来要做什么');return}
   if(!editingId&&!ensureTaskQuota())return;
   const parsed=parseWhen(title);
-  const ts=(sheetTimePicked||!parsed)?pendingTime:parsed;
+  const isTerminus=/终焉时刻|一万年后|一万年之后/.test(title);
+  const ts=isTerminus?terminusTs():((sheetTimePicked||!parsed)?pendingTime:parsed);
   if(editingId){
     const t=tasks.find(x=>x.id===editingId);
     if(t){t.title=title;t.ts=ts;t.lv=pendingLv;t.note=$('noteInput').value.trim();t.repeat=pendingRepeat;t.weekMask=pendingRepeat==='custom'?pendingWeekMask:0;t.notified=false;t.escalateCount=0}
     save();render();closeSheet();resetSheet();toast('已修改 · '+fullTime(ts));return;
   }
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
-  tasks.unshift({id:id,title,ts,lv:pendingLv,special:pendingSpecial||'',done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
-  const __tstamp=toastMsgFor(ts,pendingSpecial);save();render();highlightTask(id);closeSheet();resetSheet();toast(__tstamp);
+  tasks.unshift({id:id,title,ts,lv:isTerminus?1:pendingLv,special:isTerminus?'terminus':(pendingSpecial||''),done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+  const __tstamp=toastMsgFor(ts,pendingSpecial);save();render();highlightTask(id);closeSheet();resetSheet();toast(toastMsgFor(ts,isTerminus?'terminus':pendingSpecial));
 }
 function nextTs(t){
   let ts=t.ts;const now=Date.now();
@@ -3877,6 +3900,9 @@ try{
 
 
 
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -4034,6 +4060,14 @@ try{
           '<button class="xb-ico" id="xbAiTest" style="width:auto;padding:0 12px;height:32px;font-size:12px">测一下</button></div>' +
         '<p>Key 只存在这台设备的 localStorage，不会上传到别处。DeepSeek / Kimi / 通义 都支持浏览器直连。<br>' +
           '想换模型点上面的胶囊；同一家的其它模型名也可以直接手打。<br>推理型（reasoner / r1）会慢 3~8 秒、也贵几倍，日常记事用 chat 就够。</p>' +
+        '<details class="xb-trouble"><summary>连不上？看这里</summary><ul>' +
+          '<li><b>Key 无效 / 401</b>：复制时带了空格或换行，重新复制一遍</li>' +
+          '<li><b>404</b>：模型名或接口地址不对，点上面的预设胶囊重选一次</li>' +
+          '<li><b>429</b>：额度用完或被限流，换个平台或明天再试</li>' +
+          '<li><b>连不上 / 跨域 / 超时</b>：换网络（校园网、公司网常拦），或开热点试试</li>' +
+          '<li><b>返回为空</b>：推理模型（reasoner）把 token 花在思考上，会自动重试一次</li>' +
+          '<li><b>一直转圈</b>：12 秒自动超时，会回落到本地规则，不影响记事</li>' +
+        '</ul></details>' +
         '<div class="xb-field"><label>小步记得的事</label><div class="xb-mem" id="xbMem"></div></div>' +
         '<div class="xb-row2"><div><div class="lb">清空对话</div><div class="sb">不影响你的待办</div></div>' +
           '<button class="xb-ico" id="xbClear" style="width:auto;padding:0 12px;height:32px;font-size:12px">清空</button></div>' +
@@ -4602,6 +4636,14 @@ try{
   }
 
   function parseDraft(text) {
+    // 「终焉时刻 / 留到一万年后」→ 直接一万年后，别追问几点
+    if (/终焉时刻|一万年后|一万年之后|留到一万年/.test(String(text))) {
+      var m = String(text).match(/把(.{1,12}?)(?:留|存|放)到/);
+      var obj = m ? m[1] : '';
+      var title = (obj && !/^(这句话|它|这个|那个|这句)$/.test(obj)) ? obj : '终焉时刻';
+      var tsT = (typeof terminusTs === 'function') ? terminusTs() : (Date.now() + 10000 * 365 * 86400000);
+      return { title: title, ts: tsT, lv: 1, repeat: 'none', weekMask: 0 };
+    }
     var sp = parseSmartX(text) || { title: text, ts: null, lv: 1 };
     var rep = parseRemember(text);
     var clean = cleanTitle(text);
@@ -4967,8 +5009,10 @@ try{
     var rolled = false;
     if (ts < Date.now() - 60000) { ts += 86400000; rolled = true; }  // 说的时间已过 → 顺延到明天同一时刻
     var id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
+    var term = /终焉时刻|一万年后|一万年之后/.test(String(title || ''));
+    if (term && typeof terminusTs === 'function') { ts = terminusTs(); lv = 1; }
     var task = {
-      id: id, title: title, ts: ts, lv: lv || 1, done: false, note: '',
+      id: id, title: title, ts: ts, lv: lv || 1, special: term ? 'terminus' : '', done: false, note: '',
       repeat: repeat || 'none', weekMask: (repeat === 'custom' ? (weekMask || 0) : 0),
       completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
     };
@@ -4983,10 +5027,13 @@ try{
     });
     doToast('已记下 · ' + ft(ts), 'undo');
 
-    var meta2 = ft(ts) + ' · ' + lvName(task.lv) + (task.repeat !== 'none' ? ' · ' + repLabelOf(task) : '');
-    say(rolled ? '那个点已经过了，我顺延到明天同一时间。到点叫你。' : '记好了，到点我叫你。', {
+    var meta2 = (task.special === 'terminus'
+      ? ('公元 ' + new Date(ts).getFullYear() + ' 年 · 距今 10000 年')
+      : (ft(ts) + ' · ' + lvName(task.lv) + (task.repeat !== 'none' ? ' · ' + repLabelOf(task) : '')));
+    var termText = task.special === 'terminus';
+    say(termText ? '已刻下。一万年后见。' : (rolled ? '那个点已经过了，我顺延到明天同一时间。到点叫你。' : '记好了，到点我叫你。'), {
       k: '✓', title: title, meta: meta2, id: id,
-      acts: [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
+      acts: termText ? [{ k: 'undo', t: '撤销' }] : [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
     }, [{ t: '去提醒栏', q: '__alerts__' }, '再说一件', '看看今天剩下的']);
   }
 
