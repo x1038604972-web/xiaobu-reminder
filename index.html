@@ -869,6 +869,12 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3531,6 +3537,12 @@ try{
 
 
 
+
+
+
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -4001,6 +4013,11 @@ try{
     stats: /(这周|本周|一周|统计|完成了几|完成了多少|做了几|坚持了|连续|成绩|进度|打卡了几)/,
     busy: /(忙不忙|有空吗|有没有空|忙吗|闲不闲|事情多不多|多不多)/,
     setting: /(适老化|大字模式|深色模式|夜间模式|浅色模式|性能优先|毛玻璃|勿扰)/,
+    greet: /^(早|早上好|早安|上午好|中午好|下午好|晚上好|晚安|你好|您好|你们好|在吗|在么|在不在|嗨|哈喽|哈啰|hi|hello|hey|哈罗)(呀|啊|哈|哦|呢|噢|嘛|喔|呐)*[!！。.,，?？~～\s]*$/i,
+    thanks: /^(谢|谢谢|谢谢你|谢啦|多谢|thanks|thankyou|辛苦了|太谢谢了)(呀|啊|哈|哦|啦|了)*[!！。.,，?？~～\s]*$/i,
+    bye: /^(拜拜|再见|回见|晚安了|先这样|回头聊|bye|byebye)[!！。.,，?？~～\s]*$/i,
+    more: /^(再说一件|再记一件|再来一件|还有一件|还有呢|再来一个|再记一个|记一件|再记一条)[!！。.,，?？~～\s]*$/,
+    ack: /^(好的?|好呀|好嘞|行|可以|收到|嗯+|ok|okay|明白|知道了|没问题)(呀|啊|哈|哦|啦|了)*[!！。.,，?？~～\s]*$/i,
     list: /(有什么|哪些|几件|几条|还有|待办|清单|列出|列一下|看看|看一下|日程|今天.*(做|干|要|该)|明天.*(做|干|要))/,
     done: /(完成|做完了|做完|搞定|勾掉|打勾|弄完|做掉|已办)/,
     del: /(删除|删掉|删了|去掉|移除|清掉)/,
@@ -4020,6 +4037,10 @@ try{
   function parseTimeExtra(s) {
     s = String(s || '');
     var m, n;
+    // 模糊相对时间
+    if (/(待会|待会儿|过会|过会儿|等会|等会儿|一会儿|一会)/.test(s)) return Date.now() + 30 * 60000;
+    if (/(马上|这就|立刻|立即)/.test(s)) return Date.now() + 10 * 60000;
+    if (/(晚点|稍后|过一阵|回头)/.test(s)) return Date.now() + 60 * 60000;
     if ((m = s.match(/(\d+|[一二两三四五六七八九十]+)\s*个?\s*(分钟|分)(后|以后|之后)?/))) {
       n = cn2num(m[1]); if (n != null) return Date.now() + n * 60000;
     }
@@ -4096,6 +4117,7 @@ try{
     s = s.replace(/(提醒我|提醒|提示我|提示|记一下|记下|记住|添加|新建|加一条|加一个|安排一下|安排|定个|设个|帮我记|存一下|一下)/g, '');
     s = s.replace(/每(周|星期)[一二三四五六日天]+/g, '');   // 每周三四
     s = s.replace(/每(周|星期|天|日|个月)/g, '');
+    s = s.replace(/(待会儿|待会|过会儿|过会|等会儿|等会|一会儿|一会|马上|这就|立刻|立即|晚点|稍后|过一阵)/g, '');
     s = s.replace(/(大后天|后天|明天|今天|今晚|明早|明晚|上午|中午|下午|晚上|早上|早晨|凌晨|周末|月底|夜里|傍晚)/g, '');
     s = s.replace(/(下下|下|这|本|上)(周|星期)[一二三四五六日天]/g, '');
     s = s.replace(/(周|星期)[一二三四五六日天]/g, '');
@@ -4149,19 +4171,117 @@ try{
     if (R.busy.test(text)) { doBusy(text); return; }
     if (R.list.test(text)) { doList(); return; }
 
+    // 寒暄先拦一道：「早上好」不该变成任务「好」
+    if (R.greet.test(s)) { doGreet(s); return; }
+    if (R.thanks.test(s)) { doSmall(s, 'thanks'); return; }
+    if (R.bye.test(s)) { doSmall(s, 'bye'); return; }
+    if (R.ack.test(s)) { doSmall(s, 'ack'); return; }
+
+    if (R.more.test(s)) {
+      S.pending = { kind: 'create' };
+      say('说吧，这件要记什么？', null, ['明天 9 点交作业', '待会儿吃药']);
+      return;
+    }
+
+    // 一句话里有两件事：「明天9点交作业，下午3点开会」
+    var multi = splitMulti(text);
+    if (multi) { doCreateMulti(multi); return; }
+
     var draft = parseDraft(text);
     var wantCreate = /(提醒|记一下|记下|记住|添加|新建|加一条|加一个|安排|别忘|要记|帮我记|定个|设个|存一下)/.test(text);
-    if (wantCreate || draft.ts) { doCreate(text, draft); return; }
+    if (wantCreate || draft.ts) {
+      // 只有时间没有事，或者事太不像事 → 追问，不要凭空建
+      if (!canCreate(text, draft)) return;
+      doCreate(text, draft);
+      return;
+    }
 
     if (R.cancel.test(s)) { say('好，那这件先不记。'); return; }
 
     // 纯名词句（「喝牛奶」）→ 当成要记的事，反问时间
     if (looksLikeTask(text)) {
-      doCreate(text, { title: cleanTitle(text) || text, ts: null, lv: 1, repeat: 'none', weekMask: 0 });
+      var d2 = { title: cleanTitle(text) || text, ts: null, lv: 1, repeat: 'none', weekMask: 0 };
+      if (!canCreate(text, d2)) return;
+      doCreate(text, d2);
       return;
     }
 
     doChat(text);
+  }
+
+  /* 建任务前的兜底校验：挡住「早上好→任务：好」这类事故 */
+  var FILLER = /^(好|嗯|早|晚安|在|行|可以|ok|okay|的|了|吧|啊|呀|呢|是|对|不|没|谢谢|哈|嘿|哎|哦|噢)$/i;
+  function canCreate(text, draft) {
+    var title = String((draft && draft.title) || '').replace(/[\s，,。.！!？?、~～]/g, '');
+    var hasTs = !!(draft && draft.ts);
+    // 只有时间、没有内容
+    if (!title) {
+      if (hasTs) {
+        var when = draft.ts ? ft(draft.ts) : '';
+        S.pending = { kind: 'title', ts: draft.ts, lv: (draft && draft.lv) || 1,
+          repeat: (draft && draft.repeat) || 'none', weekMask: (draft && draft.weekMask) || 0 };
+        say('时间我记住了：' + when + '。\n要记的是什么事？', null, ['交作业', '吃药', '给妈妈打电话']);
+        return false;
+      }
+      say('要记什么？直接说「明天 9 点交作业」就行。', null, ['明天 9 点交作业']);
+      return false;
+    }
+    // 太短的填充词
+    if (title.length <= 1 || FILLER.test(title)) {
+      doGreet(String(text).replace(/\s/g, ''));
+      return false;
+    }
+    // 明确说了「提醒/记一下」才算建任务；否则要求像一件正经事
+    var wantCreate = /(提醒|记一下|记下|记住|添加|新建|加一条|加一个|安排|别忘|要记|帮我记|定个|设个|存一下)/.test(text);
+    if (!wantCreate && !hasTs && title.length < 2) {
+      doGreet(String(text).replace(/\s/g, ''));
+      return false;
+    }
+    return true;
+  }
+
+  /* 打招呼：不只是回一句，顺手报今天的状况 */
+  function doGreet(s) {
+    var hour = new Date().getHours();
+    var hi = /晚安/.test(s) ? '晚安'
+      : /早上好|早安|^早$/.test(s) ? '早上好'
+        : /上午好/.test(s) ? '上午好'
+          : /中午好/.test(s) ? '中午好'
+            : /下午好/.test(s) ? '下午好'
+              : /晚上好/.test(s) ? '晚上好'
+                : hour < 5 ? '还没睡呀'
+                  : hour < 11 ? '早上好'
+                    : hour < 14 ? '中午好'
+                      : hour < 18 ? '下午好'
+                        : hour < 23 ? '晚上好' : '这么晚还在忙';
+
+    var all = nowList();
+    var left = todayTodo();
+    var doneCount = all.filter(function (x) { return x.done; }).length;
+    var line;
+    if (/晚安/.test(s)) {
+      line = left.length ? ('晚安。今天还剩 ' + left.length + ' 件没走完，要不要顺手推明早？')
+        : '晚安。今天的事都收干净了。';
+    } else if (!all.length) {
+      line = hi + '。今天还空着，想到什么就说一句，我替你记住。';
+    } else if (!left.length) {
+      line = hi + '。今天 ' + doneCount + ' 件都走完了，难得清静。';
+    } else {
+      var next = left.slice().sort(function (a, b) { return a.ts - b.ts; })[0];
+      var cd = countdown(next.ts);
+      line = hi + '。今天还有 ' + left.length + ' 件';
+      line += next ? '，下一件是「' + next.title + '」' + (cd ? '，' + cd : '') : '';
+      line += cd ? '。' : '。';
+      if (next && next.ts < Date.now()) line = hi + '。今天还有 ' + left.length + ' 件，最早那件「' + next.title + '」已经过点了，要现在处理吗？';
+    }
+    say(line, null, left.length ? ['看看今天剩下的', '帮我记一件'] : ['明天 9 点提醒我交作业']);
+  }
+
+  /* 谢谢 / 再见 / 收到 */
+  function doSmall(s, kind) {
+    if (kind === 'thanks') say('不客气。还有要记的就喊我。', null, ['帮我记一件']);
+    else if (kind === 'bye') say('好，有事随时叫我。');
+    else say('嗯，我在。想记点什么？', null, ['明天 9 点提醒我交作业', '看看今天剩下的']);
   }
 
   /* 「我明天忙不忙」→ 报明天的量 */
@@ -4186,6 +4306,34 @@ try{
     var p = S.pending;
     if (!p) return false;
     var s = text.replace(/\s/g, '');
+
+    if (p.kind === 'create') {
+      if (R.cancel.test(s)) { S.pending = null; say('好，那先不记。'); return true; }
+      var dc = parseDraft(text);
+      var tc = String(dc.title || '').replace(/\s/g, '');
+      if (tc && tc.length >= 2 && dc.ts) { S.pending = null; createTask(tc, dc.ts, dc.lv, dc.repeat, dc.weekMask); return true; }
+      if (tc && tc.length >= 2) {
+        S.pending = { kind: 'time', title: tc, lv: dc.lv, repeat: dc.repeat, weekMask: dc.weekMask };
+        say('「' + tc + '」几点提醒你？', null, ['1 小时后', '今晚 20:00', '明早 09:00']);
+        return true;
+      }
+      if (dc.ts) {
+        S.pending = { kind: 'title', ts: dc.ts, lv: dc.lv, repeat: dc.repeat, weekMask: dc.weekMask };
+        say('时间记住了：' + ft(dc.ts) + '。要记什么？');
+        return true;
+      }
+      say('再说具体点？比如「明天 9 点交作业」。', null, ['明天 9 点交作业']);
+      return true;
+    }
+
+    if (p.kind === 'title') {
+      if (R.cancel.test(s)) { S.pending = null; say('好，那先不记。'); return true; }
+      var tt = cleanTitle(text) || String(text).trim();
+      if (!tt || tt.length <= 1) { say('还是没听清，说具体点？比如「交作业」。'); return true; }
+      S.pending = null;
+      createTask(tt, p.ts, p.lv || 1, p.repeat || 'none', p.weekMask || 0);
+      return true;
+    }
 
     if (p.kind === 'time') {
       if (R.cancel.test(s)) { S.pending = null; say('好，那先不设时间。'); return true; }
@@ -4244,6 +4392,60 @@ try{
   }
 
   /* ── 新建 ─────────────────────────────────────────────── */
+  /* 一句话拆成多件：只在全部分句都带明确时间时才动手，避免瞎猜 */
+  function dayOffsetOf(s) {
+    if (/大后天/.test(s)) return 3;
+    if (/后天/.test(s)) return 2;
+    if (/明天|明早|明晚|明日/.test(s)) return 1;
+    return 0;
+  }
+
+  function splitMulti(text) {
+    var raw = String(text).split(/[，,；;]|然后|还有|另外|顺便/).map(function (x) { return x.trim(); })
+      .filter(function (x) { return x.length >= 2; });
+    if (raw.length < 2) return null;
+    var wholeOff = dayOffsetOf(text);
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      var d = parseDraft(raw[i]);
+      var title = String(d.title || '').replace(/\s/g, '');
+      if (!title || title.length < 2 || !d.ts) return null;   // 有一句缺时间就退回单件流程
+      var ts = d.ts;
+      // 句子开头说了「明天」，后面的分句没写日期 → 继承这个日期
+      if (wholeOff > 0 && dayOffsetOf(raw[i]) === 0) {
+        var hm = new Date(ts);
+        var base = new Date();
+        base.setDate(base.getDate() + wholeOff);
+        base.setHours(hm.getHours(), hm.getMinutes(), 0, 0);
+        ts = base.getTime();
+      }
+      out.push({ title: title, ts: ts, lv: d.lv, repeat: d.repeat, weekMask: d.weekMask });
+    }
+    return out.length >= 2 ? out : null;
+  }
+
+  function doCreateMulti(parts) {
+    var ids = [], lines = [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (!canAdd()) { say('未完成事项到上限了，先完成几条再记。'); return; }
+      var task = createTask(p.title, p.ts, p.lv, p.repeat, p.weekMask, true);
+      if (task) { ids.push(task.id); lines.push('· ' + ft(p.ts) + '  ' + p.title); }
+    }
+    if (!ids.length) { say('没记下来，再说一次？'); return; }
+    doSave(); doRender();
+    setUndo(function () {
+      var arr = T();
+      ids.forEach(function (id) {
+        var k = arr.findIndex(function (x) { return x.id === id; });
+        if (k >= 0) arr.splice(k, 1);
+      });
+      doSave(); doRender(); doToast('已撤销');
+    });
+    doToast('已记下 ' + ids.length + ' 件', 'undo');
+    say('一口气记了 ' + ids.length + ' 件：\n' + lines.join('\n'), null, ['再说一件', '看看今天剩下的']);
+  }
+
   function doCreate(text, draft) {
     if (!draft.title) {
       say('要记的是什么事？比如「明天 9 点提醒我交作业」。');
@@ -4257,7 +4459,7 @@ try{
     createTask(draft.title, draft.ts, draft.lv, draft.repeat, draft.weekMask);
   }
 
-  function createTask(title, ts, lv, repeat, weekMask) {
+  function createTask(title, ts, lv, repeat, weekMask, quiet) {
     if (!canAdd()) { say('未完成事项到上限了，先完成几条再记。'); return; }
     var rolled = false;
     if (ts < Date.now() - 60000) { ts += 86400000; rolled = true; }  // 说的时间已过 → 顺延到明天同一时刻
@@ -4268,7 +4470,9 @@ try{
       completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
     };
     T().unshift(task);
-    doSave(); doRender(); highlight(id);
+    doSave(); doRender();
+    if (quiet) return task;
+    highlight(id);
 
     setUndo(function () {
       var arr = T(), i = arr.findIndex(function (x) { return x.id === id; });
@@ -4875,6 +5079,11 @@ try{
     if (R.done.test(text)) return { intent: 'done', pending: pend };
     if (R.post.test(text)) return { intent: 'postpone', pending: pend, ts: parseWhenX(text) || parseTimeExtra(text) };
     if (R.list.test(text)) return { intent: 'list', pending: pend };
+    if (R.greet.test(s)) return { intent: 'greet', pending: pend };
+    if (R.thanks.test(s)) return { intent: 'thanks', pending: pend };
+    if (R.bye.test(s)) return { intent: 'bye', pending: pend };
+    if (R.ack.test(s)) return { intent: 'ack', pending: pend };
+
     var draft = parseDraft(text);
     var wantCreate = /(提醒|记一下|记下|记住|添加|新建|加一条|加一个|安排|别忘|要记|帮我记|定个|设个|存一下)/.test(text);
     if (wantCreate || draft.ts) {
