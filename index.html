@@ -880,6 +880,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1068,6 +1071,17 @@ html[data-perf="on"] .xb-hero-img{animation:none}
 
 
 
+
+
+/* ── 模型胶囊 ─────────────────────────────── */
+.xb-models{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.xb-chip{border:1px solid var(--line);background:var(--surface);border-radius:10px;
+  padding:6px 10px;font-size:11.5px;color:var(--ink2);line-height:1.25;cursor:pointer;
+  font-family:inherit;text-align:left;transition:.18s}
+.xb-chip i{display:block;font-style:normal;font-size:9.5px;color:var(--ink3);margin-top:2px}
+.xb-chip.on{background:var(--brand-soft);border-color:#CFE2D7;color:var(--brand-ink);font-weight:700}
+.xb-chip.on i{color:var(--brand)}
+html[data-elder="on"] .xb-chip{font-size:13px;padding:8px 12px}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -3553,6 +3567,9 @@ try{
 
 
 
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -3690,10 +3707,12 @@ try{
           '</div></div>' +
         '<div class="xb-field"><label>接口地址</label><input id="xbAiBase" placeholder="https://api.deepseek.com/v1"></div>' +
         '<div class="xb-field"><label>API Key</label><input id="xbAiKey" type="password" placeholder="sk-..."></div>' +
-        '<div class="xb-field"><label>模型</label><input id="xbAiModel" placeholder="deepseek-chat"></div>' +
+        '<div class="xb-field"><label>模型</label><input id="xbAiModel" placeholder="deepseek-chat">' +
+          '<div class="xb-models" id="xbModels"></div></div>' +
         '<div class="xb-row2"><div><div class="lb">测试连接</div><div class="sb" id="xbAiState">还没测过</div></div>' +
           '<button class="xb-ico" id="xbAiTest" style="width:auto;padding:0 12px;height:32px;font-size:12px">测一下</button></div>' +
-        '<p>Key 只存在这台设备的 localStorage，不会上传到别处。DeepSeek / Kimi / 通义 都支持浏览器直连。</p>' +
+        '<p>Key 只存在这台设备的 localStorage，不会上传到别处。DeepSeek / Kimi / 通义 都支持浏览器直连。<br>' +
+          '想换模型点上面的胶囊；同一家的其它模型名也可以直接手打。</p>' +
         '<div class="xb-row2"><div><div class="lb">清空对话</div><div class="sb">不影响你的待办</div></div>' +
           '<button class="xb-ico" id="xbClear" style="width:auto;padding:0 12px;height:32px;font-size:12px">清空</button></div>' +
         '<div class="xb-actions"><button id="xbSetBack">返回</button><button class="p" id="xbSetSave">保存</button></div>' +
@@ -3753,7 +3772,11 @@ try{
       } else {
         setAiState('自己填地址和模型名');
       }
+      renderModelChips(b.dataset.p);
     });
+
+    // 模型胶囊：点一下换模型，不用手打
+    renderModelChips('deepseek');
 
     // 测试连接
     X$('xbAiTest').addEventListener('click', function () {
@@ -3769,6 +3792,45 @@ try{
       }).catch(function (err) {
         setAiState('失败：' + err.message);
       });
+    });
+  }
+
+  var MODEL_MENU = {
+    deepseek: [
+      ['deepseek-chat', '对话·便宜'],
+      ['deepseek-reasoner', '推理·更强']
+    ],
+    moonshot: [
+      ['moonshot-v1-8k', '8k·够用'],
+      ['moonshot-v1-32k', '32k'],
+      ['moonshot-v1-128k', '128k·长文']
+    ],
+    qwen: [
+      ['qwen-flash', '最快·最省'],
+      ['qwen-turbo', '快'],
+      ['qwen-plus', '均衡'],
+      ['qwen-max', '最强']
+    ],
+    custom: []
+  };
+
+  function renderModelChips(provider) {
+    var box = X$('xbModels');
+    if (!box) return;
+    var list = MODEL_MENU[provider] || [];
+    if (!list.length) { box.innerHTML = ''; return; }
+    var cur = (X$('xbAiModel').value || '').trim();
+    box.innerHTML = list.map(function (p) {
+      var on = p[0] === cur ? ' on' : '';
+      return '<button class="xb-chip' + on + '" data-model="' + p[0] + '">' +
+        p[0] + '<i>' + p[1] + '</i></button>';
+    }).join('');
+    [].forEach.call(box.children, function (b) {
+      b.onclick = function () {
+        X$('xbAiModel').value = b.dataset.model;
+        [].forEach.call(box.children, function (x) { x.classList.toggle('on', x === b); });
+        setAiState('已选 ' + b.dataset.model + '，记得点「测一下」');
+      };
     });
   }
 
@@ -3810,9 +3872,12 @@ try{
 
   function fillSetForm() {
     if (!X$('xbAiBase')) return;
+    var b0 = String(S.ai.base || '');
+    var prov = /deepseek/.test(b0) ? 'deepseek' : /moonshot/.test(b0) ? 'moonshot' : /dashscope/.test(b0) ? 'qwen' : 'custom';
     X$('xbAiBase').value = S.ai.base || '';
     X$('xbAiKey').value = S.ai.key || '';
     X$('xbAiModel').value = S.ai.model || '';
+    try { renderModelChips(prov); } catch (e) {}
     [].forEach.call(X$('xbAiSeg').children, function (x) {
       x.classList.toggle('on', (x.dataset.ai === 'on') === !!S.ai.on);
     });
