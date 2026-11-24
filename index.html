@@ -875,6 +875,10 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3543,6 +3547,10 @@ try{
 
 
 
+
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -4010,7 +4018,7 @@ try{
     yes: /^(好|好的|好啊|行|可以|对|对的|是|是的|嗯|嗯嗯|没错|确认|就它|ok|okay|yes)/i,
     no: /^(不|不是|不对|错了|不是这个|no)/i,
     help: /(你会什么|能做什么|能干什么|会干什么|帮助|怎么用|使用说明|你是谁|你是什么|介绍.*自己)/,
-    stats: /(这周|本周|一周|统计|完成了几|完成了多少|做了几|坚持了|连续|成绩|进度|打卡了几)/,
+    stats: /(统计|完成了几|完成了多少|完成了多少件|做了几|坚持了|连续\d*天|成绩|进度|打卡了几|完成情况)/,
     busy: /(忙不忙|有空吗|有没有空|忙吗|闲不闲|事情多不多|多不多)/,
     setting: /(适老化|大字模式|深色模式|夜间模式|浅色模式|性能优先|毛玻璃|勿扰)/,
     greet: /^(早|早上好|早安|上午好|中午好|下午好|晚上好|晚安|你好|您好|你们好|在吗|在么|在不在|嗨|哈喽|哈啰|hi|hello|hey|哈罗)(呀|啊|哈|哦|呢|噢|嘛|喔|呐)*[!！。.,，?？~～\s]*$/i,
@@ -4157,7 +4165,11 @@ try{
 
   /* ── 主处理 ───────────────────────────────────────────── */
   function handle(text) {
-    if (S.pending && fillSlot(text)) return;
+    if (S.pending) {
+      // 在等「时间/事情/新建」的时候，用户突然问列表、问统计、改设置 → 先放下槽位，按新意图走
+      if (!slotEscape(text) && fillSlot(text)) return;
+      S.pending = null;
+    }
 
     var s = text.replace(/\s/g, '');
     if (R.undo.test(s)) { doUndo(); return; }
@@ -4165,7 +4177,7 @@ try{
     if (R.stats.test(text)) { doStats(); return; }
 
     if (R.del.test(text)) { doDelete(text); return; }
-    if (R.done.test(text)) { doDone(text); return; }
+    if (R.done.test(text) && !/没(有)?(做完|完成|做|弄|处理)|还没(做|完成)/.test(text)) { doDone(text); return; }
     if (R.post.test(text)) { doPostpone(text); return; }
     if (R.setting.test(text)) { if (doSetting(text)) return; }
     if (R.busy.test(text)) { doBusy(text); return; }
@@ -4184,6 +4196,9 @@ try{
     }
 
     // 一句话里有两件事：「明天9点交作业，下午3点开会」
+    // 绕的说法（区间 / 随便哪天 / 都挪到 / 养成习惯 …）本地规则啃不动，直接交给模型
+    if (aiReady() && HARD.test(s) && !splitMulti(text)) { askLLM(text); return; }
+
     var multi = splitMulti(text);
     if (multi) { doCreateMulti(multi); return; }
 
@@ -4207,6 +4222,25 @@ try{
     }
 
     doChat(text);
+  }
+
+  /* 本地啃不动的说法 */
+  var HARD = /(随便|任意|哪天|之前|之内|之间|有空的时候|有空|养成习惯|每次都|各一次|两次|三次|没做完的都|都挪|都推到|重新安排|重新排|看情况|差不多|上次那条|那条改)/;
+
+  function aiReady() { return !!(S.ai && S.ai.on && S.ai.key); }
+
+  /* 槽位里说的这句话，其实是在问别的（列表 / 统计 / 设置 / 寒暄 / 新建） */
+  function slotEscape(text) {
+    var s = String(text).replace(/\s/g, '');
+    return !!(R.list.test(text) || R.stats.test(text) || R.help.test(text) ||
+      R.setting.test(text) || R.greet.test(s) || R.busy.test(text) || R.more.test(s));
+  }
+
+  /* 本地没找到目标 → 让模型再试一次 */
+  function handoff(text) {
+    if (!aiReady()) return false;
+    askLLM(text);
+    return true;
   }
 
   /* 建任务前的兜底校验：挡住「早上好→任务：好」这类事故 */
@@ -4507,6 +4541,7 @@ try{
 
   /* ── 完成 ─────────────────────────────────────────────── */
   function doDone(text) {
+    if (aiReady() && !findTasks(text).length) { askLLM(text); return; }   // 模型可能知道「课程设计」= 交课程设计文档
     var t = pick(text, 'done');
     if (t) doDoneOn(t);
   }
@@ -4551,6 +4586,7 @@ try{
 
   /* ── 删除 ─────────────────────────────────────────────── */
   function doDelete(text) {
+    if (aiReady() && !findTasks(text).length) { askLLM(text); return; }
     var t = pick(text, 'delete');
     if (t) doDeleteOn(t);
   }
@@ -4599,6 +4635,7 @@ try{
       return;
     }
 
+    if (aiReady() && !findTasks(text).length) { askLLM(text); return; }
     var t = pick(text, 'postpone');
     if (!t) return;
     if (!ts) {
@@ -4764,7 +4801,11 @@ try{
       '1) 只能引用 tasks 里真实存在的 task_id，拿不准就问，action 置 null；\n' +
       '2) when 用中文说法（明天9点 / 后天下午3点 / 一小时后 / 每天22点 / 每周三四早上8点）；\n' +
       '3) 用户说「重要/必须/不能忘」用 level 3，「普通」用 2，其余 1；\n' +
-      '4) reply 里不要重复 title 之外的多余内容，最多两句话。';
+      '4) reply 里不要重复 title 之外的多余内容，最多两句话；\n' +
+      '5) 这个 App 每条任务只有一个提醒时间。用户要「两次」「三点到五点之间」时，先建第一个时间，并在 reply 里说明「先按 X 点记，另一次你可以再补一句」；\n' +
+      '6) 用户说「养成习惯」「每天都」「老是忘」→ 用 create 且 when 写成「每天X点」；\n' +
+      '7) 只要能推断出合理时间就直接建任务并说明，例如「这周末之前随便哪天」→ 取最近的一个周五上午 10 点；实在没有依据（如「下周有空的时候」）才反问；\n' +
+      '8) reply 用中文口语，别写成系统提示，别说「作为助手」。';
   }
 
   function askLLM(text) {
@@ -4775,36 +4816,80 @@ try{
     });
     hist.push({ role: 'user', content: text });
 
+    var ctrl = null, timer = null;
+    try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, 12000); } catch (e) {}
     fetch(base + '/chat/completions', {
       method: 'POST',
+      signal: ctrl ? ctrl.signal : undefined,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
       body: JSON.stringify({
         model: S.ai.model || 'deepseek-chat',
-        temperature: 0.3,
+        temperature: 0.2,
         messages: [{ role: 'system', content: sysPrompt() }].concat(hist)
       })
     }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (j) {
+      if (timer) { clearTimeout(timer); timer = null; }
       var txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
       if (!txt) throw new Error('empty');
       var obj = normJSON(txt);
-      var reply = (obj && obj.reply) || '我不太确定，再说一次？';
-      var act = obj && obj.action;
+      // 没按 JSON 回 → 追一次严格的；仍然不行才走兜底
+      if (!obj) return retryStrict(text, hist, txt);
+      return { obj: obj };
+    }).then(function (res) {
       S.busy = false;
       typing(false);
+      var obj = res && res.obj;
+      if (!obj) {
+        // 兜底：标题不靠谱就别建（否则会建出「到之间两次吃药」）
+        var d = parseDraft(text);
+        var bad = !d || !d.title || !d.ts || d.title.length > 12 || /(之间|两次|三次|都|再|又|每|到$)/.test(d.title);
+        if (!bad && canCreate(text, d)) { doCreate(text, d); return; }
+        var raw = String((res && res.raw) || '').replace(/[{}[\]"']/g, '').slice(0, 60);
+        say((raw || '这句我没把握') + '\n再说具体点？比如「明天 9 点交作业」。', null, ['明天 9 点交作业', '看看今天剩下的']);
+        return;
+      }
+      var reply = (obj && obj.reply) || '我不太确定，再说一次？';
+      var act = obj && obj.action;
       if (act && act.type && act.type !== 'none') {
-        var extra = execRemote(act);
+        var extra = execRemote(act, reply, text);
         if (!extra) say(reply || '已经处理好了。');
       } else {
         say(reply);
       }
     }).catch(function () {
+      if (timer) { clearTimeout(timer); timer = null; }
       S.busy = false;
       typing(false);
       localChat(text, true);
     });
+  }
+
+  /* 模型没吐 JSON 时，用最严格的方式再要一次 */
+  function retryStrict(text, hist, firstTxt) {
+    var base = (S.ai.base || '').replace(/\/+$/, '');
+    var msgs = [{ role: 'system', content: sysPrompt() }].concat(hist)
+      .concat([{ role: 'system', content: '你上一条没有输出合法 JSON。这次只输出一个 JSON 对象，不要解释、不要代码块。' }]);
+    var ctrl = null, timer = null;
+    try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, 12000); } catch (e) {}
+    return fetch(base + '/chat/completions', {
+      method: 'POST',
+      signal: ctrl ? ctrl.signal : undefined,
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
+      body: JSON.stringify({ model: S.ai.model || 'deepseek-chat', temperature: 0, messages: msgs })
+    }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) {
+        if (timer) { clearTimeout(timer); timer = null; }
+        var txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+        var o = txt ? normJSON(txt) : null;
+        return { obj: o, raw: o ? '' : (txt || firstTxt) };
+      })
+      .catch(function () {
+        if (timer) { clearTimeout(timer); timer = null; }
+        return { obj: null, raw: firstTxt };
+      });
   }
 
   function normJSON(txt) {
@@ -4814,13 +4899,18 @@ try{
     return null;
   }
 
-  function execRemote(a) {
+  function execRemote(a, modelReply, userText) {
     if (a.type === 'create') {
-      var ts = parseWhenX(a.when || '');
-      var draft = parseDraft((a.title || '') + ' ' + (a.when || ''));
+      var whenStr = String(a.when || '');
+      var ts = parseWhenX(whenStr) || parseTimeExtra(whenStr) ||
+        parseWhenX(whenStr.replace(/每(天|日|周|星期)/g, '')) || parseTimeExtra(whenStr.replace(/每(天|日)/g, ''));
+      var draft = parseDraft((a.title || '') + ' ' + whenStr);
       var title = String(a.title || draft.title || '').trim();
       if (!title) return '要记的事还差个名字。';
       if (!ts) return '「' + title + '」的时间我没听清，说具体点？';
+      // 「养成习惯 / 每天都 / 老是忘」→ 落成每天重复
+      var habit = /(每天|天天|每日|习惯|老是忘|坚持)/.test(String(userText || '') + whenStr);
+      if (habit && (!draft.repeat || draft.repeat === 'none')) draft.repeat = 'daily';
       var id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
       T().unshift({
         id: id, title: title, ts: ts, lv: a.level || 1, done: false, note: '',
@@ -4833,7 +4923,8 @@ try{
         if (i >= 0) { arr.splice(i, 1); doSave(); doRender(); }
       });
       doToast('已记下 · ' + ft(ts), 'undo');
-      say('记好了：' + title + '\n' + ft(ts) + ' · ' + lvName(a.level || 1), {
+      var head = (modelReply && String(modelReply).trim()) || ('记好了：' + title);
+      say(head + '\n' + ft(ts) + ' · ' + lvName(a.level || 1) + (draft.repeat === 'daily' ? ' · 每天' : ''), {
         k: '✓', title: title, meta: ft(ts), id: id,
         acts: [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
       });
@@ -4844,7 +4935,10 @@ try{
     if (!t) return '那条待办已经不在列表里了。';
     if (a.type === 'done') { doDoneOn(t); return 'done'; }
     if (a.type === 'delete') { doDeleteOn(t); return 'done'; }
-    if (a.type === 'postpone') { doPostponeOn(t, parseWhenX(a.when || '')); return 'done'; }
+    if (a.type === 'postpone') {
+      doPostponeOn(t, parseWhenX(a.when || '') || parseTimeExtra(a.when || ''));
+      return 'done';
+    }
     return '';
   }
 
