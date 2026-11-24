@@ -868,6 +868,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1200,7 +1201,7 @@ html[data-perf="on"] .xb-hero-img{animation:none}
           <div class="acc-btns" id="accBtns"></div>
           <button class="wcfg" id="cfgEntry" style="padding:8px 0 0">配置真实登录（GitHub / 邮箱）→</button>
         </div>
-        <div class="set-card open" data-set>
+        <div class="set-card" data-set>
           <div class="set-title">系统设置<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           <div class="set-detail">
             <div class="set-row">
@@ -3253,13 +3254,21 @@ document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
   if(next==='me'){refreshNotifyStatus();renderStats();initDnd();renderAccount()}
   if(next==='calendar')renderCalendar();
 });
+const SET_OPEN_KEY='qingji_set_open_v1';
+let setOpenMap={};
+try{setOpenMap=JSON.parse(localStorage.getItem(SET_OPEN_KEY)||'{}')||{};}catch(e){setOpenMap={};}
 document.querySelectorAll('[data-set]').forEach(c=>{
   const title=c.querySelector('.set-title');
+  const key=title?title.textContent.trim():'';
+  // 默认全部折叠；只有明确展开过的才恢复展开
+  c.classList.toggle('open', !!setOpenMap[key]);
   const sync=()=>{if(title)title.setAttribute('aria-expanded',c.classList.contains('open')?'true':'false')};
   sync();
   c.onclick=e=>{
     if(e.target.closest('.set-detail'))return;
     c.classList.toggle('open');sync();
+    if(key){setOpenMap[key]=c.classList.contains('open');
+      try{localStorage.setItem(SET_OPEN_KEY,JSON.stringify(setOpenMap));}catch(e){}}
   };
 });
 $('batchToggle').onclick=()=>{batchMode=!batchMode;selected.clear();render()};
@@ -3500,11 +3509,12 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261123-xb3').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261124-xb4').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
 
 
 
