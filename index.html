@@ -891,6 +891,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3594,6 +3596,8 @@ try{
 
 
 
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -3741,7 +3745,7 @@ try{
         '<div class="xb-row2"><div><div class="lb">测试连接</div><div class="sb" id="xbAiState">还没测过</div></div>' +
           '<button class="xb-ico" id="xbAiTest" style="width:auto;padding:0 12px;height:32px;font-size:12px">测一下</button></div>' +
         '<p>Key 只存在这台设备的 localStorage，不会上传到别处。DeepSeek / Kimi / 通义 都支持浏览器直连。<br>' +
-          '想换模型点上面的胶囊；同一家的其它模型名也可以直接手打。</p>' +
+          '想换模型点上面的胶囊；同一家的其它模型名也可以直接手打。<br>推理型（reasoner / r1）会慢 3~8 秒、也贵几倍，日常记事用 chat 就够。</p>' +
         '<div class="xb-field"><label>小步记得的事</label><div class="xb-mem" id="xbMem"></div></div>' +
         '<div class="xb-row2"><div><div class="lb">清空对话</div><div class="sb">不影响你的待办</div></div>' +
           '<button class="xb-ico" id="xbClear" style="width:auto;padding:0 12px;height:32px;font-size:12px">清空</button></div>' +
@@ -3818,7 +3822,9 @@ try{
       if (!/^https?:/.test(S.ai.base)) { setAiState('接口地址要以 https:// 开头'); return; }
       setAiState('测试中…');
       testAI().then(function (r) {
-        setAiState('连上了 · ' + (r.model || S.ai.model) + '（' + r.ms + 'ms）');
+        var tail = r.ms + 'ms' + (r.slow ? ' · 推理模型首字较慢' : '');
+        setAiState('连上了 · ' + (r.model || S.ai.model) + '（' + tail + '）' +
+          (r.onlyThink ? ' · 只回了思考内容，也能用' : ''));
       }).catch(function (err) {
         setAiState('失败：' + err.message);
       });
@@ -3893,25 +3899,36 @@ try{
   function testAI() {
     var base = (S.ai.base || '').replace(/\/+$/, '');
     var t0 = Date.now();
+    var body = {
+      model: S.ai.model || 'deepseek-chat',
+      messages: [{ role: 'user', content: '回一个字：好' }],
+      max_tokens: isReasoner() ? 256 : 8
+    };
+    if (!isReasoner()) body.temperature = 0;   // 推理模型不支持 temperature
     return fetch(base + '/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
-      body: JSON.stringify({
-        model: S.ai.model || 'deepseek-chat',
-        messages: [{ role: 'user', content: '回一个字：好' }],
-        max_tokens: 8,
-        temperature: 0
-      })
+      body: JSON.stringify(body)
     }).then(function (r) {
       if (r.status === 401 || r.status === 403) throw new Error('Key 无效或没权限（' + r.status + '）');
       if (r.status === 404) throw new Error('模型名或地址不对（404）');
       if (r.status === 429) throw new Error('额度用完或限流（429）');
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if (!r.ok) return r.text().then(function (x) {
+        throw new Error('HTTP ' + r.status + (x ? ' · ' + x.slice(0, 80) : ''));
+      });
       return r.json();
     }).then(function (j) {
-      var txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      if (!txt) throw new Error('返回里没有内容');
-      return { model: j.model || S.ai.model, ms: Date.now() - t0 };
+      var msg = (j && j.choices && j.choices[0] && j.choices[0].message) || {};
+      var txt = msg.content || '';
+      var think = msg.reasoning_content || '';
+      // 推理模型可能把 token 全花在思考上，正文为空——这不算失败
+      if (!txt && !think) throw new Error('返回里没有内容');
+      return {
+        model: j.model || S.ai.model,
+        ms: Date.now() - t0,
+        slow: isReasoner(),
+        onlyThink: !txt && !!think
+      };
     }).catch(function (e) {
       if (e && e.message && e.message.indexOf('Failed to fetch') >= 0) {
         throw new Error('连不上（网络或接口不允许跨域）');
@@ -4375,6 +4392,12 @@ try{
   var HARD = /(随便|任意|哪天|之前|之内|之间|有空的时候|有空|养成习惯|每次都|各一次|两次|三次|没做完的都|都挪|都推到|重新安排|重新排|看情况|差不多|上次那条|那条改)/;
 
   function aiReady() { return !!(S.ai && S.ai.on && S.ai.key); }
+
+  /* 推理型模型：先想再说，token 消耗大、不支持 temperature、首字慢 */
+  function isReasoner() {
+    return /(reasoner|r1|think|o1|o3)/i.test(String((S.ai && S.ai.model) || ''));
+  }
+  function aiTimeout() { return isReasoner() ? 30000 : 12000; }
 
   /* 槽位里说的这句话，其实是在问别的（列表 / 统计 / 设置 / 寒暄 / 新建） */
   function slotEscape(text) {
@@ -5213,16 +5236,14 @@ try{
     hist.push({ role: 'user', content: text });
 
     var ctrl = null, timer = null;
-    try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, 12000); } catch (e) {}
+    try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, aiTimeout()); } catch (e) {}
     fetch(base + '/chat/completions', {
       method: 'POST',
       signal: ctrl ? ctrl.signal : undefined,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
-      body: JSON.stringify({
-        model: S.ai.model || 'deepseek-chat',
-        temperature: 0.2,
-        messages: [{ role: 'system', content: sysPrompt() }].concat(hist)
-      })
+      body: JSON.stringify(isReasoner()
+        ? { model: S.ai.model, messages: [{ role: 'system', content: sysPrompt() }].concat(hist), max_tokens: 1200 }
+        : { model: S.ai.model || 'deepseek-chat', temperature: 0.2, messages: [{ role: 'system', content: sysPrompt() }].concat(hist) })
     }).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
@@ -5275,12 +5296,14 @@ try{
     var msgs = [{ role: 'system', content: sysPrompt() }].concat(hist)
       .concat([{ role: 'system', content: '你上一条没有输出合法 JSON。这次只输出一个 JSON 对象，不要解释、不要代码块。' }]);
     var ctrl = null, timer = null;
-    try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, 12000); } catch (e) {}
+    try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, aiTimeout()); } catch (e) {}
     return fetch(base + '/chat/completions', {
       method: 'POST',
       signal: ctrl ? ctrl.signal : undefined,
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
-      body: JSON.stringify({ model: S.ai.model || 'deepseek-chat', temperature: 0, messages: msgs })
+      body: JSON.stringify(isReasoner()
+        ? { model: S.ai.model, messages: msgs, max_tokens: 1200 }
+        : { model: S.ai.model || 'deepseek-chat', temperature: 0, messages: msgs })
     }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (j) {
         if (timer) { clearTimeout(timer); timer = null; }
