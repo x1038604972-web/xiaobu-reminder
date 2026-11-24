@@ -879,6 +879,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3551,6 +3552,7 @@ try{
 
 
 
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -4899,7 +4901,22 @@ try{
     return null;
   }
 
+  function normActType(a) {
+    var m = {
+      create: 'create', add: 'create', new: 'create', remind: 'create', remember: 'create', 新建: 'create', 添加: 'create', 记: 'create',
+      done: 'done', complete: 'done', completed: 'done', finish: 'done', check: 'done', tick: 'done', 完成: 'done', 打勾: 'done',
+      delete: 'delete', remove: 'delete', del: 'delete', drop: 'delete', 删除: 'delete',
+      postpone: 'postpone', delay: 'postpone', reschedule: 'postpone', snooze: 'postpone', later: 'postpone', 推迟: 'postpone',
+      list: 'list', query: 'list', show: 'list', 查询: 'list', 列表: 'list'
+    };
+    var k = String((a && a.type) || '').toLowerCase().trim();
+    if (m[k]) a.type = m[k];
+    if (!a.task_id && a.id) a.task_id = a.id;
+    return a;
+  }
+
   function execRemote(a, modelReply, userText) {
+    a = normActType(a || {});
     if (a.type === 'create') {
       var whenStr = String(a.when || '');
       var ts = parseWhenX(whenStr) || parseTimeExtra(whenStr) ||
