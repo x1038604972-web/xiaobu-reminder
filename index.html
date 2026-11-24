@@ -893,6 +893,16 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1101,6 +1111,31 @@ html[data-elder="on"] .xb-chip{font-size:13px;padding:8px 12px}
 .xb-memitem.ghost{background:transparent;border-style:dashed;border-color:var(--line);color:var(--ink3)}
 html[data-elder="on"] .xb-memitem{font-size:13px}
 
+
+/* 面板收起时彻底移出布局：避免页面滚动时从底部露出标题，也不撑高文档 */
+.xb:not(.on){display:none!important}
+.xb.on{display:flex}
+
+
+/* 浮层（登录 / 小步）是绝对定位，会把文档撑高，导致页面能滚到它们——
+   滚动统一交给 .scroll，文档本身不滚 */
+html,body{overflow:hidden}
+
+/* 手机壳内裁切：语音面板 / 登录浮层等都是绝对定位在视口下方，不裁会从底部漏出来 */
+.app{overflow:hidden}
+
+/* 语音面板未展开时不许露头（它绝对定位在底部，收起状态仍占位） */
+.voice-panel:not(.on){visibility:hidden;pointer-events:none}
+.voice-panel.on{visibility:visible}
+
+/* 导览遮罩铺满整屏，避免底部漏出一条没被压暗的内容 */
+#guideMask{position:fixed!important;inset:0!important;height:100vh!important}
+
+/* 底部抽屉（登录 / 配置 / 邮箱）收起时只移出 88%，会从底边漏出一条——
+   收起状态直接不可见 */
+.sheet:not(.on){visibility:hidden!important;pointer-events:none!important}
+.sheet.on{visibility:visible!important}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -1171,7 +1206,7 @@ html[data-elder="on"] .xb-memitem{font-size:13px}
         <div class="sec-head"><span class="sec-title">已 过 时 间</span><button class="mini-btn" id="postponeAll">全部推迟到今天 20:00</button></div>
         <div id="overdueList"></div>
       </div>
-      <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 4 步新手导览 <b>→</b></div>
+      <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 <em id="guideCount" style="font-style:normal">7</em> 步新手导览 <b>→</b></div>
       <div class="sec">
         <div class="sec-head"><span class="sec-title">待 办</span><button class="mini-btn" id="batchToggle">批量</button></div>
         <div id="todoList"></div>
@@ -1340,7 +1375,7 @@ html[data-elder="on"] .xb-memitem{font-size:13px}
         </div>
         <div class="set-card clickable" id="guideCard">
           <div class="set-title">新手导览<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          <div class="set-desc">再看一遍这 4 步上手指引</div>
+          <div class="set-desc" id="guideCardDesc">再看一遍这 7 步上手指引</div>
         </div>
         <div class="set-card" data-set>
           <div class="set-title">关于你的数据<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
@@ -2998,13 +3033,23 @@ function finishWelcome(){
 }
 const GUIDE_KEY='qingji_guide_v1';
 const GUIDE_STEPS=[
-  {tab:'today',sel:'#quickInput',title:'① 说出来，就记下',body:'在底部输入要做的事，比如「明天 9 点交作业」，点右边的「＋」就记下了。也可以点麦克风说话。'},
-  {tab:'today',sel:'#quickAdd',title:'② 想改时间？',body:'点中间的「＋」能选时间、提醒强度和重复。输入里带「明天 9 点」会自动识别。记下后提示里的「改时间」也能改。'},
-  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'③ 走完一件，划掉一件',body:'点任务左边的圆圈就完成了一小步。左滑卡片能推迟或删除，删错了 5 秒内点「撤销」能找回。'},
-  {tab:'today',sel:'.tabbar',title:'④ 四个页签',body:'今日看待办，日历看排期，提醒看快到点的，我的里有设置。长辈用可在「我的 → 外观」里打开适老化模式。'}
+  {tab:'today',sel:'#quickInput',title:'① 说出来，就记下',
+   body:'底部输入「明天 9 点交作业」按回车就记下，时间会自动识别；也可以点麦克风说一句。\n不用先选日期，也不用填表单。'},
+  {tab:'today',sel:'#quickAdd',title:'② 三档强度，一眼看懂',
+   body:'点中间的「＋」能定时间、提醒强度、重复星期几。\n强度下面直接写清差别：轻提醒弹 1 次，重要会 10 分钟后再弹，紧急会每 5 分钟追最多 4 次。'},
+  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'③ 最近那件，会自己跳到眼前',
+   body:'列表顶部那张是「下一条」，放大 + 红框 + 倒计时，先做它就行。\n点左边圆圈完成；左滑可推迟或删除，删错了 5 秒内点「撤销」能找回。'},
+  {tab:'today',sel:'#xiaobuBtn',title:'④ 小步：会聊，也会替你动手',
+   body:'点右下「小步」能跟它说话：「明天9点提醒我交作业」「我今天还有几件事」「把吃药挪到明早」。\n它不是只会回话，会真的改列表。在它右上角的齿轮里填一个大模型 Key，绕的说法也能听懂；不填也能用。'},
+  {tab:'me',sel:'#notifyCard',title:'⑤ 到点会追到你',
+   body:'「我的 → 系统通知」开启后，就算你在刷别的 App、手机在锁屏，提醒也会从顶部弹出来，还能直接在通知上点「完成」或「推迟 10 分钟」。'},
+  {tab:'me',sel:'#elderSeg',title:'⑥ 字小？有适老化',
+   body:'这里能开适老化（字更大、按钮更高、对比更强）、深色模式，还有「性能优先」——手机发烫或卡顿时打开它。'},
+  {tab:'today',sel:'.tabbar',title:'⑦ 四个页签',
+   body:'今日看待办，日历看排期，提醒看快到点的，我的里是全部设置。\n以后想再看一遍，到「我的 → 新手导览」随时能重开。'}
 ];
 let guideStep=0,guideActive=false,guideCheckTimer=null;
-function guideSeen(){try{return localStorage.getItem(GUIDE_KEY)==='1'}catch(e){return false}}
+function guideSeen(){try{return localStorage.getItem(GUIDE_KEY)==='2'}catch(e){return false}}
 function guideTarget(s){
   let el=document.querySelector(s.sel);
   if(s.expand){
@@ -3023,11 +3068,32 @@ function guideFillTip(){
   $('guidePrev').style.visibility=guideStep===0?'hidden':'visible';
   $('guideDots').innerHTML=GUIDE_STEPS.map((_,i)=>'<i class="'+(i===guideStep?'on':'')+'"></i>').join('');
 }
+const guideOpened=[];
+function guideEnsureVisible(el){
+  if(!el||!el.closest)return false;
+  const card=el.closest('[data-set]');
+  if(card&&!card.classList.contains('open')){
+    card.click();
+    guideOpened.push(card);
+    return true;
+  }
+  return false;
+}
 function guideLayout(){
   guideFillTip();
   const s=GUIDE_STEPS[guideStep],el=guideTarget(s),mask=$('guideMask');
   if(!el)return;
-  if(el.closest('.scroll')){try{el.scrollIntoView({block:'nearest'})}catch(e){}}
+  // 目标藏在折叠卡里：先展开，等动画走完再重新定位
+  if(guideEnsureVisible(el)){setTimeout(guideLayout,340);return;}
+  if(el.closest('.scroll')){
+    try{
+      const r0=el.getBoundingClientRect();
+      const mm=guideMask.getBoundingClientRect();
+      // 靠近上下边缘就滚到中间，保证框和提示都能放下
+      if(r0.top<mm.top+140||r0.bottom>mm.bottom-220)el.scrollIntoView({block:'center'});
+      else el.scrollIntoView({block:'nearest'});
+    }catch(e){}
+  }
   const base=mask.getBoundingClientRect(),r=el.getBoundingClientRect(),pad=8;
   const x=Math.max(6,r.left-base.left-pad),y=Math.max(6,r.top-base.top-pad);
   const w=Math.min(base.width-12,r.width+pad*2),h=Math.min(base.height-12,r.height+pad*2);
@@ -3057,11 +3123,25 @@ function startGuide(force){
 function endGuide(){
   guideActive=false;
   $('guideMask').classList.remove('on');
-  try{localStorage.setItem(GUIDE_KEY,'1')}catch(e){}
+  // 导览期间替用户展开的折叠卡，收回去
+  try{
+    guideOpened.splice(0).forEach(function(c){
+      if(c&&c.classList.contains('open'))c.click();
+    });
+  }catch(e){}
+  try{localStorage.setItem(GUIDE_KEY,'2')}catch(e){}
 }
 function guideNext(){if(guideStep<GUIDE_STEPS.length-1)guideGoto(guideStep+1);else endGuide()}
 function guidePrev(){if(guideStep>0)guideGoto(guideStep-1)}
+function syncGuideCount(){
+  try{
+    const n=GUIDE_STEPS.length;
+    const a=document.getElementById('guideCount'); if(a)a.textContent=n;
+    const b=document.getElementById('guideCardDesc'); if(b)b.textContent='再看一遍这 '+n+' 步上手指引';
+  }catch(e){}
+}
 function scheduleGuide(force){
+  syncGuideCount();
   clearTimeout(guideCheckTimer);let n=0;
   const check=()=>{
     if(guideActive)return;
@@ -3557,6 +3637,16 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
+
+
+
+
 
 
 
