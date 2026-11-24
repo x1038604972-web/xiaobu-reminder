@@ -906,6 +906,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3742,6 +3744,8 @@ try{
 
 
 
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -3768,8 +3772,17 @@ try{
 
   /* ── 主脚本访问包装 ───────────────────────────────────── */
   function T() { try { return tasks; } catch (e) { return []; } }
-  function doSave() { try { save(); } catch (e) {} }
-  function doRender() { try { render(); } catch (e) {} }
+  function doSave() {
+    try { if (typeof window.save === 'function') window.save(); else save(); } catch (e) {}
+  }
+  function doRender() {
+    // 注意：本模块内部也有 render()（渲染聊天气泡），会遮蔽 App 的 render()。
+    // 这里必须显式调 App 的渲染，否则小步改完数据后列表/提醒栏不刷新。
+    try {
+      if (typeof window.render === 'function') window.render();
+      else render();
+    } catch (e) {}
+  }
   function doToast(m, k) { try { toast(m, k); } catch (e) {} }
   function ft(ts) { try { return fullTime(ts); } catch (e) { return new Date(ts).toLocaleString(); } }
   function cdown(ts) { try { return countdown(ts); } catch (e) { return ''; } }
@@ -3908,7 +3921,17 @@ try{
     X$('xbMic').addEventListener('click', mic);
     X$('xbChips').addEventListener('click', function (e) {
       var b = e.target.closest('.xb-chip');
-      if (b) { X$('xbText').value = b.dataset.q || b.textContent; send(); }
+      if (!b) return;
+      var q = b.dataset.q || b.textContent;
+      if (q === '__alerts__') {                 // 关面板，跳到「提醒」页
+        try { close(); } catch (err) {}
+        try {
+          var tab = document.querySelector('[data-tab="alerts"]');
+          if (tab) tab.click();
+        } catch (err) {}
+        return;
+      }
+      X$('xbText').value = q; send();
     });
     X$('xbBody').addEventListener('click', onBodyClick);
     X$('xbSetBtn').addEventListener('click', function () { X$('xbSet').classList.add('on'); fillSetForm(); });
@@ -4833,7 +4856,7 @@ try{
     say(rolled ? '那个点已经过了，我顺延到明天同一时间。到点叫你。' : '记好了，到点我叫你。', {
       k: '✓', title: title, meta: meta2, id: id,
       acts: [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
-    }, ['再说一件', '看看今天剩下的']);
+    }, [{ t: '去提醒栏', q: '__alerts__' }, '再说一件', '看看今天剩下的']);
   }
 
   /* ── 查询 ─────────────────────────────────────────────── */
