@@ -917,6 +917,17 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1226,6 +1237,134 @@ html[data-elder="on"] .terminus-days{font-size:12px}
 .xb-trouble ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--ink3);line-height:1.75}
 .xb-trouble li{margin-bottom:3px}
 .xb-trouble b{color:var(--ink2);font-weight:700}
+
+
+/* ══════════════════════════════════════════════════════════
+   体验优化（QA 走查后）
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 1. 触控目标：小于 36px 的一律放大 ───────────────── */
+.seg button{min-height:32px;padding-top:4px;padding-bottom:4px}
+#calPrev,#calNext{min-width:34px;min-height:34px;display:inline-flex;align-items:center;justify-content:center}
+#calToday{min-height:34px;padding:0 12px}
+#batchLater,#batchDel,#batchCancel{min-height:34px;padding:0 12px}
+.mini-btn{min-height:34px;padding:8px 14px;display:inline-flex;align-items:center}
+.note-toggle{min-height:34px;display:inline-flex;align-items:center}
+.voice-close,.member-close{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}
+.member-plan-btn{min-height:38px}
+/* 勾选圈视觉不变，热区扩到 ~42px */
+.check{position:relative}
+.check::after{content:"";position:absolute;inset:-9px;border-radius:50%}
+html[data-elder="on"] .seg button{min-height:40px}
+html[data-elder="on"] .check::after{inset:-11px}
+
+/* ── 2. 焦点可见（键盘/外接设备） ───────────────────── */
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:8px}
+button:focus:not(:focus-visible){outline:none}
+
+/* ── 3. 卡片进场：错开 35ms，最多 12 张 ─────────────── */
+.card.enter{animation:cardIn .42s var(--ease) both}
+.card.enter{animation-delay:calc(var(--i,0) * 35ms)}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(10px) scale(.985)}
+  to{opacity:1;transform:none}
+}
+/* 下一张稍微"呼吸"，提示它最急 */
+.card.next-card{animation:cardIn .42s var(--ease) both, nextBreath 3.4s ease-in-out .5s infinite}
+@keyframes nextBreath{
+  0%,100%{box-shadow:0 0 0 1px rgba(181,69,60,.20),0 8px 22px rgba(181,69,60,.10)}
+  50%{box-shadow:0 0 0 1.5px rgba(181,69,60,.34),0 10px 26px rgba(181,69,60,.16)}
+}
+
+/* ── 4. 完成动作：勾选弹出 + 卡片轻微下压 ───────────── */
+.check{transition:transform .16s var(--ease),background .18s,border-color .18s}
+.card .check:active{transform:scale(.88)}
+.card.done .check{animation:tickPop .34s var(--ease)}
+@keyframes tickPop{
+  0%{transform:scale(.72)}
+  55%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+.card.done{animation:cardSettle .3s var(--ease)}
+@keyframes cardSettle{0%{transform:scale(1)}45%{transform:scale(.988)}100%{transform:scale(1)}}
+
+/* ── 5. 按压反馈统一 ─────────────────────────────────── */
+.add-btn,.save,.mbtn,.mini-btn,.data-btn,.postpone-btn,.seg button,.chip,.tab,.voice-go,.voice-cancel{
+  transition:transform .12s var(--ease),background .16s,color .16s,border-color .16s;
+}
+.add-btn:active,.save:active,.mbtn:active,.mini-btn:active,.data-btn:active,
+.postpone-btn:active,.chip:active,.tab:active,.voice-go:active{
+  transform:scale(.96);
+}
+
+/* ── 6. Toast 进出更顺 ───────────────────────────────── */
+.toast{
+  left:50%;right:auto;transform:translateX(-50%) translateY(10px) scale(.98);
+  max-width:calc(100% - 32px);white-space:normal;text-align:center;
+  opacity:0;transition:opacity .22s var(--ease),transform .26s var(--ease);
+}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ── 7. 主题切换一次性过渡（避免平时卡顿） ───────────── */
+html.theme-fade *{transition:background-color .34s ease,color .34s ease,border-color .34s ease,fill .34s ease !important}
+
+/* ── 8. 空状态：给一个可直接点的按钮 ─────────────────── */
+.empty-cta{
+  margin-top:14px;height:40px;padding:0 20px;border-radius:12px;border:none;
+  background:var(--brand);color:#FFF9EF;font-size:13.5px;font-weight:800;
+  font-family:inherit;cursor:pointer;box-shadow:0 8px 20px rgba(47,110,82,.22);
+  transition:transform .12s var(--ease),box-shadow .2s;
+}
+.empty-cta:active{transform:scale(.96)}
+html[data-elder="on"] .empty-cta{height:46px;font-size:15px}
+
+/* ── 9. 安全区与滚动留白 ─────────────────────────────── */
+.top{padding-top:calc(34px + env(safe-area-inset-top))}
+.tabbar{padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.home-ind{height:calc(5px + env(safe-area-inset-bottom))}
+.scroll{scroll-padding-bottom:200px;overscroll-behavior:contain}
+
+/* ── 10. 暗色下次级文字提亮一点，避免发灰 ───────────── */
+html[data-mode="dark"]{--ink3:#9C9385}
+html[data-mode="dark"] .card .meta .cd{color:#B7AE9E}
+
+/* ── 11. 数字等宽，避免倒计时跳动 ───────────────────── */
+.cd,.ring-num,.stat-num,.countdown,.c-time{font-variant-numeric:tabular-nums}
+
+/* ── 12. 尊重系统「减少动态效果」 ───────────────────── */
+@media (prefers-reduced-motion: reduce){
+  .card.enter,.card.next-card,.card.done,.card.done .check,.xb-hero-img{animation:none !important}
+  .toast{transition:none}
+  html.theme-fade *{transition:none !important}
+}
+
+/* ── 13. 零散小按钮兜底（QA 走查发现的 <36px 目标） ── */
+.wcfg,.vibe-test,.note-toggle,.data-btn,#memberClose{min-height:34px}
+.wcfg,.vibe-test{display:inline-flex;align-items:center}
+#memberClose{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}
+.member-plan-btn{min-height:40px;display:flex;align-items:center;justify-content:center}
+
+/* ── 14. 浅色下次级文字加密，保证 4.5:1 以上 ─────────── */
+:root{--ink2:#514B43;--ink3:#6A6357}
+/* 底部 Home 指示条与页面同色，避免与内容出现色阶断层 */
+.home-ind{background:var(--paper)!important}
+/* 首页顶部光晕下文字仍清晰 */
+.top .date,.top .summary{text-shadow:0 1px 0 rgba(255,255,255,.55)}
+html[data-mode="dark"] .top .date,html[data-mode="dark"] .top .summary{text-shadow:0 1px 0 rgba(0,0,0,.35)}
+
+/* ── 15. 底栏改为实色，滚动内容不再从半透明下透出 ───── */
+.tabbar{background:var(--paper)!important;position:relative;z-index:70;box-shadow:0 -1px 0 var(--line)}
+.home-ind{position:relative;z-index:70}
+
+/* ── 16. 底部收边：盖住 tabbar 与安全区之间的漏缝 ───── */
+.app::after{
+  content:";position:absolute;left:0;right:0;bottom:0;
+  height:calc(30px + env(safe-area-inset-bottom));
+  background:var(--paper);pointer-events:none;z-index:69;
+}
+
+/* 滚动区底部裁掉 26px：内容不会露到 tabbar 下方（底部本就留白 190px，无内容损失） */
+.scroll{clip-path:inset(0 0 26px 0)}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2033,6 +2172,7 @@ function playFlip(before){
   });
 }
 function render(){
+  try{syncGuideEntry()}catch(e){}
   const before=captureCardY();
   renderTop();
   const todayEnd=today0()+86400000-1;
@@ -2049,7 +2189,7 @@ function render(){
   $('doneCount').textContent=done.length?done.length+' 件':'';
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
-  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p></div>';
+  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ').replace('data-id="','style="--i:'+Math.min(i,12)+'" data-id="')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
   $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
   $('doneSec').style.display=done.length?'block':'none';
   const soon=normal.filter(t=>t.ts<Date.now()+86400000).sort((a,b)=>a.ts-b.ts);
@@ -2832,6 +2972,11 @@ function isDarkMode(){
   return window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
 }
 function applyTheme(){
+  try{
+    document.documentElement.classList.add('theme-fade');
+    clearTimeout(window.__themeT);
+    window.__themeT=setTimeout(()=>document.documentElement.classList.remove('theme-fade'),420);
+  }catch(e){}
   document.documentElement.setAttribute('data-mode',modePref);
   const t=THEMES[themeKey]||THEMES.pine,dark=isDarkMode(),p=dark?t.dark:t.light;
   const s=document.documentElement.style;
@@ -3748,6 +3893,9 @@ $('emailSwitch').onclick=()=>{
   $('emailErr').textContent='';
 };
 $('micBtn').onclick=openVoice;
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-act="empty-add"]')){ try{openSheet()}catch(err){} }
+});
 $('voiceClose').onclick=closeVoice;
 $('voiceCancel').onclick=closeVoice;
 $('voiceMask').onclick=closeVoice;
@@ -3792,6 +3940,8 @@ $('guidePrev').onclick=guidePrev;
 $('guideSkip').onclick=endGuide;
 $('guideCard').onclick=()=>startGuide(true);
 $('guideEntry').onclick=()=>startGuide(true);
+function syncGuideEntry(){const el=$('guideEntry');if(!el)return;el.style.display=guideSeen()?'none':''}
+syncGuideEntry();
 window.addEventListener('resize',()=>{if(guideActive)guideLayout()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(guideActive){endGuide();return}closeModal();closeSummary();closeSheet();closeAuth();closeVoice();closeEmail();closeCfg();closeLate()}});
 
@@ -3838,6 +3988,17 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
