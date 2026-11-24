@@ -883,6 +883,14 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1082,6 +1090,14 @@ html[data-perf="on"] .xb-hero-img{animation:none}
 .xb-chip.on{background:var(--brand-soft);border-color:#CFE2D7;color:var(--brand-ink);font-weight:700}
 .xb-chip.on i{color:var(--brand)}
 html[data-elder="on"] .xb-chip{font-size:13px;padding:8px 12px}
+
+
+/* ── 小步记得的事 ─────────────────────────── */
+.xb-mem{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.xb-memitem{font-size:11.5px;padding:5px 9px;border-radius:9px;background:var(--brand-soft);
+  color:var(--brand-ink);border:1px solid #CFE2D7;line-height:1.2}
+.xb-memitem.ghost{background:transparent;border-style:dashed;border-color:var(--line);color:var(--ink3)}
+html[data-elder="on"] .xb-memitem{font-size:13px}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -3570,6 +3586,14 @@ try{
 
 
 
+
+
+
+
+
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -3584,6 +3608,7 @@ try{
 
   var KEY = 'qingji_xiaobu_v1';
   var AIKEY = 'qingji_xiaobu_ai_v1';
+  var MEMKEY = 'qingji_xiaobu_mem_v1';
   var MAXMSG = 40;
 
   function X$(id) { return document.getElementById(id); }
@@ -3642,11 +3667,15 @@ try{
     msgs: [],
     pending: null,
     chips: [],
+    mem: { name: '', notes: [] },
+    chatStreak: 0,
+    aiWarned: false,
     ai: { on: false, base: 'https://api.deepseek.com/v1', key: '', model: 'deepseek-chat' },
     rec: null
   };
 
   function loadState() {
+    loadMem();
     try {
       var v = JSON.parse(localStorage.getItem(KEY) || 'null');
       if (v && Array.isArray(v.msgs)) S.msgs = v.msgs.slice(-MAXMSG);
@@ -3713,6 +3742,7 @@ try{
           '<button class="xb-ico" id="xbAiTest" style="width:auto;padding:0 12px;height:32px;font-size:12px">测一下</button></div>' +
         '<p>Key 只存在这台设备的 localStorage，不会上传到别处。DeepSeek / Kimi / 通义 都支持浏览器直连。<br>' +
           '想换模型点上面的胶囊；同一家的其它模型名也可以直接手打。</p>' +
+        '<div class="xb-field"><label>小步记得的事</label><div class="xb-mem" id="xbMem"></div></div>' +
         '<div class="xb-row2"><div><div class="lb">清空对话</div><div class="sb">不影响你的待办</div></div>' +
           '<button class="xb-ico" id="xbClear" style="width:auto;padding:0 12px;height:32px;font-size:12px">清空</button></div>' +
         '<div class="xb-actions"><button id="xbSetBack">返回</button><button class="p" id="xbSetSave">保存</button></div>' +
@@ -3814,6 +3844,26 @@ try{
     custom: []
   };
 
+  function renderMemBox() {
+    var box = X$('xbMem');
+    if (!box) return;
+    var parts = [];
+    if (S.mem && S.mem.name) parts.push('叫「' + S.mem.name + '」');
+    (S.mem && S.mem.notes ? S.mem.notes : []).slice(0, 6).forEach(function (n) { parts.push(n); });
+    if (!parts.length) {
+      box.innerHTML = '<span class="xb-memitem ghost">还没记下什么。聊两句，我会记住你提过的事。</span>';
+      return;
+    }
+    box.innerHTML = parts.map(function (p) {
+      return '<span class="xb-memitem">' + esc(p) + '</span>';
+    }).join('') + '<button class="xb-chip" id="xbMemClear">全忘掉</button>';
+    var c = X$('xbMemClear');
+    if (c) c.onclick = function () {
+      S.mem = { name: '', notes: [] }; saveMem();
+      renderMemBox(); setAiState('已经忘了。');
+    };
+  }
+
   function renderModelChips(provider) {
     var box = X$('xbModels');
     if (!box) return;
@@ -3878,6 +3928,7 @@ try{
     X$('xbAiKey').value = S.ai.key || '';
     X$('xbAiModel').value = S.ai.model || '';
     try { renderModelChips(prov); } catch (e) {}
+    try { renderMemBox(); } catch (e) {}
     [].forEach.call(X$('xbAiSeg').children, function (x) {
       x.classList.toggle('on', (x.dataset.ai === 'on') === !!S.ai.on);
     });
@@ -3967,6 +4018,13 @@ try{
   function say(text, card, chips) {
     typing(false);
     S.busy = false;
+    try {
+      var prev = null;
+      for (var i = S.msgs.length - 1; i >= 0; i--) {
+        if (S.msgs[i].r === 'b' && S.msgs[i].t) { prev = S.msgs[i].t; break; }
+      }
+      if (prev && text && prev === text && !card) text = text + '\n（嗯，这话我刚才说过——但我还在。）';
+    } catch (e) {}
     push('b', text, card);
     if (chips) setChips(chips);
     return text;
@@ -4158,11 +4216,30 @@ try{
   /* 纯名词句，例如「喝牛奶」——当作「要记这件事，缺时间」 */
   function looksLikeTask(text) {
     var s = String(text || '').replace(/\s/g, '');
-    if (s.length < 2 || s.length > 14) return false;
+    if (s.length < 2 || s.length > 12) return false;
     if (/^(你好|在吗|嗨|hi|hello|谢谢|谢了|好的|嗯|晚安|早上好|晚上好)/i.test(s)) return false;
     if (/[?？]/.test(s)) return false;
-    if (/^(你|我)(要|想|该)/.test(s)) return false;
+    // 第一人称叙述 / 情绪 / 语气词 → 不是任务名
+    if (/^(我|你|他|她|它|咱|我们)/.test(s)) return false;
+    if (/(累|烦|压力|无聊|难过|开心|生气|想哭|失眠|好困|饿了|下雨|好热|好冷)/.test(s)) return false;
+    if (/(了|吗|呢|吧|啊|呀|嘛|哦|唉|哎|哈)$/.test(s)) return false;
     return /^[一-龥a-zA-Z0-9]+$/.test(s);
+  }
+
+  /* 这句话像在聊天，而不是在交代一件事 */
+  function isCasual(text) {
+    var s = String(text || '').replace(/\s/g, '');
+    if (!s) return false;
+    // 明确在交代事情 → 不算闲聊
+    if (/(提醒|记一下|记下|记住|添加|新建|加一条|安排|别忘|要记|帮我记|定个|设个)/.test(s)) return false;
+    // 自我介绍类
+    if (/(我叫|我名字|我姓|我养了|我家有|我家猫|我家狗|我喜欢|我讨厌|我不喜欢|我最近|我这几天|我今年)/.test(s)) return true;
+    if (/(我在[\u4e00-\u9fa5]{2,10}(读书|上学|上班|工作|实习))/.test(s)) return true;
+    for (var i = 0; i < TOPICS.length; i++) if (TOPICS[i].re.test(s)) return true;
+    if (/(几点了|现在几点|今天几号|今天星期几)/.test(s)) return true;
+    if (/^(嗯|哦|噢|啊|唉|哎|哈|呵|嘿)+$/.test(s)) return true;
+    if (s.length <= 8 && /^(我|你).*(了|吗|呢|吧)$/.test(s)) return true;
+    return false;
   }
 
   function parseRemember(text) {
@@ -4263,6 +4340,9 @@ try{
     }
 
     // 一句话里有两件事：「明天9点交作业，下午3点开会」
+    // 像人话的句子 → 先聊，别抢着建任务
+    if (isCasual(text) && !splitMulti(text)) { doChat(text); return; }
+
     // 绕的说法（区间 / 随便哪天 / 都挪到 / 养成习惯 …）本地规则啃不动，直接交给模型
     if (aiReady() && HARD.test(s) && !splitMulti(text)) { askLLM(text); return; }
 
@@ -4356,6 +4436,7 @@ try{
                       : hour < 18 ? '下午好'
                         : hour < 23 ? '晚上好' : '这么晚还在忙';
 
+    var lead = (S.mem && S.mem.name) ? S.mem.name + '，' : '';
     var all = nowList();
     var left = todayTodo();
     var doneCount = all.filter(function (x) { return x.done; }).length;
@@ -4364,16 +4445,16 @@ try{
       line = left.length ? ('晚安。今天还剩 ' + left.length + ' 件没走完，要不要顺手推明早？')
         : '晚安。今天的事都收干净了。';
     } else if (!all.length) {
-      line = hi + '。今天还空着，想到什么就说一句，我替你记住。';
+      line = lead + hi + '。今天还空着，想到什么就说一句，我替你记住。';
     } else if (!left.length) {
-      line = hi + '。今天 ' + doneCount + ' 件都走完了，难得清静。';
+      line = lead + hi + '。今天 ' + doneCount + ' 件都走完了，难得清静。';
     } else {
       var next = left.slice().sort(function (a, b) { return a.ts - b.ts; })[0];
       var cd = countdown(next.ts);
-      line = hi + '。今天还有 ' + left.length + ' 件';
+      line = lead + hi + '。今天还有 ' + left.length + ' 件';
       line += next ? '，下一件是「' + next.title + '」' + (cd ? '，' + cd : '') : '';
       line += cd ? '。' : '。';
-      if (next && next.ts < Date.now()) line = hi + '。今天还有 ' + left.length + ' 件，最早那件「' + next.title + '」已经过点了，要现在处理吗？';
+      if (next && next.ts < Date.now()) line = lead + hi + '。今天还有 ' + left.length + ' 件，最早那件「' + next.title + '」已经过点了，要现在处理吗？';
     }
     say(line, null, left.length ? ['看看今天剩下的', '帮我记一件'] : ['明天 9 点提醒我交作业']);
   }
@@ -4826,18 +4907,261 @@ try{
   ];
   function doChat(text) {
     if (doSetting(text)) return;
+    var learned = { name: '', note: '' };
+    try { learned = learnFrom(text) || learned; } catch (e) {}
+    S.chatStreak = (S.chatStreak || 0) + 1;
     if (S.ai.on && S.ai.key) { askLLM(text); return; }
+
+    // 刚知道名字，先正经回一句
+    if (learned.name) {
+      say('记住了，' + learned.name + '。以后我就这么叫你。\n有事说事，没事聊两句也行。',
+        null, ['明天 9 点提醒我交作业', '我今天还有几件事']);
+      return;
+    }
     localChat(text, false);
+
+    // 连着聊了几句，轻轻提一次；正在说累/烦的时候不打扰
+    var emotional = /(累|烦|压力|难过|焦虑|失眠|生气|想哭)/.test(String(text));
+    if (!emotional && S.chatStreak === 5) {
+      setTimeout(function () {
+        if (S.open && S.msgs.length) push('b', '对了，要是手头有件容易忘的事，顺手说一句，我替你盯着。');
+      }, 900);
+    }
   }
+  /* ── 唠家常：没有大模型也要有人味儿 ────────────────── */
+  var lastPick = {};
+  function pickLine(key, arr) {
+    if (arr.length === 1) return arr[0];
+    var i = Math.floor(Math.random() * arr.length);
+    if (i === lastPick[key]) i = (i + 1) % arr.length;
+    lastPick[key] = i;
+    return arr[i];
+  }
+  function loadMem() {
+    try {
+      var v = JSON.parse(localStorage.getItem(MEMKEY) || 'null');
+      if (v && typeof v === 'object') {
+        S.mem = { name: String(v.name || ''), notes: Array.isArray(v.notes) ? v.notes.slice(0, 20) : [] };
+      }
+    } catch (e) {}
+  }
+  function saveMem() {
+    try { localStorage.setItem(MEMKEY, JSON.stringify(S.mem)); } catch (e) {}
+  }
+  function memSim(a, b) {
+    a = String(a); b = String(b);
+    if (!a || !b) return 0;
+    var set = {}, n = 0;
+    for (var i = 0; i < a.length; i++) set[a[i]] = 1;
+    for (var j = 0; j < b.length; j++) if (set[b[j]]) n++;
+    return n / Math.max(a.length, b.length);
+  }
+  function addMemory(line) {
+    var s = String(line || '').replace(/\s+/g, ' ').trim();
+    s = s.replace(/[。.，,；;！!？?\s]+$/, '');        // 去掉句末标点
+    if (!s || s.length < 2) return;
+    if (s.length > 42) s = s.slice(0, 42);
+
+    // 「用户叫X」→ 直接并入名字字段，不占一条记忆
+    var m = s.match(/(?:用户|他|她|这个人)?(?:的名字)?(?:是|叫)?\s*([\u4e00-\u9fa5A-Za-z]{1,6})$/) &&
+      /叫|名字是/.test(s);
+    if (m && s.length <= 10) {
+      if (!S.mem.name) { S.mem.name = m[1]; saveMem(); }
+      return;
+    }
+
+    if (S.mem.notes.indexOf(s) >= 0) return;
+    for (var i = 0; i < S.mem.notes.length; i++) {
+      var old = S.mem.notes[i];
+      // 完全覆盖或高度相似 → 用新的（通常更完整）
+      if (memSim(old, s) > 0.5) {
+        if (s.length > old.length) S.mem.notes[i] = s;
+        saveMem(); return;
+      }
+      // 旧的是新的子集（例如「养了只猫「豆豆」」⊂「…养了只猫叫豆豆…」）→ 删旧留新
+      var oldN = String(old).replace(/[「」『』"'（）()]/g, '');
+      var hit = 0;
+      for (var k = 0; k < oldN.length; k++) if (s.indexOf(oldN[k]) >= 0) hit++;
+      if (oldN.length > 1 && hit / oldN.length > 0.7) {
+        S.mem.notes.splice(i, 1);
+        i--;
+        continue;
+      }
+    }
+    S.mem.notes.unshift(s);
+    if (S.mem.notes.length > 12) S.mem.notes.length = 12;
+    saveMem();
+  }
+  /* 没有大模型时，也从话里捡一点关于你的信息 */
+  function learnFrom(text) {
+    var s = String(text || '');
+    var m, learned = { name: '', note: '' };
+    var beforeNotes = (S.mem.notes || []).length;
+    if ((m = s.match(/我(?:的名字)?叫\s*([\u4e00-\u9fa5A-Za-z]{1,8})/)) && !/小步/.test(m[1])) {
+      if (!S.mem.name) { S.mem.name = m[1]; saveMem(); learned.name = m[1]; }
+    }
+    if ((m = s.match(/我(?:是|在)([\u4e00-\u9fa5]{2,10})(?:大学|学院|专业|读书|上学)/))) addMemory('在' + m[1] + '读书');
+    if ((m = s.match(/我(?:在|是)([\u4e00-\u9fa5]{2,10})(?:上班|工作|实习)/))) addMemory('在' + m[1] + '工作');
+    if ((m = s.match(/(?:我养了|我家有|我有一只)\s*([\u4e00-\u9fa5]{1,4}?)(?:叫|名叫)\s*([\u4e00-\u9fa5A-Za-z]{1,6})/))) {
+      addMemory('养了' + m[1] + '「' + m[2] + '」');
+    }
+    if ((m = s.match(/我(?:最)?(?:喜欢|爱)\s*([\u4e00-\u9fa5]{2,8})/))) addMemory('喜欢' + m[1]);
+    if ((m = s.match(/我(?:最)?(?:讨厌|不喜欢)\s*([\u4e00-\u9fa5]{2,8})/))) addMemory('不喜欢' + m[1]);
+    if ((m = s.match(/我(?:最近|这几天)(?:在|忙着)?\s*([\u4e00-\u9fa5]{2,10})/))) addMemory('最近在' + m[1]);
+    if ((S.mem.notes || []).length > beforeNotes) learned.note = S.mem.notes[0];
+    return learned;
+  }
+  function memName() { return (S.mem && S.mem.name) ? S.mem.name : ''; }
+  function memPet() {
+    var notes = (S.mem && S.mem.notes) ? S.mem.notes : [];
+    for (var i = 0; i < notes.length; i++) {
+      var m = String(notes[i]).match(/养了[^「]*「(.+?)」/);
+      if (m) return m[1];
+    }
+    return '';
+  }
+  function withName(s) {
+    var n = memName();
+    var pet = memPet();
+    s = s.replace(/\{petSay\}/g, pet ? ('「' + pet + '」这名字起得好。') : '毛孩子最会挑时间闹人了。它叫什么？我记一下。');
+    if (!n) return s.replace(/\{name\}，?/g, '');
+    return s.replace(/\{name\}/g, n);
+  }
+
+  var TOPICS = [
+    {
+      key: 'tired', re: /(累|好累|疲惫|撑不住|好困|困死|没睡好|熬夜|加班到现在)/,
+      r: ['听着就累。{name}今天是不是一直没停过？',
+        '累就先坐一会儿，事情跑不掉。要我帮你把今晚那件挪到明早吗？',
+        '那我少说两句：今天能不做的事，我帮你往后放。'],
+      chips: ['帮我挪到明早', '看看今天剩下的']
+    },
+    {
+      key: 'stress', re: /(压力|焦虑|紧张|考试|论文|答辩|作业写不完|DDL|deadline|来不及)/i,
+      r: ['这种被压着的感觉我知道。先只盯着最近的那一件，其他的我帮你排着。',
+        '别一口气想完所有事——{name}，现在最急的是哪个？我把它放到最近。',
+        '要不这样：把明早第一件提前到今晚做完，明天就轻一半。'],
+      chips: ['我今天还有几件事', '明天 9 点提醒我继续写']
+    },
+    {
+      key: 'annoyed', re: /(烦|生气|气死|郁闷|无语|崩溃|受不了|想骂人)/,
+      r: ['是该烦。要不要说说是谁惹的？我不评价，就听着。',
+        '烦的时候别硬撑。要不要先把让你烦的那件事写下来，写出来就没那么胀了？'],
+      chips: ['帮我记下来', '算了，不说这个']
+    },
+    {
+      key: 'sad', re: /(难过|委屈|想哭|失落|不开心|心里堵|emo)/i,
+      r: ['嗯，我在。不想说话也行，我陪着。',
+        '委屈就先委屈一会儿，不用马上好起来。{name}要不要喝口水？',
+        '我记性不错，但不会到处说。想讲就讲。'],
+      chips: ['我想说说话', '帮我记一件']
+    },
+    {
+      key: 'happy', re: /(开心|太好了|顺利|搞定|成功|过了|赢了|爽|哈哈|笑死)/,
+      r: ['这个得记一下——{name}，好事也该被记住。',
+        '听着就舒服。要不要我把它记成今天的小成就？',
+        '那今天算没白过。'],
+      chips: ['帮我记下这件好事', '看看今天剩下的']
+    },
+    {
+      key: 'bored', re: /(无聊|没意思|好闲|不知道干嘛|躺平|发呆)/,
+      r: ['那就闲聊两句。今天有什么让你分神的小事吗？',
+        '无聊的时候最适合把拖着的那件小事做掉——就一件，做完再躺。'],
+      chips: ['帮我记一件小事']
+    },
+    {
+      key: 'food', re: /(饿了|吃什么|吃饭|外卖|馋|想吃)/,
+      r: ['先吃。饿着的时候做什么都想不清。',
+        '{name}想吃什么？要我把「吃饭」记个点吗——到点我叫你。'],
+      chips: ['半小时后提醒我吃饭', '不用']
+    },
+    {
+      key: 'weather', re: /(下雨|好热|好冷|降温|大风|天气)/,
+      r: ['那出门记得带伞/多穿一件。要我到点提醒你吗？',
+        '这种天最容易忘带东西。要不要我提醒你一次？'],
+      chips: ['提醒我带伞', '不用']
+    },
+    {
+      key: 'sleep', re: /(失眠|睡不着|睡了|晚安|夜里醒)/,
+      r: ['那别刷了，越刷越精神。明天第一件我帮你放到九点后。',
+        '睡不着就先躺着，我在这儿。有事明天说。'],
+      chips: ['把明早的事挪到九点后', '晚安']
+    },
+    {
+      key: 'praise', re: /(你真好|你真棒|厉害|喜欢你|可爱|谢谢你陪)/,
+      r: ['被夸会记很久的那种。',
+        '我只是记性好一点。{name}的事我记得住。'],
+      chips: ['明天 9 点提醒我交作业']
+    },
+    {
+      key: 'blame', re: /(笨|弱智|不好使|垃圾|没用|听不懂|傻)/,
+      r: ['这次是我没听懂，你说具体点我就能记住。',
+        '是我笨了。你重说一遍，我认真听。'],
+      chips: ['明天 9 点提醒我交作业', '打开设置']
+    },
+    {
+      key: 'pet', re: /(猫|狗|宠物|毛孩子|小猫|小狗|崽)/,
+      r: ['{petSay}要我把喂它、遛它记个点吗？到点我叫你。',
+        '{petSay}这种事我记性好：几点喂、几点遛，说一句就行。',
+        '{petSay}它今天有没有闹你？'],
+      chips: ['每天 8 点提醒我喂猫', '不用']
+    },
+    {
+      key: 'who', re: /(你是谁|你叫什么|你在干嘛|你睡了吗|你会累吗|你有名字吗)/,
+      r: ['我叫小步。住在你手机里，替你记事，也陪你说话。',
+        '小步。平时躲在角落，你说一句我就出来。'],
+      chips: ['帮我记一件']
+    },
+    {
+      key: 'chat', re: /(聊聊|陪我说|说说话|唠|随便聊|谈心)/,
+      r: ['来。今天有什么让你反复想起的事？',
+        '行，我听着。从最不重要的那件说起也行。'],
+      chips: ['我今天还有几件事']
+    },
+    {
+      key: 'nothing', re: /^(没事|没什么|算了|不说了|就随便说说|emm+|额+)$/i,
+      r: ['那就不说。我在，随时。',
+        '嗯。想说了再喊我。'],
+      chips: ['明天 9 点提醒我交作业']
+    }
+  ];
+
+  function chitchatReply(text) {
+    var s = String(text).replace(/\s/g, '');
+    var hour = new Date().getHours();
+    // 时间类小问答
+    if (/(几点了|现在几点|什么时间)/.test(s)) {
+      var d = new Date();
+      return '现在 ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + '。';
+    }
+    if (/(今天几号|今天星期几|几月几号)/.test(s)) {
+      var d2 = new Date();
+      return '今天 ' + (d2.getMonth() + 1) + ' 月 ' + d2.getDate() + ' 号，星期' + '日一二三四五六'[d2.getDay()] + '。';
+    }
+    for (var i = 0; i < TOPICS.length; i++) {
+      var tp = TOPICS[i];
+      if (tp.re.test(s)) return withName(pickLine(tp.key, tp.r));
+    }
+    // 兜底：不打太极，接一句 + 递个话头
+    var filler = hour < 5 ? ['这么晚还没睡？我陪你待会儿。']
+      : hour < 11 ? ['早。今天想先做哪件事？', '我在听。']
+        : hour < 14 ? ['中午了，先吃口饭。', '我在听，你说。']
+          : hour < 19 ? ['下午好。有事说事，没事聊两句也行。', '嗯，你说。']
+            : ['晚上好。今天就到这儿也行。', '我在，你说。'];
+    return pickLine('filler' + hour, filler);
+  }
+
   function localChat(text, aiFailed) {
-    var t = text.replace(/\s/g, '');
-    var reply;
-    if (/^(你好|在吗|hi|hello|嗨|早上好|晚上好)/i.test(t)) reply = '在的。今天想先记哪一件？';
-    else if (/谢谢|辛苦|厉害/.test(t)) reply = '不客气，到点我会提醒你。';
-    else if (/你是谁|你叫什么/.test(t)) reply = '我是小步，住在这个 App 里，替你记事、替你改时间。';
-    else reply = CHAT[Math.floor(Math.random() * CHAT.length)];
-    if (aiFailed) reply = '（AI 没连上，先用本地规则处理）\n' + reply;
-    say(reply, null, ['明天 9 点提醒我交作业', '我今天还有几件事']);
+    var reply = chitchatReply(text);
+    var chips = ['明天 9 点提醒我交作业', '我今天还有几件事'];
+    for (var i = 0; i < TOPICS.length; i++) {
+      if (TOPICS[i].re.test(String(text).replace(/\s/g, '')) && TOPICS[i].chips) { chips = TOPICS[i].chips; break; }
+    }
+    if (aiFailed && !S.aiWarned) {
+      S.aiWarned = true;
+      reply = reply + '\n（网没通，这句我自己答的）';
+    }
+    say(reply, null, chips);
   }
 
   /* ── 大模型桥 ─────────────────────────────────────────── */
@@ -4853,26 +5177,31 @@ try{
   }
   function sysPrompt() {
     var s = snapshot();
-    return '你是「小步」，中文提醒应用里的助手。语气短、具体、像真人，别客套。\n' +
-      '现在是 ' + s.now + '（星期' + s.weekday + '）。\n' +
-      '用户待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
-      '只输出 JSON，不要解释、不要代码块：{"reply":"给用户看的一句话","action":null}\n' +
-      '需要动手时 action 用下列之一：\n' +
+    var nm = (S.mem && S.mem.name) ? S.mem.name : '';
+    var notes = (S.mem && S.mem.notes && S.mem.notes.length)
+      ? S.mem.notes.slice(0, 8).join('；') : '（还没记下什么）';
+    return '你是「小步」，住在用户手机里的提醒伙伴，也乐意陪他聊两句。不要自称 AI 或助手，就叫小步。\n' +
+      '现在 ' + s.now + '（星期' + s.weekday + '）。\n' +
+      '用户名字：' + (nm || '（还不知道）') + '\n' +
+      '你记得的关于他：' + notes + '\n' +
+      '待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
+      '\n只输出一个 JSON 对象，不要解释、不要代码块：{"reply":"…","action":null,"memory":null}\n' +
+      '\n【A · 要动手】用户要记事 / 改时间 / 查待办 / 打勾 / 删除：\n' +
       '{"type":"create","title":"喝牛奶","when":"明天9点","level":1}\n' +
       '{"type":"create","title":"打卡","when":"每天22点","level":1}\n' +
-      '{"type":"done","task_id":"…"}\n' +
-      '{"type":"delete","task_id":"…"}\n' +
-      '{"type":"postpone","task_id":"…","when":"明早8点"}\n' +
-      '{"type":"list"}\n' +
-      '规则：\n' +
-      '1) 只能引用 tasks 里真实存在的 task_id，拿不准就问，action 置 null；\n' +
-      '2) when 用中文说法（明天9点 / 后天下午3点 / 一小时后 / 每天22点 / 每周三四早上8点）；\n' +
-      '3) 用户说「重要/必须/不能忘」用 level 3，「普通」用 2，其余 1；\n' +
-      '4) reply 里不要重复 title 之外的多余内容，最多两句话；\n' +
-      '5) 这个 App 每条任务只有一个提醒时间。用户要「两次」「三点到五点之间」时，先建第一个时间，并在 reply 里说明「先按 X 点记，另一次你可以再补一句」；\n' +
-      '6) 用户说「养成习惯」「每天都」「老是忘」→ 用 create 且 when 写成「每天X点」；\n' +
-      '7) 只要能推断出合理时间就直接建任务并说明，例如「这周末之前随便哪天」→ 取最近的一个周五上午 10 点；实在没有依据（如「下周有空的时候」）才反问；\n' +
-      '8) reply 用中文口语，别写成系统提示，别说「作为助手」。';
+      '{"type":"done","task_id":"…"}   {"type":"delete","task_id":"…"}\n' +
+      '{"type":"postpone","task_id":"…","when":"明早8点"}   {"type":"list"}\n' +
+      '\n【B · 只是说话】聊心情、唠家常、问你在干嘛：action 置 null，reply 用 1~3 句口语——\n' +
+      '· 先接住他的情绪或话题，再给一句具体的（共鸣 / 很小的建议 / 一句反问），别空泛安慰；\n' +
+      '· 不要每句都推销功能，也不要硬把话拽回记事。他在聊，就聊；\n' +
+      '· 不许说「作为AI」「我可以帮你」「建议您」，不要列点、不要客套、不要「我理解你的感受」这类套话；\n' +
+      '· 可以说自己的小偏好、可以承认不懂、一次只问一句他的事；\n' +
+      '· 他说累 / 烦 / 压力大：先共情一句，再给一个很小的具体提议，不讲道理、不评判；\n' +
+      '· 他夸你或骂你，都当真接住，别解释机制；\n' +
+      '· memory：他透露了关于自己的事（名字、学校、家人、宠物、喜好、最近在忙什么），写一句第三人称短句，否则 null。\n' +
+      '\n其他规则：只能引用 tasks 里真实存在的 task_id；when 用中文说法（明天9点 / 一小时后 / 每天22点）；\n' +
+      '用户说「重要/必须」用 level 3，「普通」用 2，其余 1；时间拿不准就反问，action 置 null；\n' +
+      '这个 App 每条任务只有一个提醒时间，用户要「两次 / 三点到五点之间」时先建第一个并说明。';
   }
 
   function askLLM(text) {
@@ -4917,6 +5246,12 @@ try{
         var raw = String((res && res.raw) || '').replace(/[{}[\]"']/g, '').slice(0, 60);
         say((raw || '这句我没把握') + '\n再说具体点？比如「明天 9 点交作业」。', null, ['明天 9 点交作业', '看看今天剩下的']);
         return;
+      }
+      if (obj && obj.memory && typeof obj.memory === 'string') {
+        try { addMemory(obj.memory); } catch (e) {}
+      }
+      if (obj && obj.name && typeof obj.name === 'string' && !S.mem.name) {
+        S.mem.name = String(obj.name).slice(0, 8); saveMem();
       }
       var reply = (obj && obj.reply) || '我不太确定，再说一次？';
       var act = obj && obj.action;
