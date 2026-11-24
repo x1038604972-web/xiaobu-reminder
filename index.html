@@ -908,6 +908,12 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1174,6 +1180,32 @@ html[data-elder="on"] .terminus-when{font-size:13px}
 .card.terminus.done{opacity:.62}
 .card.terminus.done .title{text-decoration:line-through;color:rgba(243,228,190,.55)!important}
 
+
+/* ── 「小步」按钮：与「说话」同款（图标在上、文字在下、带底色矩形） ── */
+.quick-more{
+  width:44px;height:44px;min-height:0;padding:0;border-radius:12px;
+  background:var(--brand-soft);color:var(--brand);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex:none;
+  font-size:9px;line-height:1;
+}
+.quick-more svg{width:19px;height:19px;color:var(--brand)}
+.quick-more em{font-size:9px;font-style:normal;font-weight:800;letter-spacing:.02em;line-height:1}
+.quick-more:active{background:var(--brand-soft);transform:scale(.9)}
+html[data-elder="on"] .quick-more{width:54px;height:54px;border-radius:14px}
+html[data-elder="on"] .quick-more svg{width:22px;height:22px}
+html[data-elder="on"] .quick-more em{font-size:11px}
+
+
+/* ── 语音面板：改用打字 ───────────────────────── */
+.voice-type{
+  display:block;width:100%;margin:2px 0 4px;padding:9px 12px;border-radius:11px;
+  border:1px dashed var(--line);background:transparent;color:var(--ink2);
+  font-size:12.5px;font-family:inherit;cursor:pointer;
+}
+.voice-type:active{background:var(--line2)}
+.voice-hint{line-height:1.6}
+html[data-elder="on"] .voice-type{font-size:14px;padding:11px 14px}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -1439,7 +1471,7 @@ html[data-elder="on"] .terminus-when{font-size:13px}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
       </button>
       <button class="mic-btn" id="micBtn" aria-label="语音录入"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/></svg><em>说话</em></button>
-      <button class="quick-more" id="xiaobuBtn" aria-label="小步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg>小步</button>
+      <button class="quick-more" id="xiaobuBtn" aria-label="小步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg><em>小步</em></button>
     </div>
     <div class="tabbar">
       <button class="tab on" data-tab="today"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 15l2.5 2.5L16 12"/></svg>今日</button>
@@ -1576,6 +1608,7 @@ html[data-elder="on"] .terminus-when{font-size:13px}
     <div class="voice-text placeholder" id="voiceText">点击麦克风开始说话</div>
     <div class="voice-parsed" id="voiceParsed" style="display:none"></div>
     <div class="voice-hint" id="voiceHint">说出要做的事和时间，例如「明天下午三点交作业」<br>识别后可确认再记下</div>
+    <button class="voice-type" id="voiceType">识别不好用？改用打字</button>
     <div class="voice-actions"><button class="voice-cancel" id="voiceCancel">取消</button><button class="voice-go" id="voiceGo" disabled>记下</button></div>
   </div>
 
@@ -3214,99 +3247,185 @@ function voiceRender(){
     box.textContent='将记为：「'+sp.title+'」· '+fullTime(ts)+' · '+LV[sp.lv].n;
   }else box.style.display='none';
 }
-function micAuthState(){
-  if(!navigator.permissions||!navigator.permissions.query)return Promise.resolve('unknown');
-  return navigator.permissions.query({name:'microphone'}).then(r=>r.state).catch(()=> 'unknown');
+/* ══════════════════════════════════════════════════════════
+   语音输入
+   老实现的问题：
+   1) 先在 Promise 里等 permissions.query / getUserMedia，再调 start()，
+      安卓上已经脱离用户手势，识别常常起不来或直接 not-allowed；
+   2) continuous=true 在安卓上「刚连上就断开」，看起来像没反应；
+   3) onend 之后不自动续，用户以为坏了；
+   4) 出错只说「识别出错」，国内网络访问不到识别服务时完全看不懂。
+   现在：点一下就在手势里同步 start，断了自动续，错误说人话，还能一键改用打字。
+   ══════════════════════════════════════════════════════════ */
+let voiceWanting=false, voiceStarting=false, voiceRestarts=0, voiceRestartTimer=null, voiceErrAt=0;
+let voiceLocalOk=false;   // 支持端上离线识别（Chrome 138+）时为 true
+
+(function probeLocalSpeech(){
+  try{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(SR&&typeof SR.available==='function'){
+      SR.available({langs:['zh-CN'],processLocally:true}).then(r=>{
+        voiceLocalOk=(r==='available');
+      }).catch(()=>{});
+    }
+  }catch(e){}
+})();
+
+function voicePanelOpen(){const p=$('voicePanel');return !!(p&&p.classList.contains('on'))}
+function voiceSay(state,hint){
+  const s=$('voiceState'),h=$('voiceHint');
+  if(s&&state)s.textContent=state;
+  if(h&&hint!==undefined)h.innerHTML=hint;
 }
-function startVoiceWithMic(){
-  $('voiceState').textContent='正在请求麦克风权限…';
-  $('voiceHint').innerHTML='若手机弹出权限提示，请点「允许」';
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
-    $('voiceState').textContent='正在准备录音…';
-    startVoice();return;
-  }
-  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-    try{stream.getTracks().forEach(t=>t.stop())}catch(e){}
-    $('voiceState').textContent='已获得麦克风权限';
-    startVoice();
-  }).catch(err=>{
-    const n=err&&err.name||'';
-    const msg=(n==='NotAllowedError'||n==='PermissionDeniedError')?'麦克风权限被拒绝':(n==='NotFoundError'||n==='DevicesNotFoundError')?'没有找到麦克风':'无法访问麦克风';
-    voiceActive=false;$('voicePanel').classList.remove('rec');$('voiceMic').classList.remove('rec');
-    $('voiceState').textContent=msg;
-    $('voiceHint').innerHTML='请在浏览器地址栏的权限设置里允许麦克风后，再点一次麦克风。';
-    toast(msg);
-  });
+function voiceIdleUI(){
+  const p=$('voicePanel'),m=$('voiceMic');
+  if(p)p.classList.remove('rec');
+  if(m)m.classList.remove('rec');
 }
+
+function stopVoice(){
+  voiceWanting=false;voiceStarting=false;voiceActive=false;
+  clearTimeout(voiceRestartTimer);voiceRestartTimer=null;
+  if(recog){try{recog.onend=null;recog.abort()}catch(e){}recog=null}
+  voiceIdleUI();
+}
+
 function openVoice(){
-  buildWave();voiceFinal='';voiceInterim='';voiceRender();
+  // 导览正在显示时先收起来，否则会盖住语音面板
+  try{ if(typeof guideActive!=='undefined'&&guideActive&&typeof endGuide==='function') endGuide(); }catch(e){}
+  buildWave();voiceFinal='';voiceInterim='';
   $('voiceMic').style.opacity='1';
-  $('voiceState').textContent='正在检查麦克风权限…';
-  $('voiceHint').innerHTML='稍等，正在确认麦克风是否可用';
-  $('voiceMask').classList.add('on');$('voicePanel').classList.add('on');
+  $('voiceMask').classList.add('on');
+  $('voicePanel').classList.add('on');
+  voiceRender();
   if(!SpeechRec){
-    $('voiceState').textContent='浏览器不支持语音识别';
-    $('voiceHint').innerHTML='当前浏览器不支持语音录入，请用 Chrome / Edge，或手动输入。';
+    voiceSay('这个浏览器不支持语音识别',
+      '语音需要 Chrome / Edge（安卓版 Chrome 需能联网）。<br>可以直接用下面的输入框打字，一样能自动识别时间。');
     $('voiceMic').style.opacity='.4';
     return;
   }
-  micAuthState().then(state=>{
-    if(state==='granted'){
-      $('voiceState').textContent='已有麦克风权限，正在启动…';
-      startVoice();
-    }else startVoiceWithMic();
-  });
+  voiceSay('正在启动麦克风…','如果弹出麦克风授权，请点「允许」');
+  startVoice();
 }
+
 function closeVoice(){
-  voiceActive=false;
-  if(recog){try{recog.abort()}catch(e){}recog=null}
-  $('voicePanel').classList.remove('on','rec');$('voiceMask').classList.remove('on');
-  $('voiceMic').classList.remove('rec');
+  stopVoice();
+  $('voicePanel').classList.remove('on');
+  $('voiceMask').classList.remove('on');
 }
+
+function voiceErrorHint(err){
+  if(err==='network'){
+    return ['识别服务连不上',
+      '语音识别用的是浏览器的在线识别服务，需要能访问到服务器；<br>国内网络经常被挡。换个网络再试，或者直接打字。'];
+  }
+  if(err==='not-allowed'||err==='service-not-allowed'){
+    return ['麦克风权限被拒绝',
+      '请在浏览器地址栏左侧的锁形图标里，把「麦克风」改成允许，再点一次麦克风。'];
+  }
+  if(err==='audio-capture'){
+    return ['没有找到麦克风','检查一下是不是被别的 App 占用了，或者设备没有麦克风。'];
+  }
+  if(err==='no-speech'){
+    return ['没听到声音','靠近一点、说大声些，说完停一下。'];
+  }
+  if(err==='language-not-supported'){
+    return ['不支持中文识别','换 Chrome / Edge 再试，或直接打字。'];
+  }
+  return ['识别出错','可以再点一次麦克风，或者直接打字。'];
+}
+
 function startVoice(){
-  if(!SpeechRec)return;
+  if(!SpeechRec){voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');return}
+  if(voiceStarting||voiceActive)return;
+  voiceStarting=true;voiceWanting=true;
+  voiceSay('正在启动麦克风…','如果弹出麦克风授权，请点「允许」');
   try{
+    if(recog){try{recog.abort()}catch(e){}}
     recog=new SpeechRec();
-    recog.lang='zh-CN';recog.continuous=true;recog.interimResults=true;recog.maxAlternatives=1;
+    recog.lang='zh-CN';
+    recog.continuous=false;      // 安卓上更稳，靠 onend 自动续
+    recog.interimResults=true;
+    recog.maxAlternatives=1;
+    if(voiceLocalOk){try{recog.processLocally=true}catch(e){}}
+
     recog.onstart=()=>{
-      voiceActive=true;
-      $('voiceState').textContent='正在聆听…';$('voicePanel').classList.add('rec');
-      $('voiceMic').classList.add('rec');$('voiceHint').innerHTML='说出要做的事和时间，说完点「记下」';
+      voiceStarting=false;voiceActive=true;
+      voiceSay('正在聆听…','说完会自动断句，停了也会继续听；确认后点「记下」');
+      $('voicePanel').classList.add('rec');
+      $('voiceMic').classList.add('rec');
       voiceRender();
     };
+
     recog.onresult=e=>{
       let interim='',final='';
       for(let i=e.resultIndex;i<e.results.length;i++){
         const r=e.results[i],txt=r[0].transcript;
         if(r.isFinal)final+=txt;else interim+=txt;
       }
-      if(final)voiceFinal=(voiceFinal+' '+final).trim();
-      voiceInterim=interim;voiceRender();
+      if(final){
+        const add=final.trim();
+        if(add&&voiceFinal.indexOf(add)<0)voiceFinal=(voiceFinal+' '+add).trim();
+        // 最终结果已经包含上一段临时结果时，清掉它，避免「交作业 交作业」
+        if(add&&(!interim||add.indexOf(interim.trim())>=0))interim='';
+      }
+      voiceInterim=interim;
+      voiceRender();
     };
+
     recog.onerror=e=>{
-      voiceActive=false;$('voicePanel').classList.remove('rec');$('voiceMic').classList.remove('rec');
-      let msg;
-      if(e.error==='not-allowed'||e.error==='service-not-allowed')msg='麦克风权限被拒绝，请在浏览器权限设置里允许';
-      else if(e.error==='no-speech')msg='没听到声音，再试一次';
-      else if(e.error==='audio-capture')msg='没有找到麦克风设备';
-      else msg='识别出错，请重试';
-      $('voiceState').textContent=msg;
-      if(msg.indexOf('权限')>=0)$('voiceHint').innerHTML='请在浏览器地址栏的权限设置里允许麦克风后，再点一次麦克风。';
-      toast(msg);
+      voiceActive=false;voiceStarting=false;voiceIdleUI();
+      const err=(e&&e.error)||'';
+      if(err==='aborted')return;            // 我们自己 abort 的，不打扰
+      if(err==='no-speech'){               // 没说话：继续听
+        voiceSay('没听到声音，还在听…','靠近一点、说大声些');
+        return;
+      }
+      voiceWanting=false;                   // 其他错误不再自动续
+      voiceErrAt=Date.now();
+      const [head,hint]=voiceErrorHint(err);
+      voiceSay(head,hint);
+      toast(head);
     };
+
     recog.onend=()=>{
-      if(voiceActive){$('voicePanel').classList.remove('rec');$('voiceMic').classList.remove('rec');$('voiceState').textContent='已停止，可点麦克风继续';voiceActive=false;voiceRender()}
+      voiceActive=false;voiceStarting=false;voiceIdleUI();
+      if(voiceWanting&&voicePanelOpen()&&voiceRestarts<24){
+        voiceRestarts++;
+        clearTimeout(voiceRestartTimer);
+        voiceRestartTimer=setTimeout(()=>{
+          if(voiceWanting&&voicePanelOpen())startVoice();
+        },300);
+        return;
+      }
+      if(voicePanelOpen()){
+        if(Date.now()-voiceErrAt>900){       // 刚报过错就保留错误说明，别覆盖
+          voiceSay(voiceFinal.trim()?'已停止，可点麦克风继续':'已停止，点麦克风继续',
+            '也可以直接用输入框打字');
+        }
+        voiceRender();
+      }
     };
+
     recog.start();
-  }catch(e){$('voiceState').textContent='无法启动麦克风';}
+  }catch(err){
+    voiceStarting=false;
+    if(err&&err.name==='InvalidStateError'){
+      setTimeout(()=>{voiceStarting=false;if(voicePanelOpen()&&voiceWanting)startVoice()},400);
+    }else{
+      voiceWanting=false;
+      voiceSay('无法启动麦克风','请检查浏览器麦克风权限，或直接用输入框打字');
+    }
+  }
 }
+
 function commitVoice(){
   const raw=voiceFinal.trim();if(!raw)return;
   if(!ensureTaskQuota())return;
   const sp=parseSmart(raw),ts=sp.ts||presetTime(1);
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
   tasks.unshift({id:id,title:sp.title,ts:ts,lv:sp.lv,done:false,note:'',repeat:'none',completedCount:0,escalateCount:0,notified:false,created:Date.now()});
-  closeVoice();save();render();highlightTask(id);lastQuickId=id;
+  stopVoice();closeVoice();save();render();highlightTask(id);lastQuickId=id;
   toast('已记下「'+sp.title+'」· '+fullTime(ts)+' · '+LV[sp.lv].n,'edit');
 }
 
@@ -3610,15 +3729,21 @@ $('voiceClose').onclick=closeVoice;
 $('voiceCancel').onclick=closeVoice;
 $('voiceMask').onclick=closeVoice;
 $('voiceGo').onclick=commitVoice;
+$('voiceType').onclick=()=>{
+  const text=voiceFinal.trim();
+  closeVoice();
+  const qi=$('quickInput');
+  if(qi){qi.value=text;qi.focus()}
+  if(text)try{renderParsePreview(text,'parsePreview',true)}catch(e){}
+};
 $('voiceMic').onclick=()=>{
-  if(!SpeechRec)return;
-  if(voiceActive){if(recog){try{recog.stop()}catch(e){}}}
-  else micAuthState().then(state=>{
-    if(state==='granted'){
-      $('voiceState').textContent='已有麦克风权限，正在启动…';
-      startVoice();
-    }else startVoiceWithMic();
-  });
+  if(!SpeechRec){
+    voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');
+    return;
+  }
+  if(voiceWanting){ stopVoice(); voiceSay('已暂停','点麦克风继续，或直接点「记下」'); return; }
+  voiceRestarts=0;
+  startVoice();          // 在点击手势里同步启动，安卓才认
 };
 $('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar()};
 $('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar()};
@@ -3690,6 +3815,12 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
 
 
 
