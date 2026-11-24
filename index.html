@@ -903,6 +903,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1135,6 +1138,39 @@ html,body{overflow:hidden}
    收起状态直接不可见 */
 .sheet:not(.on){visibility:hidden!important;pointer-events:none!important}
 .sheet.on{visibility:visible!important}
+
+
+/* ── 终焉时刻：特殊卡片 ───────────────────────── */
+.terminus-chip{color:#8A6B1F!important;border-color:#E4D3A8!important;background:#FBF3DF!important}
+.terminus-chip.on{background:#3A2F18!important;background-image:none!important;color:#F1D68A!important;border-color:#3A2F18!important;box-shadow:none!important}
+html[data-mode="dark"] .terminus-chip{color:#E9C87A!important;border-color:#5A4A28!important;background:#2A2519!important}
+
+.card.terminus{
+  position:relative;overflow:hidden;
+  background:linear-gradient(150deg,#26221C 0%,#1C1915 62%,#241F18 100%);
+  border:1px solid rgba(233,200,122,.34);
+  box-shadow:0 10px 28px rgba(20,17,12,.28),inset 0 1px 0 rgba(233,200,122,.12);
+}
+.card.terminus::after{
+  content:"";position:absolute;inset:-40% -10% auto auto;width:220px;height:220px;pointer-events:none;
+  background:radial-gradient(circle,rgba(233,200,122,.22),transparent 66%);
+}
+.card.terminus .title{color:#F3E4BE!important}
+.card.terminus .meta{gap:7px}
+.card.terminus .check{border-color:rgba(233,200,122,.5)!important;background:rgba(233,200,122,.06)!important}
+.card.terminus .tag:not(.terminus-tag){background:rgba(243,228,190,.14)!important;color:#EFDCAE!important}
+.card.terminus .postpone-btn{color:#E9C87A!important;border-color:rgba(233,200,122,.32)!important}
+.card.terminus .icon-btn.del{color:rgba(233,200,122,.66)!important}
+.card.terminus .card-edit{color:rgba(233,200,122,.7)!important}
+.tag.terminus-tag{
+  background:rgba(233,200,122,.16)!important;color:#F1D68A!important;
+  border:1px solid rgba(233,200,122,.4);font-weight:800;letter-spacing:.06em;
+}
+.terminus-when{font-size:11.5px;color:rgba(233,200,122,.82);letter-spacing:.02em;
+  font-variant-numeric:tabular-nums}
+html[data-elder="on"] .terminus-when{font-size:13px}
+.card.terminus.done{opacity:.62}
+.card.terminus.done .title{text-decoration:line-through;color:rgba(243,228,190,.55)!important}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -1610,7 +1646,7 @@ html,body{overflow:hidden}
 <script>
 const KEY='qingji_tasks_v1';const ACC_KEY='qingji_accounts_v1';const CUR_KEY='qingji_current_user_v1';
 const LV={1:{n:'轻提醒',c:'lv1'},2:{n:'普通',c:'lv2'},3:{n:'重要',c:'lv3'}};
-let tasks=[],meta={firstUse:0,lastOpen:0,streak:0,dnd:{on:false,from:22,to:8},history:[]},pendingTime=0,pendingLv=1,pendingRepeat='none',pendingWeekMask=0,quickTimeOverride=0,sheetTimePicked=false;
+let tasks=[],meta={firstUse:0,lastOpen:0,streak:0,dnd:{on:false,from:22,to:8},history:[]},pendingTime=0,pendingSpecial='',pendingLv=1,pendingRepeat='none',pendingWeekMask=0,quickTimeOverride=0,sheetTimePicked=false;
 let modalId=null,lastDeleted=null,toastTimer=null,editingId=null,lastQuickId=null,batchMode=false,selected=new Set(),undoAction=null,lastPostponeCustom=0,lateId=null;
 let accounts=[],currentUser=null,calYear=0,calMonth=0,calSelected=null,authMode='register';
 let SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition,recog=null,voiceActive=false,voiceFinal='',voiceInterim='';
@@ -1686,6 +1722,9 @@ const pad=n=>String(n).padStart(2,'0');
 const today0=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime()};
 const dayKey=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 function atTime(h,m){const d=new Date();d.setHours(h,m,0,0);return d.getTime()}
+function toastMsgFor(ts,special){return special==='terminus'?('已刻下 · 终焉时刻 公元 '+terminusYear(ts)+' 年'):('已记下 · '+fullTime(ts))}
+function terminusTs(){const d=new Date();d.setFullYear(d.getFullYear()+10000);return d.getTime()}
+function terminusYear(ts){return new Date(ts).getFullYear()}
 function presetTime(i){if(i===0)return Date.now();if(i===1)return atTime(18,0);if(i===2){const d=new Date();d.setDate(d.getDate()+1);d.setHours(9,0,0,0);return d.getTime()}const d=new Date();d.setDate(d.getDate()+1);d.setHours(20,0,0,0);return d.getTime()}
 function dayStr(ts){const d=new Date(ts),n=new Date();const a=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(),b=today0();if(a===b)return'今天';if(a===b+86400000)return'明天';if(a===b+172800000)return'后天';return(d.getMonth()+1)+'月'+d.getDate()+'日'}
 function timeStr(ts){const d=new Date(ts);return pad(d.getHours())+':'+pad(d.getMinutes())}
@@ -1894,7 +1933,8 @@ function cardHTML(t,opts){
   const soonColor=!t.done&&!over&&diff<2592000000;
   const rep=t.repeat&&t.repeat!=='none'?'<span class="tag rep">↻ '+repeatLabel(t)+'</span>':'';
   const unhandled=(t.lv===3&&!t.done&&(t.escalateCount||0)>=4)?'<span class="tag unhandled">未处理</span>':'';
-  const cd=!t.done&&!over?'<span class="cd'+(diff<3600000?' soon':'')+'">· '+countdown(t.ts)+'</span>':'';
+  const terminus=t.special==='terminus';
+  const cd=terminus?'':(!t.done&&!over?'<span class="cd'+(diff<3600000?' soon':'')+'">· '+countdown(t.ts)+'</span>':'');
   const nextTip=(opts.next&&!t.done&&!over)?'<span class="next-flag">下一条</span>':'';
   const sel=batchMode&&selected.has(t.id);
   const left=batchMode
@@ -1904,16 +1944,19 @@ function cardHTML(t,opts){
   if(t.done)cls.push('done');
   if(sel)cls.push('sel');
   if(opts.next&&!t.done&&!over)cls.push('next-card');
-  if(urgent)cls.push('urgent');else if(soonColor)cls.push('soon-card');
+  if(terminus)cls.push('terminus');
+  else if(urgent)cls.push('urgent');else if(soonColor)cls.push('soon-card');
   return '<div class="'+cls.join(' ')+'" data-id="'+t.id+'">'+
     '<div class="swipe-actions"><button class="sw-done ios-host" data-act="check">✓<span>完成</span>'+iosTickHTML()+'</button><button class="sw-later" data-act="swipe-later">⏱<span>推迟</span></button><button class="sw-del" data-act="del">✕<span>删除</span></button></div>'+
     '<div class="body-shift" style="display:flex;gap:13px;align-items:flex-start;width:100%">'+left+
     '<div class="body" data-act="open"><div class="title">'+esc(t.title)+'</div>'+
-    '<div class="meta">'+nextTip+'<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd+
+    '<div class="meta">'+nextTip+(terminus
+      ? '<span class="tag terminus-tag">✦ 终焉</span><span class="terminus-when">公元 '+terminusYear(t.ts)+' 年 · 距今 10000 年</span>'
+      : '<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd)+
     '<span class="tag '+LV[t.lv].c+'">'+LV[t.lv].n+'</span></div>'+
     (t.note?'<div class="detail">'+esc(t.note)+'</div>':'')+
     '<span class="card-edit" data-act="edit">编辑</span></div>'+
-    '<div class="act">'+(t.done?'':'<button class="postpone-btn" data-act="postpone-one" aria-label="推迟">推迟</button>')+
+    '<div class="act">'+((t.done||terminus)?'':'<button class="postpone-btn" data-act="postpone-one" aria-label="推迟">推迟</button>')+
     '<button class="icon-btn del" data-act="del" aria-label="删除"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div></div></div>';
 }
 function captureCardY(){
@@ -2024,17 +2067,19 @@ function openSheet(){
 }
 function closeSheet(){editingId=null;setSheetMode(false);$('sheet').classList.remove('on');$('sheetMask').classList.remove('on')}
 function buildTimeChips(){
-  const labels=['现在','今天 18:00','明天 09:00','明天 20:00','自定义'];
+  const labels=['现在','今天 18:00','明天 09:00','明天 20:00','自定义','终焉时刻'];
   $('timeChips').innerHTML=labels.map((l,i)=>'<button class="chip'+(i===1?' on':'')+'" data-i="'+i+'">'+l+'</button>').join('');
   $('customTime').style.display='none';
-  pendingTime=presetTime(1);sheetTimePicked=false;
+  pendingTime=presetTime(1);sheetTimePicked=false;pendingSpecial='';
   updateSheetSummary();
 }
 function updateSheetSummary(){
   const el=$('sheetSummary');if(!el)return;
   const lv=(LV[pendingLv]||LV[1]).n;
   const rep=pendingRepeat==='daily'?'每天':pendingRepeat==='weekly'?'每周':pendingRepeat==='custom'?('每周 '+weekMaskText(pendingWeekMask)):'不重复';
-  const text=fullTime(pendingTime)+' · '+lv+' · '+rep;
+  const text=(pendingSpecial==='terminus'
+    ? ('✦ 终焉时刻 · 公元 '+terminusYear(pendingTime)+' 年（距今 10000 年）')
+    : fullTime(pendingTime))+' · '+lv+' · '+rep;
   el.textContent=text;
 }
 function resetSheet(){
@@ -2077,8 +2122,8 @@ function addTask(){
     save();render();closeSheet();resetSheet();toast('已修改 · '+fullTime(ts));return;
   }
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
-  tasks.unshift({id:id,title,ts,lv:pendingLv,done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
-  save();render();highlightTask(id);closeSheet();resetSheet();toast('已记下 · '+fullTime(ts));
+  tasks.unshift({id:id,title,ts,lv:pendingLv,special:pendingSpecial||'',done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+  const __tstamp=toastMsgFor(ts,pendingSpecial);save();render();highlightTask(id);closeSheet();resetSheet();toast(__tstamp);
 }
 function nextTs(t){
   let ts=t.ts;const now=Date.now();
@@ -3326,6 +3371,12 @@ $('timeChips').onclick=e=>{
   document.querySelectorAll('#timeChips .chip').forEach(c=>c.classList.remove('on'));
   b.classList.add('on');
   const i=+b.dataset.i;
+  if(i===5){
+    pendingSpecial='terminus';pendingTime=terminusTs();sheetTimePicked=true;
+    $('customTime').style.display='none';updateSheetSummary();
+    return;
+  }
+  pendingSpecial='';
   if(i===4){$('customTime').style.display='block';$('customInput').focus();updateSheetSummary();return}
   $('customTime').style.display='none';pendingTime=presetTime(i);sheetTimePicked=true;updateSheetSummary();
 };
@@ -3637,6 +3688,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
