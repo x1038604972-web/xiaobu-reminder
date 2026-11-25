@@ -349,6 +349,7 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .auth-field input{width:100%;height:44px;border:1.5px solid var(--line);border-radius:11px;background:var(--surface);padding:0 13px;font-size:15px;outline:none;transition:border-color .15s}
 .auth-field input:focus{border-color:var(--brand)}
 .auth-err{color:var(--alert);font-size:12px;min-height:18px;margin-top:10px;font-weight:600}
+.auth-note{color:var(--muted);font-size:11.5px;line-height:1.55;margin-top:8px}
 
 .sec{margin-top:20px}
 .sec-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 9px;gap:8px}
@@ -835,6 +836,7 @@ html[data-style="original"] .cal-cell.sel{background:var(--brand);border-color:v
   transition:all .25s;white-space:nowrap;box-shadow:0 8px 26px rgba(0,0,0,.26);display:flex;align-items:center;gap:12px;
 }
 .toast.success{background:#1F4B3B;border-color:rgba(255,255,255,.22);box-shadow:0 8px 26px rgba(0,0,0,.3)}
+.toast.warn{background:#7A3E22;border-color:rgba(255,255,255,.24);box-shadow:0 8px 26px rgba(0,0,0,.32)}
 .toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
 .toast button{color:#CDEBDD;font-size:12px;font-weight:700}
 html[data-mode="dark"] .toast{background:#F6F1E8;color:#111111;border-color:rgba(17,17,17,.14);box-shadow:0 8px 26px rgba(0,0,0,.42)}
@@ -861,6 +863,13 @@ html[data-mode="dark"] .toast button{color:#245740}
 html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;object-fit:cover;
   box-shadow:0 6px 16px rgba(35,32,28,.18);flex:0 0 auto}
 50%{transform:translateY(-6px)}}
+
+
+
+
+
+
+
 
 
 
@@ -2619,7 +2628,8 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
     <div class="grab"></div>
     <h2 id="authTitle">本地注册</h2>
     <div class="auth-field"><label>邮箱或昵称</label><input id="authUser" type="text" maxlength="60" placeholder="邮箱或昵称都行" autocomplete="username"></div>
-    <div class="auth-field"><label>密码</label><input id="authPass" type="password" maxlength="30" placeholder="至少 4 位" autocomplete="current-password"></div>
+    <div class="auth-field"><label>密码</label><input id="authPass" type="password" maxlength="64" placeholder="至少 6 位" autocomplete="current-password"></div>
+<div class="auth-note">本地账号只用来区分不同的数据空间：它不加密数据，也不能代替云端认证；换设备请用「导出备份」搬过去。</div>
     <div class="auth-err" id="authErr"></div>
     <button class="save" id="authSubmit">注册</button>
     <button class="sheet-del" id="authSwitch">已有账号？去登录</button>
@@ -2850,43 +2860,127 @@ function dayHint(){
   return h<11?'早上好，先挑一件最重要的走一小步':h<14?'中午了，别忘了给下午留点余地':h<18?'下午了，把要紧的事先收掉':'晚上了，剩下没做完的明天接着走';
 }
 
-function sanitizeTasks(arr){
-  // 旧版本数据 / 手改 localStorage / 半截写入，都可能让字段缺失或类型不对。
-  // 这里统一洗一遍：坏到无法挽救的条目直接丢掉，其余补齐默认值。
-  const out=[];
-  (Array.isArray(arr)?arr:[]).forEach(function(raw,idx){
-    if(!raw||typeof raw!=='object')return;
-    const title=(typeof raw.title==='string'?raw.title:String(raw.title==null?'':raw.title)).trim();
-    if(!title)return;
-    let ts=Number(raw.ts);
-    if(!isFinite(ts)||ts<=0)ts=Date.now()+3600000;
-    let lv=Number(raw.lv);
-    if(!isFinite(lv)||lv<1||lv>3)lv=1;
-    const reps=['none','daily','weekly','custom'];
-    const repeat=reps.indexOf(raw.repeat)>=0?raw.repeat:'none';
-    let mask=Number(raw.weekMask);if(!isFinite(mask)||mask<=0)mask=0;
-    out.push({
-      id:(typeof raw.id==='string'&&raw.id)||('t'+idx+Date.now().toString(36)),
-      title:title,
-      ts:ts,
-      lv:lv,
-      special:raw.special==='terminus'?'terminus':'',
-      subs:(Array.isArray(raw.subs)?raw.subs:[]).filter(function(s){
-        return s&&typeof s==='object'&&typeof s.text==='string'&&s.text.trim();
-      }).map(function(s,i){
-        return {id:(typeof s.id==='string'&&s.id)||('s'+idx+i),text:s.text.trim().slice(0,30),done:!!s.done};
-      }).slice(0,12),
-      subsOpen:raw.subsOpen!==false,
-      done:!!raw.done,
-      note:typeof raw.note==='string'?raw.note:'',
-      repeat:repeat,
-      weekMask:mask,
-      completedCount:Number(raw.completedCount)||0,
-      escalateCount:Number(raw.escalateCount)||0,
-      notified:!!raw.notified,
-      created:Number(raw.created)||Date.now()
-    });
+/* ═══ 统一数据层：校验 / 清洗 / ID 规范化 ═══════════════════════════
+   本地读取、JSON 导入、云端读取、小步创建，全部必须经过这里。
+   原则：能修的修（补默认值 / 换掉非法 ID），不能修的丢（没有标题），
+   绝不把可疑字符串原样拼进 HTML 属性（见 attrEsc）。 */
+const ID_RE=/^[A-Za-z0-9_-]{1,64}$/;
+const DLIMIT={tasks:5000,title:200,note:2000,subText:60,subs:12,habits:200,habitTitle:40,backupBytes:8*1024*1024};
+function attrEsc(v){
+  return String(v==null?'':v).replace(/[&<>"'\r\n\t]/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','\r':'','\n':' ','\t':' '}[c];
   });
+}
+function isValidId(v){return typeof v==='string'&&ID_RE.test(v)}
+function makeId(prefix,used){
+  let id='';
+  do{ id=prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }while(used&&used.has(id));
+  return id;
+}
+function validateTask(raw){
+  const errors=[];
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)){errors.push('不是对象');return {ok:false,errors}}
+  const title=(typeof raw.title==='string'?raw.title:String(raw.title==null?'':raw.title)).trim();
+  if(!title)errors.push('标题为空');
+  if(title.length>DLIMIT.title)errors.push('标题超过 '+DLIMIT.title+' 字');
+  if(raw.ts!=null&&!isFinite(Number(raw.ts)))errors.push('时间不是数字');
+  if(raw.lv!=null&&!(Number(raw.lv)>=1&&Number(raw.lv)<=3))errors.push('级别不在 1–3');
+  if(raw.id!=null&&!isValidId(raw.id))errors.push('ID 含非法字符');
+  if(raw.subs!=null&&!Array.isArray(raw.subs))errors.push('子任务不是数组');
+  if(raw.weekMask!=null&&!(Number(raw.weekMask)>=0&&Number(raw.weekMask)<=127))errors.push('重复规则越界');
+  return {ok:errors.length===0,errors};
+}
+function sanitizeTask(raw,idx){
+  const chk=validateTask(raw);
+  if(chk.errors.indexOf('不是对象')>=0||chk.errors.indexOf('标题为空')>=0)return null;
+  const title=(typeof raw.title==='string'?raw.title:String(raw.title==null?'':raw.title)).trim().slice(0,DLIMIT.title);
+  const terminus=raw.special==='terminus';
+  let ts=Number(raw.ts);
+  if(!isFinite(ts)||ts<=0)ts=Date.now()+3600000;
+  if(!terminus){
+    const maxTs=Date.now()+200*365*86400000;
+    if(ts>maxTs)ts=maxTs;
+    if(ts<0)ts=Date.now()+3600000;
+  }
+  let lv=Number(raw.lv);if(!isFinite(lv)||lv<1||lv>3)lv=1;
+  const reps=['none','daily','weekly','custom'];
+  const repeat=reps.indexOf(raw.repeat)>=0?raw.repeat:'none';
+  let mask=Number(raw.weekMask);
+  if(!isFinite(mask)||mask<0||mask>127)mask=0;
+  const subs=[];
+  (Array.isArray(raw.subs)?raw.subs:[]).forEach(function(s){
+    if(subs.length>=DLIMIT.subs)return;
+    if(!s||typeof s!=='object')return;
+    const text=(typeof s.text==='string'?s.text:'').trim().slice(0,DLIMIT.subText);
+    if(!text)return;
+    subs.push({id:isValidId(s.id)?s.id:'',text:text,done:!!s.done});
+  });
+  return {
+    id:isValidId(raw.id)?raw.id:'',
+    title:title,
+    ts:ts,
+    lv:lv,
+    special:terminus?'terminus':'',
+    subs:subs,
+    subsOpen:raw.subsOpen!==false,
+    done:!!raw.done,
+    note:(typeof raw.note==='string'?raw.note:'').slice(0,DLIMIT.note),
+    repeat:repeat,
+    weekMask:mask,
+    completedCount:Number(raw.completedCount)||0,
+    escalateCount:Number(raw.escalateCount)||0,
+    notified:!!raw.notified,
+    lastShownAt:Number(raw.lastShownAt)||0,
+    created:Number(raw.created)||Date.now()
+  };
+}
+function normalizeTaskIds(list){
+  const usedTask=new Set(),usedSub=new Set(),out=[];
+  let repaired=0,dropped=0;
+  (Array.isArray(list)?list:[]).forEach(function(t){
+    if(!t||typeof t!=='object'){dropped++;return}
+    const id=isValidId(t.id)&&!usedTask.has(t.id)?t.id:(repaired++,makeId('t',usedTask));
+    usedTask.add(id);
+    const subs=[];
+    (Array.isArray(t.subs)?t.subs:[]).forEach(function(s){
+      if(!s||typeof s!=='object')return;
+      const sid=isValidId(s.id)&&!usedSub.has(s.id)?s.id:(repaired++,makeId('s',usedSub));
+      usedSub.add(sid);
+      subs.push({id:sid,text:s.text||'',done:!!s.done});
+    });
+    t.id=id;t.subs=subs;out.push(t);
+  });
+  return {tasks:out,repaired:repaired,dropped:dropped};
+}
+function sanitizeTasks(arr,stats){
+  const out=[];
+  const src=(Array.isArray(arr)?arr:[]);
+  src.slice(0,DLIMIT.tasks).forEach(function(raw){
+    const t=sanitizeTask(raw);
+    if(t)out.push(t);else if(stats)stats.dropped++;
+  });
+  if(src.length>DLIMIT.tasks&&stats)stats.truncated=src.length-DLIMIT.tasks;
+  const norm=normalizeTaskIds(out);
+  if(stats){stats.dropped+=norm.dropped;stats.repaired=norm.repaired}
+  return norm.tasks;
+}
+function sanitizeHabits(arr,stats){
+  const out=[];
+  (Array.isArray(arr)?arr:[]).slice(0,DLIMIT.habits).forEach(function(h){
+    if(!h||typeof h!=='object'){if(stats)stats.dropped++;return}
+    const title=(typeof h.title==='string'?h.title:'').trim().slice(0,DLIMIT.habitTitle);
+    if(!title){if(stats)stats.dropped++;return}
+    const days={};
+    if(h.days&&typeof h.days==='object'){
+      Object.keys(h.days).forEach(function(k){
+        if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&h.days[k])days[k]=1;
+      });
+    }
+    out.push({id:isValidId(h.id)?h.id:'',title:title,created:Number(h.created)||Date.now(),days:days});
+  });
+  const norm=normalizeTaskIds(out.map(function(h){return {id:h.id,subs:[],title:h.title}}));
+  norm.tasks.forEach(function(t,i){out[i].id=t.id});
+  if(stats)stats.repaired=(stats.repaired||0)+norm.repaired;
   return out;
 }
 function load(){
@@ -2956,25 +3050,64 @@ function renderParsePreview(val,target,editable){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 
+/* 中文数字 → 整数（1–59 够用：日期、钟点、分钟） */
+const CN_DIGIT={'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+function cnNumToInt(v){
+  if(v==null)return null;
+  const str=String(v).trim();
+  if(!str)return null;
+  if(/^\d+$/.test(str))return parseInt(str,10);
+  if(/^十[一二三四五六七八九]?$/.test(str))return 10+(str.length>1?CN_DIGIT[str.charAt(1)]:0);
+  if(/^[一二两三四五六七八九]十[一二三四五六七八九]?$/.test(str))return CN_DIGIT[str.charAt(0)]*10+(str.length>2?CN_DIGIT[str.charAt(2)]:0);
+  if(str.length===1&&CN_DIGIT[str]!=null)return CN_DIGIT[str];
+  return null;
+}
+/* 反向校验：Date 会把 2 月 31 日滚到 3 月，这里要求年月日原样回来 */
+function validYMD(y,mo0,da){
+  const d=new Date(y,mo0,da);
+  return d.getFullYear()===y&&d.getMonth()===mo0&&d.getDate()===da;
+}
+/* 合法则返回当年的日偏移，非法返回 null；闰日会往后找最近 4 年 */
+function resolveMonthDay(now,mo1,da){
+  if(!(mo1>=1&&mo1<=12))return null;
+  if(!(da>=1&&da<=31))return null;
+  const y0=now.getFullYear();
+  for(let k=0;k<=4;k++){
+    const y=y0+k;
+    if(!validYMD(y,mo1-1,da))continue;
+    const d=new Date(y,mo1-1,da);
+    if(d<new Date(today0())&&k===0)continue;
+    return Math.round((new Date(y,mo1-1,da)-new Date(today0()))/86400000);
+  }
+  return null;
+}
 function parseWhen(text){
   if(!text)return null;
   const s=String(text).replace(/\s+/g,''),now=new Date();
+  // 先整体拦掉非法时刻：25:00 / 9:75 / 26点 这类一律判为「无法识别」，
+  // 免得被后面的兜底逻辑当成「只说了日期」，悄悄记到 09:00。
+  const badColon=s.match(/(\d{1,2})[:：](\d{2})/);
+  if(badColon){const bh=parseInt(badColon[1],10),bm=parseInt(badColon[2],10);if(bh>24||bm>59)return null}
+  const badHour=s.match(/(\d{1,2}|[一二两三四五六七八九十]{1,3})点/);
+  if(badHour){const bh=cnNumToInt(badHour[1]);if(bh==null||bh>24)return null}
   // 「现在 / 这个时候 / 这会儿」= 就现在这个钟点（配合「每天」就是每天这一刻）
   if(/(现在|这个时候|这会儿|这时候|当下|马上|立刻)/.test(s)){
     const t0=new Date(now.getTime()+60000);
     t0.setSeconds(0,0);
     return t0.getTime();
   }
-  let dayOffset=0,daySet=false,morningDefault=false,h=null,m=0,hasTime=false,hourOff=0,minOff=0,fixedHour=false;
-  const cnNum=v=>{const m={'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12};return m[v]!=null?m[v]:(/^\d+$/.test(v)?parseInt(v):null)};
+  let dayOffset=0,daySet=false,morningDefault=false,h=null,m=0,hasTime=false,hourOff=0,minOff=0,fixedHour=false,dayShift=0;
+  const cnNum=v=>cnNumToInt(v);
   const dm={'今天':0,'明天':1,'后天':2,'大后天':3};
   for(const k in dm){if(s.indexOf(k)>=0){dayOffset=dm[k];daySet=true;break}}
+  // 「大后天」含「后天」，先判长词，避免被 2 覆盖
+  if(s.indexOf('大后天')>=0){dayOffset=3;daySet=true}
   if(s.indexOf('明早')>=0){dayOffset=1;daySet=true;h=9;hasTime=true;fixedHour=true}
   if(s.indexOf('明晚')>=0){dayOffset=1;daySet=true;h=20;hasTime=true;fixedHour=true}
   if(s.indexOf('今晚')>=0){dayOffset=0;daySet=true;h=20;hasTime=true;fixedHour=true}
-  let mm=s.match(/((\d+|[一二两三四五六七八九十]+))天(后|以后)/);if(mm){const n=cnNum(mm[1]);if(n!=null){dayOffset=n;daySet=true}}
-  mm=s.match(/((\d+|[一二两三四五六七八九十]+))个?小时(后|以后)/);if(mm){const n=cnNum(mm[1]);if(n!=null)hourOff=n}
-  mm=s.match(/((\d+|[一二两三四五六七八九十]+))分钟(后|以后)/);if(mm){const n=cnNum(mm[1]);if(n!=null)minOff+=n}
+  let mm=s.match(/((\d+|[一二两三四五六七八九十]+))天(后|以后)/);if(mm){const n=cnNum(mm[1]);if(n!=null&&n>=0&&n<=3650){dayOffset=n;daySet=true}}
+  mm=s.match(/((\d+|[一二两三四五六七八九十]+))个?小时(后|以后)/);if(mm){const n=cnNum(mm[1]);if(n!=null&&n>=0&&n<=8760)hourOff=n}
+  mm=s.match(/((\d+|[一二两三四五六七八九十]+))分钟(后|以后)/);if(mm){const n=cnNum(mm[1]);if(n!=null&&n>=0&&n<=10080)minOff+=n}
   if(/一(个)?半(小时|钟头)(后|以后)/.test(s))minOff+=90;
   else if(s.indexOf('半小时后')>=0||s.indexOf('半个小时后')>=0||s.indexOf('半小时以后')>=0)minOff+=30;
   if(s.indexOf('周末')>=0){let d=now.getDay(),add=(6-d+7)%7;if(add===0)add=7;dayOffset=add;daySet=true;h=10;hasTime=true}
@@ -2982,38 +3115,56 @@ function parseWhen(text){
   const wk={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
   mm=s.match(/(下?)(周|星期)([一二三四五六日天])/);
   if(mm){const target=wk[mm[3]];let add=(target-now.getDay()+7)%7;if(add===0)add=7;if(mm[1]==='下')add+=7;dayOffset=add;daySet=true;morningDefault=true}
-  mm=s.match(/(\d{1,2})月(\d{1,2})[号日]/);
+  // 几月几号：严格范围 + 反向校验；13 月 / 2 月 31 日这类直接判定为无法识别
+  mm=s.match(/(\d{1,2}|[一二三四五六七八九十]{1,3})月(\d{1,2}|[一二三四五六七八九十]{1,3})[号日]/);
   if(mm){
-    const mo=parseInt(mm[1])-1,da=parseInt(mm[2]);
-    let d=new Date(now.getFullYear(),mo,da);
-    if(d<new Date(today0()))d=new Date(now.getFullYear()+1,mo,da);
-    dayOffset=Math.round((d-new Date(today0()))/86400000);daySet=true;
+    const mo=cnNum(mm[1]),da=cnNum(mm[2]);
+    if(mo==null||da==null)return null;
+    if(mo<1||mo>12||da<1||da>31)return null;
+    const off=resolveMonthDay(now,mo,da);
+    if(off==null)return null;
+    dayOffset=off;daySet=true;
   }
   mm=s.match(/(\d{1,2}):(\d{2})/);
-  if(mm){if(!fixedHour)h=parseInt(mm[1]);m=parseInt(mm[2]);hasTime=true}
-  else{
+  if(mm){
+    const hh=parseInt(mm[1],10),mi=parseInt(mm[2],10);
+    if(mi>=0&&mi<=59&&hh>=0&&hh<=24){
+      if(hh===24){dayShift=1;h=0;m=0}
+      else if(!fixedHour){h=hh;m=mi}
+      if(hh!==24)m=mi;
+      hasTime=true;
+    }
+  }else{
     const cn={'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12};
-    mm=s.match(/(上午|中午|下午|晚上|早上)(\d{1,2}|十一|十二|十|[一二两三四五六七八九])点(半)?/);
+    mm=s.match(/(上午|中午|下午|晚上|早上|早晨|凌晨)(\d{1,2}|[一二两三四五六七八九十]{1,3})点(半)?/);
     if(mm){
       if(!fixedHour){
-        let hh=cn[mm[2]]!=null?cn[mm[2]]:parseInt(mm[2]);
-        if((mm[1]==='下午'||mm[1]==='晚上')&&hh<12)hh+=12;
+        let hh=cnNumToInt(mm[2]);
+        if(!(hh>=0&&hh<=24))return null;
+        if(mm[1]==='下午'||mm[1]==='晚上'){
+          if(hh===12)hh=mm[1]==='晚上'?24:12;
+          else if(hh<12)hh+=12;
+        }
         if(mm[1]==='中午'&&hh<11)hh+=12;
-        h=hh;hasTime=true;
+        if(mm[1]==='凌晨'&&hh===12)hh=0;
+        if(hh===24){dayShift=1;h=0}else h=hh;
+        hasTime=true;
       }
       if(mm[3])m=30;
     }else if(!fixedHour){
-      mm=s.match(/(\d{1,2}|十一|十二|十|[一二两三四五六七八九])点(半)?/);
+      mm=s.match(/(\d{1,2}|[一二两三四五六七八九十]{1,3})点(半)?/);
       if(mm){
-        let hh=cn[mm[1]]!=null?cn[mm[1]]:parseInt(mm[1]);
+        let hh=cnNumToInt(mm[1]);
+        if(!(hh>=0&&hh<=24))return null;
         if(hh>=1&&hh<=6)hh+=12;
-        h=hh;m=mm[2]?30:0;hasTime=true;
+        if(hh===24){dayShift=1;h=0}else h=hh;
+        m=mm[2]?30:0;hasTime=true;
       }
     }
   }
   if(fixedHour&&/点半|时半/.test(s))m=30;
   if(!daySet&&!hasTime&&hourOff===0&&minOff===0)return null;
-  let d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+dayOffset);
+  let d=new Date(now.getFullYear(),now.getMonth(),now.getDate()+dayOffset+dayShift);
   if(hasTime&&h!=null)d.setHours(h,m||0,0,0);
   else if(daySet&&morningDefault)d.setHours(9,0,0,0);
   else if(daySet)d.setHours(9,0,0,0);
@@ -3021,7 +3172,11 @@ function parseWhen(text){
   if(hourOff)d=new Date(d.getTime()+hourOff*3600000);
   if(minOff)d=new Date(d.getTime()+minOff*60000);
   if(daySet&&!hasTime&&d<now)d=new Date(now.getTime());
-  return d.getTime();
+  const ts=d.getTime();
+  if(!isFinite(ts))return null;
+  const yr=d.getFullYear();
+  if(yr<1970||yr>now.getFullYear()+200)return null;
+  return ts;
 }
 function parseSmart(text){
   const raw=String(text||'').trim();
@@ -3138,7 +3293,7 @@ function cardHTML(t,opts){
   if(opts.next&&!t.done&&!over)cls.push('next-card');
   if(terminus)cls.push('terminus');
   else if(urgent)cls.push('urgent');else if(soonColor)cls.push('soon-card');
-  return '<div class="'+cls.join(' ')+'" data-id="'+t.id+'">'+
+  return '<div class="'+cls.join(' ')+'" data-id="'+attrEsc(t.id)+'">'+
     (t.done?'':'<div class="swipe-actions"><button class="sw-done ios-host" data-act="check">✓<span>完成</span>'+iosTickHTML()+'</button><button class="sw-later" data-act="swipe-later">⏱<span>推迟</span></button><button class="sw-del" data-act="del">✕<span>删除</span></button></div>')+
     '<div class="body-shift" style="display:flex;gap:13px;align-items:flex-start;width:100%">'+left+
     '<div class="body" data-act="open"><div class="title">'+esc(t.title)+'</div>'+
@@ -3153,7 +3308,7 @@ function cardHTML(t,opts){
           const open=t.subsOpen!==false;
           let rows='';
           t.subs.forEach(function(s){
-            rows+='<button class="sub-row'+(s.done?' on':'')+'" data-sub-act="toggle" data-sub-id="'+s.id+'" type="button">'+
+            rows+='<button class="sub-row'+(s.done?' on':'')+'" data-sub-act="toggle" data-sub-id="'+attrEsc(s.id)+'" type="button">'+
               '<i class="sub-box">'+ (s.done?'✓':'') +'</i><span class="sub-txt">'+esc(s.text)+'</span></button>';
           });
           return '<div class="subs'+(open?' open':'')+'">'+
@@ -3344,8 +3499,9 @@ function toast(msg,kind){
   $('toastUndo').style.display=kind==='undo'?'inline':'none';
   $('toastEdit').style.display=kind==='edit'?'inline':'none';
   $('toast').classList.toggle('success',kind==='success');
+  $('toast').classList.toggle('warn',kind==='warn');
   $('toast').classList.add('on');
-  toastTimer=setTimeout(()=>{$('toast').classList.remove('on');if(kind!=='undo')undoAction=null},kind==='undo'?5200:3800);
+  toastTimer=setTimeout(()=>{$('toast').classList.remove('on');if(kind!=='undo')undoAction=null},kind==='warn'?5200:(kind==='undo'?5200:3800));
 }
 function setSheetMode(edit){
   $('sheetTitle').textContent=edit?'修改这条':'说出要做的那件事';
@@ -3497,13 +3653,22 @@ function addTask(){
   const ts=isTerminus?terminusTs():((sheetTimePicked||!parsed)?pendingTime:parsed);
   if(editingId){
     const t=tasks.find(x=>x.id===editingId);
-    if(t){t.title=title;t.ts=ts;t.lv=pendingLv;t.note=$('noteInput').value.trim();
-      t.subs=editingSubs.map(function(s){return {id:s.id,text:s.text,done:!!s.done}});t.repeat=pendingRepeat;t.weekMask=pendingRepeat==='custom'?pendingWeekMask:0;t.notified=false;t.escalateCount=0}
+    if(t){
+      const draft=Object.assign({},t,{title:title,ts:ts,lv:pendingLv,note:$('noteInput').value.trim(),
+        subs:editingSubs.map(function(s){return {id:s.id,text:s.text,done:!!s.done}}),
+        repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,notified:false,escalateCount:0});
+      const clean=sanitizeTask(draft);
+      if(!clean){toast('这条内容没通过校验，没有保存','warn');return}
+      Object.assign(t,clean);
+    }
     save();render();closeSheet();resetSheet();toast('已修改 · '+fullTime(ts));return;
   }
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
-  tasks.unshift({subs:editingSubs.map(function(s){return {id:s.id,text:s.text,done:!!s.done}}),id:id,title,ts,lv:isTerminus?1:pendingLv,special:isTerminus?'terminus':(pendingSpecial||''),done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
-  const __tstamp=toastMsgFor(ts,pendingSpecial);save();render();highlightTask(id);closeSheet();resetSheet();toast(toastMsgFor(ts,isTerminus?'terminus':pendingSpecial));
+  const draft={subs:editingSubs.map(function(s){return {id:s.id,text:s.text,done:!!s.done}}),id:id,title,ts,lv:isTerminus?1:pendingLv,special:isTerminus?'terminus':(pendingSpecial||''),done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()};
+  const clean=sanitizeTask(draft);
+  if(!clean){toast('这条内容没通过校验，没有保存','warn');return}
+  tasks.unshift(clean);
+  save();render();highlightTask(clean.id);closeSheet();resetSheet();toast(toastMsgFor(ts,isTerminus?'terminus':pendingSpecial));
 }
 function nextTs(t){
   let ts=t.ts;const now=Date.now();
@@ -3709,6 +3874,23 @@ function checkReminders(){
     if(now-t.lastShownAt>=gap&&!($('modal').classList.contains('on')&&modalId===t.id))fireReminder(t);
   });
 }
+/* 页面可见 / 回到前台 / 从往返缓存恢复 / 网络恢复 → 补查一次到期提醒。
+   JS 定时器在后台会被冻结，所以不能只靠 60 秒轮询。 */
+function resyncReminders(reason){
+  try{renderTop()}catch(e){}
+  try{checkReminders()}catch(e){}
+  try{if(typeof armNotify==='function')armNotify()}catch(e){}
+}
+if(!window.__xbResyncArmed){
+  window.__xbResyncArmed=true;
+  ['visibilitychange','focus','pageshow','online'].forEach(function(ev){
+    window.addEventListener(ev,function(){
+      if(ev==='visibilitychange'&&document.visibilityState!=='visible')return;
+      resyncReminders(ev);
+    });
+  });
+  document.addEventListener('resume',function(){resyncReminders('resume')},false);
+}
 function refreshNotifyStatus(){
   if(!('Notification' in window)){$('notifyStatus').textContent='当前浏览器不支持系统通知';return}
   const p=Notification.permission;
@@ -3722,29 +3904,164 @@ function ensureNotify(){
     refreshNotifyStatus();toast(p==='granted'?'通知已开启':'未授权，页面内提醒仍可用');
   }).catch(()=>toast('授权失败，页面内提醒仍可用'));
 }
+/* ═══ 备份与恢复（backupVersion 2）═══════════════════════════════
+   覆盖：任务 / 习惯 / meta / 全部设置项。绝不导出密码、token、API Key。 */
+const BACKUP_VERSION=2;
+const AUTOBK_KEY='qingji_autobackup_v1';
+const CLEAR_KEEP=['qingji_welcomed_v1','qingji_autobackup_v1'];
+const BACKUP_SETTING_KEYS={
+  theme:'qingji_theme_v1',style:'qingji_visual_style_v1',elder:'qingji_elder_mode_v1',
+  perf:'qingji_perf_mode_v1',doneFx:'qingji_done_fx_v1',vibe:'qingji_done_vibe_v1',
+  vibeStrength:'qingji_vibe_strength_v1',fxSound:'qingji_fx_sound_v1',member:'qingji_member_v1',
+  postponeCustom:'qingji_postpone_custom_v1',guide:'qingji_guide_v1',visual:'qingji_visual_style_v1'
+};
+function collectSettings(){
+  const out={};
+  Object.keys(BACKUP_SETTING_KEYS).forEach(function(k){
+    try{const raw=localStorage.getItem(BACKUP_SETTING_KEYS[k]);if(raw!=null)out[k]=JSON.parse(raw)}catch(e){}
+  });
+  return out;
+}
+function applySettings(obj){
+  if(!obj||typeof obj!=='object')return;
+  Object.keys(BACKUP_SETTING_KEYS).forEach(function(k){
+    if(!(k in obj))return;
+    try{localStorage.setItem(BACKUP_SETTING_KEYS[k],JSON.stringify(obj[k]))}catch(e){}
+  });
+}
+function currentHabits(){try{return Array.isArray(habits)?habits:[]}catch(e){return []}}
+function buildBackup(){
+  const hs=currentHabits();
+  return {
+    backupVersion:BACKUP_VERSION,
+    exportedAt:new Date().toISOString(),
+    app:{version:(typeof APP_VERSION==='string'?APP_VERSION:'1.2.0'),schema:'qingji'},
+    counts:{tasks:tasks.length,habits:hs.length},
+    tasks:tasks,
+    habits:hs,
+    meta:meta,
+    settings:collectSettings()
+  };
+}
+function autoBackup(reason){
+  try{
+    const payload=JSON.stringify({reason:reason||'manual',at:new Date().toISOString(),data:buildBackup()});
+    if(payload.length>DLIMIT.backupBytes)return false;
+    localStorage.setItem(AUTOBK_KEY,payload);
+    return true;
+  }catch(e){return false}
+}
 function exportData(){
+  let text='';
+  try{text=JSON.stringify(buildBackup(),null,2)}catch(e){toast('导出失败：数据序列化出错','warn');return}
   const name='小步备份-'+dayKey(Date.now()).replace(/-/g,'')+'.json';
-  const blob=new Blob([JSON.stringify({version:1,tasks:tasks},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('已导出 '+name);
+  try{
+    const blob=new Blob([text],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  }catch(e){toast('导出失败：浏览器不允许下载','warn');return}
+  autoBackup('export');
+  toast('已导出 '+name+' · '+tasks.length+' 条任务 / '+currentHabits().length+' 个习惯');
+}
+function validateImportData(obj){
+  const out={ok:false,errors:[],warnings:[],tasks:[],habits:[],meta:null,settings:null,version:0};
+  if(!obj||typeof obj!=='object'){out.errors.push('不是有效的 JSON 对象');return out}
+  let rawTasks=null;
+  if(Array.isArray(obj)){rawTasks=obj;out.version=1;out.warnings.push('旧格式（只有任务列表），建议导出新备份')}
+  else if(Array.isArray(obj.tasks)){rawTasks=obj.tasks;out.version=Number(obj.backupVersion||obj.version||1)||1}
+  if(!rawTasks){out.errors.push('缺少 tasks 数组');return out}
+  if(out.version>BACKUP_VERSION)out.warnings.push('备份版本 v'+out.version+' 比当前程序新，可能有字段被忽略');
+  if(rawTasks.length>DLIMIT.tasks)out.warnings.push('任务 '+rawTasks.length+' 条超过上限，只导入前 '+DLIMIT.tasks+' 条');
+  const st={dropped:0,repaired:0,truncated:0};
+  out.tasks=sanitizeTasks(rawTasks,st);
+  if(!out.tasks.length)out.errors.push('没有一条任务通过校验');
+  if(st.dropped)out.warnings.push('丢弃无效任务 '+st.dropped+' 条（缺标题/结构不对）');
+  if(st.repaired)out.warnings.push('修复重复或非法 ID '+st.repaired+' 个');
+  const hs={dropped:0,repaired:0};
+  out.habits=sanitizeHabits(Array.isArray(obj.habits)?obj.habits:[],hs);
+  if(hs.dropped)out.warnings.push('丢弃无效习惯 '+hs.dropped+' 个');
+  if(obj.meta&&typeof obj.meta==='object')out.meta=obj.meta;
+  if(obj.settings&&typeof obj.settings==='object')out.settings=obj.settings;
+  out.ok=out.errors.length===0&&out.tasks.length>0;
+  return out;
+}
+function importPreviewText(v){
+  const lines=[];
+  lines.push('导入预览');
+  lines.push('· 任务：'+v.tasks.length+' 条'+(v.habits.length?('，习惯：'+v.habits.length+' 个'):''));
+  lines.push('· 备份版本：v'+v.version+(v.settings?'，含设置':''));
+  if(v.warnings.length)lines.push('· 提醒：'+v.warnings.slice(0,3).join('；'));
+  lines.push('导入前会自动备份当前数据，导入失败会回滚。');
+  lines.push('');
+  lines.push('确定导入？');
+  return lines.join('\n');
 }
 function importData(file){
-  const r=new FileReader();
-  r.onload=()=>{
+  if(!file){toast('没有选择文件','warn');return}
+  if(file.size>DLIMIT.backupBytes){toast('文件超过 '+(DLIMIT.backupBytes/1048576)+'MB，已取消导入','warn');return}
+  const reader=new FileReader();
+  reader.onerror=function(){toast('文件读取失败，原数据未改动','warn')};
+  reader.onload=function(){
+    let obj;
+    try{obj=JSON.parse(reader.result)}catch(e){toast('JSON 解析失败，原数据未改动','warn');return}
+    const v=validateImportData(obj);
+    if(!v.ok){toast('导入失败：'+(v.errors[0]||'格式不对')+'（原数据未改动）','warn');return}
+    let go=false;
+    try{go=confirm(importPreviewText(v))}catch(e){go=true}
+    if(!go){toast('已取消导入');return}
+    const backedUp=autoBackup('before-import');
+    const before={raw:null,tasks:tasks,meta:meta,habits:currentHabits().slice()};
+    try{before.raw=localStorage.getItem(KEY)}catch(e){}
     try{
-      const v=JSON.parse(r.result);
-      if(!v||v.version!==1||!Array.isArray(v.tasks))throw 0;
-      tasks=v.tasks;save();render();toast('已导入 '+tasks.length+' 条');
-    }catch(e){toast('文件格式不对')}
+      tasks=v.tasks;
+      meta=Object.assign({firstUse:Date.now(),lastOpen:dayKey(Date.now()),streak:1,dnd:{on:false,from:22,to:8},history:[]},v.meta||{});
+      meta.dnd=Object.assign({on:false,from:22,to:8},meta.dnd||{});
+      if(!Array.isArray(meta.history))meta.history=[];
+      if(v.habits.length){habits=v.habits;try{saveHabits()}catch(e){}}
+      if(v.settings)applySettings(v.settings);
+      if(!saveCurrent())throw new Error('storage');
+      try{initTheme();initVisualStyle();applyTheme();applyElder();applyVisualStyle();loadDoneFx();loadDoneVibe();loadFxSound()}catch(e){}
+      render();try{renderHabits()}catch(e){}
+      try{tasks.forEach(function(t){if(!t.done&&!t.notified&&t.ts<=Date.now())t.notified=false});armNotify();checkReminders()}catch(e){}
+      toast('已导入 '+tasks.length+' 条任务'+(v.habits.length?(' · '+v.habits.length+' 个习惯'):'')+(backedUp?'（原数据已自动备份）':''));
+    }catch(err){
+      try{
+        if(before.raw==null)localStorage.removeItem(KEY);else localStorage.setItem(KEY,before.raw);
+      }catch(e){}
+      tasks=before.tasks;meta=before.meta;
+      try{if(v.habits.length){habits=before.habits;saveHabits()}}catch(e){}
+      try{render();renderHabits()}catch(e){}
+      toast('导入失败，已回滚到导入前的数据','warn');
+    }
   };
-  r.onerror=()=>toast('文件读取失败');
-  r.readAsText(file);
+  reader.readAsText(file);
+}
+function qingjiKeys(){
+  const keys=[];
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('qingji_')===0)keys.push(k)}}catch(e){}
+  return keys;
 }
 function clearAll(){
-  if(!confirm('确定清空全部数据？此操作不可撤销。'))return;
-  localStorage.removeItem(KEY);tasks=[];meta={firstUse:Date.now(),lastOpen:dayKey(Date.now()),streak:1,dnd:{on:false,from:22,to:8},history:[]};
-  save();render();toast('已清空全部数据');
+  const keys=qingjiKeys();
+  const scope='任务、习惯、账号与登录态、主题/适老化/特效等全部设置、小步记忆';
+  const msg='清空全部数据？\n\n将清理：'+scope+'\n涉及 '+keys.length+' 个 qingji_* 数据项（保留首次使用标记与自动备份）。\n\n清空前会自动备份一份，导入时可找回。\n此操作不可撤销，确定继续？';
+  let go=false;
+  try{go=confirm(msg)}catch(e){go=true}
+  if(!go)return;
+  const backedUp=autoBackup('before-clear');
+  const failed=[];
+  keys.forEach(function(k){
+    if(CLEAR_KEEP.indexOf(k)>=0)return;
+    try{localStorage.removeItem(k)}catch(e){failed.push(k)}
+  });
+  tasks=[];
+  if(typeof habits!=='undefined'){habits=[];try{saveHabits()}catch(e){}}
+  meta={firstUse:Date.now(),lastOpen:dayKey(Date.now()),streak:1,dnd:{on:false,from:22,to:8},history:[]};
+  accounts=[];currentUser=null;
+  saveCurrent();
+  try{render();renderHabits();renderAccount();initDnd()}catch(e){}
+  toast(failed.length?('已清空，但有 '+failed.length+' 项清理失败'):('已清空全部数据'+(backedUp?' · 已留一份自动备份':'')));
 }
 
 function loadAccounts(){
@@ -3752,17 +4069,57 @@ function loadAccounts(){
   currentUser=localStorage.getItem(CUR_KEY)||null;
   if(currentUser&&!accounts.some(a=>a.user===currentUser))currentUser=null;
 }
+/* 本地账号只用于「区分不同的数据空间」，不是安全认证、也不是加密。
+   新注册用 PBKDF2-SHA256（12 万次）存派生值；老账号的 DJB2 哈希在下次登录时自动升级。 */
 function hashPass(s){let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return'h'+h.toString(36)}
+function b64(buf){let s='';for(let i=0;i<buf.length;i++)s+=String.fromCharCode(buf[i]);return btoa(s)}
+function canStrongHash(){try{return !!(window.crypto&&window.crypto.subtle&&window.crypto.subtle.deriveBits)}catch(e){return false}}
+async function hashPassStrong(pass,salt){
+  const enc=new TextEncoder();
+  const key=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:enc.encode(salt),iterations:120000},key,256);
+  return b64(new Uint8Array(bits));
+}
+async function makePassRecord(pass){
+  if(!canStrongHash())return {algo:'legacy-djb2',salt:'',pass:hashPass(pass)};
+  const salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+  return {algo:'pbkdf2-sha256-120k',salt:salt,pass:await hashPassStrong(pass,salt)};
+}
+async function verifyPass(a,pass){
+  if(!a)return false;
+  if(a.algo==='pbkdf2-sha256-120k'&&canStrongHash()){
+    try{return a.pass===(await hashPassStrong(pass,a.salt||''))}catch(e){return false}
+  }
+  return a.pass===hashPass(pass);
+}
 function snapshot(){return JSON.stringify({version:1,tasks:tasks,meta:meta})}
+let lastGoodSnapshot=null,storageWarned=false;
+function safeSetItem(k,v){
+  try{localStorage.setItem(k,v);if(k===KEY)lastGoodSnapshot=v;return true}
+  catch(e){return false}
+}
+function storageFailNotice(){
+  if(storageWarned)return;
+  storageWarned=true;
+  toast('本地保存失败：存储空间不足或被浏览器限制。请先导出备份，再清理空间。','warn');
+}
 function persistSnapshot(){
-  if(!currentUser)return;
-  const a=accounts.find(x=>x.user===currentUser);if(!a)return;
-  a.data=snapshot();localStorage.setItem(ACC_KEY,JSON.stringify(accounts));
+  if(!currentUser)return true;
+  const a=accounts.find(x=>x.user===currentUser);if(!a)return true;
+  a.data=snapshot();
+  const ok=safeSetItem(ACC_KEY,JSON.stringify(accounts));
+  if(!ok)storageFailNotice();
+  return ok;
 }
 function saveCurrent(){
-  localStorage.setItem(KEY,snapshot());
-  if(currentUser){const a=accounts.find(x=>x.user===currentUser);if(a){a.data=snapshot();localStorage.setItem(ACC_KEY,JSON.stringify(accounts))}}
+  const snap=snapshot();
+  const ok=safeSetItem(KEY,snap);
+  let accOk=true;
+  if(currentUser){const a=accounts.find(x=>x.user===currentUser);if(a){a.data=snap;accOk=safeSetItem(ACC_KEY,JSON.stringify(accounts))}}
+  if(!ok||!accOk){storageFailNotice();return false}
+  return true;
 }
+
 function switchUser(user){
   persistSnapshot();
   currentUser=user||null;
@@ -3784,7 +4141,7 @@ function renderAccount(){
   if(isCloud&&a.cloudAvatar)avatar.innerHTML='<img src="'+esc(a.cloudAvatar)+'" alt="">';
   else avatar.textContent=isCloud?(a.cloudName||'云').charAt(0).toUpperCase():(a?a.user.charAt(0).toUpperCase():'游');
   $('accName').textContent=isCloud?(a.cloudName||'云端用户'):(a?a.user:'本地模式');
-  $('accSub').textContent=isCloud?('云端账号 · '+(a.email||'')+' · '+tasks.length+' 条'):(a?('本地账号 · '+tasks.length+' 条事项'):'数据只存在这台设备');
+  $('accSub').textContent=isCloud?('云端账号 · '+(a.email||'')+' · 仅登录，任务仍只在本机（云同步未启用）'):(a?('本地账号 · '+tasks.length+' 条事项 · 仅区分数据空间，不加密'):'数据只存在这台设备');
   if(isCloud){
     $('accBtns').innerHTML='<button class="acc-ghost" id="accLogout">退出云端账号</button>';
   }else{
@@ -3809,23 +4166,36 @@ function openAuth(mode){
   setTimeout(()=>$('authUser').focus(),260);
 }
 function closeAuth(){$('authMask').classList.remove('on');$('authSheet').classList.remove('on')}
-function submitAuth(){
+async function submitAuth(){
   const u=$('authUser').value.trim().toLowerCase(),p=$('authPass').value;
   const isMail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(u);
   if(!isMail&&!/^[\w\u4e00-\u9fa5·._-]{2,20}$/.test(u)){$('authErr').textContent='请填写邮箱，或 2–20 字的昵称';return}
-  if(p.length<4){$('authErr').textContent='密码至少 4 位';return}
+  if(p.length<6){$('authErr').textContent='密码至少 6 位（本地账号只用于区分数据空间）';return}
+  const btn=$('authSubmit');if(btn)btn.disabled=true;
   if(authMode==='register'){
-    if(accounts.some(a=>a.user===u)){$('authErr').textContent='这个账号已注册，请直接登录';return}
-    accounts.push({user:u,pass:hashPass(p),data:snapshot(),created:Date.now()});
-    localStorage.setItem(ACC_KEY,JSON.stringify(accounts));
-    currentUser=u;localStorage.setItem(CUR_KEY,u);localStorage.setItem(KEY,snapshot());
-    closeAuth();finishWelcome();render();renderAccount();toast('已注册并登录 · '+u);
-  }else{
-    const a=accounts.find(x=>x.user===u);
-    if(!a){$('authErr').textContent='这个账号还没注册，先注册一下';return}
-    if(a.pass!==hashPass(p)){$('authErr').textContent='密码错误';return}
-    closeAuth();finishWelcome();switchUser(u);toast('欢迎回来 · '+u);
+    if(accounts.some(a=>a.user===u)){$('authErr').textContent='这个账号已注册，请直接登录';if(btn)btn.disabled=false;return}
+    try{
+      const rec=await makePassRecord(p);
+      accounts.push({user:u,pass:rec.pass,algo:rec.algo,salt:rec.salt,data:snapshot(),created:Date.now()});
+      if(!safeSetItem(ACC_KEY,JSON.stringify(accounts))){accounts.pop();$('authErr').textContent='本地存储写入失败，先导出备份再试';if(btn)btn.disabled=false;return}
+      currentUser=u;try{localStorage.setItem(CUR_KEY,u)}catch(e){}
+      saveCurrent();
+      closeAuth();finishWelcome();render();renderAccount();
+      toast('已注册并登录 · '+u+'（本地账号，不是安全认证）');
+    }catch(e){$('authErr').textContent='注册失败：'+(e&&e.message?e.message:'未知错误')}
+    if(btn)btn.disabled=false;
+    return;
   }
+  const a=accounts.find(x=>x.user===u);
+  if(!a){$('authErr').textContent='这个账号还没注册，先注册一下';if(btn)btn.disabled=false;return}
+  let ok=false;
+  try{ok=await verifyPass(a,p)}catch(e){ok=false}
+  if(!ok){$('authErr').textContent='密码错误';if(btn)btn.disabled=false;return}
+  if(a.algo!=='pbkdf2-sha256-120k'&&canStrongHash()){
+    try{const rec=await makePassRecord(p);a.algo=rec.algo;a.salt=rec.salt;a.pass=rec.pass;safeSetItem(ACC_KEY,JSON.stringify(accounts))}catch(e){}
+  }
+  closeAuth();finishWelcome();switchUser(u);toast('欢迎回来 · '+u);
+  if(btn)btn.disabled=false;
 }
 function renderCalendar(){
   const now=new Date();
@@ -3918,7 +4288,7 @@ function renderCalDay(){
   const left=list.filter(t=>!t.done).length;
   $('calDayTitle').textContent=(dt.getMonth()+1)+'月'+dt.getDate()+'日 · '+'日一二三四五六'[dt.getDay()]+
     (list.length?('  ·  '+left+'/'+list.length+' 件未完成·点一行可勾选'):'');
-  $('calDayList').innerHTML=list.length?list.map(t=>'<div class="hist-item'+(t.done?' on':'')+'" data-id="'+t.id+'" role="button" tabindex="0">'+
+  $('calDayList').innerHTML=list.length?list.map(t=>'<div class="hist-item'+(t.done?' on':'')+'" data-id="'+attrEsc(t.id)+'" role="button" tabindex="0">'+
     '<span class="hck">'+(t.done?'✓':'○')+'</span>'+esc(t.title)+'<span class="hm">'+timeStr(t.ts)+'</span></div>').join('')
     :'<div class="empty" style="padding:24px"><p>这一天还没有安排</p></div>';
 }
@@ -4314,7 +4684,8 @@ function initTheme(){
   }
   const seg=$('modeSeg');
   if(seg)seg.onclick=e=>{const b=e.target.closest('button');if(!b)return;modePref=b.dataset.mode;applyTheme();toast('已切换为'+(modePref==='auto'?'跟随系统':modePref==='dark'?'深色':'浅色'))};
-  if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(modePref==='auto')applyTheme()});
+  // 导入后会再 initTheme() 一次，监听只挂一次，避免重复回调
+  if(window.matchMedia&&!window.__xbThemeMM){window.__xbThemeMM=1;window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(modePref==='auto')applyTheme()})}
   applyTheme();
 }
 
@@ -5346,7 +5717,7 @@ function renderHabits(){
     });
     const weekDone=week.filter(function(k){return h.days[k]}).length;
     const st=habitStreak(h),best=habitBest(h);
-    return '<div class="habit" data-id="'+h.id+'">'+
+    return '<div class="habit" data-id="'+attrEsc(h.id)+'">'+
       '<button class="habit-check'+(h.days[todayKey]?' on':'')+'" data-act="toggle" aria-label="今天打卡">✓</button>'+
       '<div class="habit-main">'+
         '<div class="habit-line">'+
@@ -5788,11 +6159,18 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261125-xb5').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261125-xb7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
+
 
 
 
