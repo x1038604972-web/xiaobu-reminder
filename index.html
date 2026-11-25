@@ -1019,6 +1019,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2102,6 +2103,23 @@ html[data-elder="on"] .quick .mic-btn em,
 html[data-elder="on"] .quick .quick-more em{
   font-size:11px!important;line-height:1;
 }
+
+
+/* ── 适老化：完成震动（6 个选项）不再被裁 ────────────────
+   适老化把 .seg button 放大到 14px 字、13px 内边距、44px 高，
+   6 个按钮一行放不下，第二行会被 .set-detail 的 max-height 裁掉半截。
+   这里允许换行并排成 3+3，同时让展开的详情不再限高。 */
+html[data-elder="on"] .set-card.open .set-detail{max-height:none!important}
+html[data-elder="on"] .seg{flex-wrap:wrap;height:auto}
+html[data-elder="on"] .fx-seg{row-gap:5px}
+html[data-elder="on"] .fx-seg button{
+  flex:1 1 calc(33.333% - 4px);
+  min-width:0;
+  justify-content:center;
+  text-align:center;
+}
+/* 震动强度那一行也给足空间，别被挤 */
+html[data-elder="on"] .vibe-slider{margin-top:10px}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -5668,6 +5686,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
