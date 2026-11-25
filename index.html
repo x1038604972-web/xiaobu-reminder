@@ -976,6 +976,13 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4307,6 +4314,10 @@ function distillSpeech(raw){
   return out;
 }
 
+/* 小步模块共用同一套口语蒸馏 */
+var __distillSpeech=distillSpeech, __distillCleanTitle=distillCleanTitle;   // 先存原函数，避免同名遮蔽导致递归
+window.distillSpeech=function(x){try{return __distillSpeech(x)}catch(e){return null}};
+window.distillCleanTitle=function(x){try{return __distillCleanTitle(x)}catch(e){return ''}};
 function voiceRender(){
   const text=(voiceFinal+' '+voiceInterim).trim();
   const t=$('voiceText');
@@ -5320,6 +5331,13 @@ try{
 
 
 
+
+
+
+
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -6028,6 +6046,98 @@ try{
   }
 
   /* 自己清洗标题：比 parseSmart 更狠地剥掉「提醒我 / 每周三四 / 明天9点」 */
+
+  /* ── 口语裁剪：把小步收到的长句压成能上卡片的短标题 ────
+     优先复用 App 语音那套 distillSpeech（它懂口语、懂意图、会改时间），
+     再用 local 规则兜底，最后按「动词 + 宾语」抽核心片段缩短。 */
+  var CORE_VERBS = '交|送|取|买|做|写|发|打|约|见|开|准备|整理|复习|下载|安装|报销|提交|联系|确认|检查|预约|报名|缴费|打卡|锻炼|吃药|喝水|洗|收|寄|还|借|学|练|看|听|读|背|问|找|修|换|搬|订|充|拍照|上传|打电话|开会|面试|体检|看病|陪|接|缴';
+  var FILLERS = /^(嗯+|呃+|啊+|哦+|噢+|那个|这个|就是|然后|其实|对了|唉+|诶+|行吧|好吧)+/;
+
+  function corePhrase(s, max) {
+    var x = String(s || '')
+      .replace(/[，。,.!！?？、；;：:~～…]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    for (var k = 0; k < 3; k++) {
+      var y = x.replace(FILLERS, '').trim();
+      if (y === x) break;
+      x = y;
+    }
+    if (x.length <= max) return x;
+    // 取含核心动词的那一段（动词 + 后面 12 字）
+    var re = new RegExp('(' + CORE_VERBS + ')[^ ]{0,14}');
+    var m = x.match(re);
+    if (m && m[0].length >= 3) {
+      var cand = m[0].trim();
+      if (cand.length > max) cand = cand.slice(0, max);
+      return cand.replace(/[的了吧呢啊呀嘛哦]+$/, '');
+    }
+    // 实在没有动词：按首段截断，别留半个词
+    var first = x.split(' ')[0] || x;
+    var out = first.slice(0, max).replace(/[的了吧呢啊呀嘛哦]+$/, '');
+    return out;
+  }
+
+
+  /* 口语骨架重写：去代词/副词，把字句改主动句，尽量保留「做什么 + 对谁」 */
+  function polishTitle(s) {
+    var x = String(s || '');
+    x = x.replace(/[嗯呃啊哦噢诶]/g, '');
+    x = x.replace(/(那个|这个|然后|就是|其实|对了|到时候|一开始)/g, '');
+    x = x.replace(/(你|我|我们|你们|他|她|咱们)/g, '');
+    x = x.replace(/(亲手|亲自|顺便|特意|务必|一定要|千万|记得|别忘|一下|一趟|这边|那边)/g, '');
+    // 「把 A 交给 B」→「A 交给 B」
+    var m = x.match(/把(.{1,14}?)(拿去给|送过去|交给|送到|交|送给|送|转给|拿给|带给|带到)(.{0,10})/);
+    if (m) {
+      var verb = m[2].replace(/^(送给|送|转给|拿给|带给|带到|拿去给|送过去|送到)$/, '交给');
+      x = m[1] + verb + m[3];
+    }
+    x = x.replace(/(一声|一下子|一趟儿)$/g, '');
+    // 「去(一趟)?学校」这类地点前缀，句子已经够长时去掉
+    if (x.length > 18) x = x.replace(/^(去|到|在)(一趟|一次)?(.{1,6}?)(?=把|将|交|送|取|买)/, '');
+    x = x.replace(/^[得要先去把将就]+/, '').replace(/[的了呢吧啊呀嘛哦]+$/, '');
+    return x.trim();
+  }
+
+  function shrinkTitle(raw) {
+    var text = String(raw == null ? '' : raw).trim();
+    if (!text) return '';
+    var cand = cleanTitle(text) || '';
+    // distill 的标题会被它自己截到 16 字，容易断在半句（「…文档交」），
+    // 所以优先用原句清洗的结果；distill 只在清不出东西时兜底。
+    if (!cand && typeof window.distillSpeech === 'function') {
+      try {
+        var d = window.distillSpeech(text);
+        if (d && d.title) cand = String(d.title).trim();
+      } catch (e) {}
+    }
+    if (!cand) cand = text;
+    var polished = polishTitle(cand);
+    if (polished.length >= 2) cand = polished;
+    if (cand.length > 16) cand = corePhrase(cand, 16) || cand;
+    cand = candlean(cand);
+    return cand.trim();
+  }
+
+  function candlean(s) {
+    return String(s || '')
+      .replace(/^[的得地把将就再又都很更还也]+/, '')
+      .replace(/[的了呢吧啊呀嘛哦]+$/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /* 标题被压短了就把原话放进备注，别丢信息 */
+  function shrinkNote(raw, title) {
+    var text = String(raw == null ? '' : raw).trim();
+    if (!title) return '';
+    if (!text) return '';
+    // 把标题从原话里抠掉，剩下的还有一截信息（>=10 字）就留进备注，别丢
+    var rest = text.split(title).join('').replace(/[\s，。,.!！?？、；;：:~～]/g, '');
+    if (rest.length >= 10) return text;
+    return '';
+  }
+
   function cleanTitle(text) {
     var s = String(text || '');
     s = s.replace(/(别忘了|别忘记|别忘|要记得|记得)/g, '');
@@ -6063,10 +6173,10 @@ try{
     }
     var sp = parseSmartX(text) || { title: text, ts: null, lv: 1 };
     var rep = parseRemember(text);
-    var clean = cleanTitle(text);
+    var clean = shrinkTitle(text);
     // 只有 parseSmart 真的剥掉了东西（结果 ≠ 原句）才肯用它兜底，
     // 否则「后天下午三点」这种纯时间句会被当成任务名。
-    var fallback = (sp.title && sp.title !== String(text).trim()) ? String(sp.title).trim() : '';
+    var fallback = (sp.title && sp.title !== String(text).trim()) ? shrinkTitle(sp.title) : '';
     var title = clean || fallback;
     // 强度：只有明确说「重要/紧急」才升档，默认沿用 App 的轻提醒
     var lv = 1;
@@ -6074,6 +6184,7 @@ try{
     else if (/(普通|记得|注意|留意)/.test(text)) lv = 2;
     return {
       title: title,
+      note: shrinkNote(text, title),
       ts: sp.ts || parseTimeExtra(text) || null,
       lv: lv,
       repeat: rep.repeat,
@@ -6136,7 +6247,8 @@ try{
 
     // 纯名词句（「喝牛奶」）→ 当成要记的事，反问时间
     if (looksLikeTask(text)) {
-      var d2 = { title: cleanTitle(text) || text, ts: null, lv: 1, repeat: 'none', weekMask: 0 };
+      var _t2 = shrinkTitle(text);
+    var d2 = { title: _t2, note: shrinkNote(text, _t2), ts: null, lv: 1, repeat: 'none', weekMask: 0 };
       if (!canCreate(text, d2)) return;
       doCreate(text, d2);
       return;
@@ -6290,7 +6402,7 @@ try{
 
     if (p.kind === 'title') {
       if (R.cancel.test(s)) { S.pending = null; say('好，那先不记。'); return true; }
-      var tt = cleanTitle(text) || String(text).trim();
+      var tt = shrinkTitle(text) || String(text).trim();
       if (!tt || tt.length <= 1) { say('还是没听清，说具体点？比如「交作业」。'); return true; }
       S.pending = null;
       createTask(tt, p.ts, p.lv || 1, p.repeat || 'none', p.weekMask || 0);
@@ -6300,7 +6412,7 @@ try{
     if (p.kind === 'time') {
       if (R.cancel.test(s)) { S.pending = null; say('好，那先不设时间。'); return true; }
       var ts = parseWhenX(text);
-      if (ts) { S.pending = null; createTask(p.title, ts, p.lv, p.repeat, p.weekMask); return true; }
+      if (ts) { S.pending = null; createTask(p.title, ts, p.lv, p.repeat, p.weekMask, false, p.note); return true; }
       S.pending = null;
       say('没听出具体时间。重来一次可以说「明天 9 点提醒我' + p.title + '」。');
       return true;
@@ -6391,7 +6503,7 @@ try{
     for (var i = 0; i < parts.length; i++) {
       var p = parts[i];
       if (!canAdd()) { say('未完成事项到上限了，先完成几条再记。'); return; }
-      var task = createTask(p.title, p.ts, p.lv, p.repeat, p.weekMask, true);
+      var task = createTask(p.title, p.ts, p.lv, p.repeat, p.weekMask, true, p.note);
       if (task) { ids.push(task.id); lines.push('· ' + ft(p.ts) + '  ' + p.title); }
     }
     if (!ids.length) { say('没记下来，再说一次？'); return; }
@@ -6414,14 +6526,14 @@ try{
       return;
     }
     if (!draft.ts) {
-      S.pending = { kind: 'time', title: draft.title, lv: draft.lv, repeat: draft.repeat, weekMask: draft.weekMask };
+      S.pending = { kind: 'time', title: draft.title, lv: draft.lv, repeat: draft.repeat, weekMask: draft.weekMask, note: draft.note || '' };
       say('好，几点提醒你「' + draft.title + '」？', null, ['今天 18:00', '明天 09:00', '一小时后', '明早 09:00']);
       return;
     }
-    createTask(draft.title, draft.ts, draft.lv, draft.repeat, draft.weekMask);
+    createTask(draft.title, draft.ts, draft.lv, draft.repeat, draft.weekMask, false, draft.note);
   }
 
-  function createTask(title, ts, lv, repeat, weekMask, quiet) {
+  function createTask(title, ts, lv, repeat, weekMask, quiet, note) {
     if (!canAdd()) { say('未完成事项到上限了，先完成几条再记。'); return; }
     var rolled = false;
     if (ts < Date.now() - 60000) { ts += 86400000; rolled = true; }  // 说的时间已过 → 顺延到明天同一时刻
@@ -6429,7 +6541,7 @@ try{
     var term = /终焉时刻|一万年后|一万年之后/.test(String(title || ''));
     if (term && typeof terminusTs === 'function') { ts = terminusTs(); lv = 1; }
     var task = {
-      id: id, title: title, ts: ts, lv: lv || 1, special: term ? 'terminus' : '', done: false, note: '',
+      id: id, title: title, ts: ts, lv: lv || 1, special: term ? 'terminus' : '', done: false, note: String(note || '').slice(0, 120),
       repeat: repeat || 'none', weekMask: (repeat === 'custom' ? (weekMask || 0) : 0),
       completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
     };
@@ -7390,7 +7502,8 @@ try{
     }
     if (R.cancel.test(s)) return { intent: 'cancel', pending: pend };
     if (looksLikeTask(text)) {
-      return { intent: 'create', pending: pend, draft: { title: cleanTitle(text) || text, ts: null, lv: 1, repeat: 'none', weekMask: 0 } };
+      var _t3 = shrinkTitle(text);
+    return { intent: 'create', pending: pend, draft: { title: _t3, note: shrinkNote(text, _t3), ts: null, lv: 1, repeat: 'none', weekMask: 0 } };
     }
     return { intent: 'chat', pending: pend };
   }
