@@ -998,6 +998,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1900,6 +1902,20 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 }
 html[data-elder='on'] .card-tools .card-edit,
 html[data-elder='on'] .card-tools .note-add{height:32px}
+
+
+/* 备注后面的「改」：跟着文字走，不再钉在行尾 */
+.note-line{padding-right:0!important}
+.note-pen{
+  position:static!important;display:inline-block;
+  margin-left:6px;vertical-align:1px;
+  font-size:10px;line-height:1.35;
+}
+html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
+
+
+/* 备注被截断时不显示行内「改」（否则会掉到块外） */
+.note-line.clipped .note-pen{display:none!important}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2918,9 +2934,20 @@ function render(){
   $('alertList').innerHTML=soon.length?soon.map(cardHTML).join('')
     :'<div class="empty"><p>今天没有要提醒的<br>可以安心做点别的</p></div>';
   try{renderHabits()}catch(e){}
+  markClippedNotes();
   renderStats();
   playFlip(before);
   initIosHaptics();
+}
+/* 备注被两行截断时，行内的「改」会被挤到块外 → 收起来，改用下面的「编辑」 */
+function markClippedNotes(){
+  try{
+    document.querySelectorAll('.note-line').forEach(function(el){
+      if(el.classList.contains('readonly'))return;
+      const clipped=el.scrollHeight>el.clientHeight+2;
+      el.classList.toggle('clipped',clipped);
+    });
+  }catch(e){}
 }
 function highlightTask(id){
   const card=document.querySelector('.card[data-id="'+id+'"]');if(!card)return;
@@ -5363,6 +5390,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
