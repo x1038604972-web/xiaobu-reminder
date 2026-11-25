@@ -1007,6 +1007,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1998,6 +2000,16 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
 .card.terminus.done .check svg path{stroke:#2E2618!important}
 .card.terminus.done .check::after{content:none!important}
 
+
+/* 非今天时摘要旁边给一个「回到今天」 */
+.back-today{
+  display:none;align-items:center;margin-left:8px;padding:3px 9px;
+  border-radius:999px;border:1px solid var(--brand);background:var(--brand-soft);
+  color:var(--brand);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;
+  vertical-align:1px;
+}
+.back-today:active{transform:scale(.96)}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -2057,7 +2069,7 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
         <div class="ring-num" id="ringNum">0/0</div>
       </div>
     </div>
-    <div class="summary"><span class="dot"></span><span id="summaryTxt">正在加载…</span></div>
+    <div class="summary"><span class="dot"></span><span id="summaryTxt">正在加载…</span><button class="back-today" id="backToday" type="button">回到今天</button></div>
   </div>
 
   <div class="batch-bar" id="batchBar"><span id="batchCount">已选 0 条</span><span class="sp"></span><button id="batchDone" class="ios-host">完成</button><button id="batchLater">推迟</button><button id="batchDel">删除</button><button id="batchCancel">取消</button></div>
@@ -2815,9 +2827,8 @@ function parseSmart(text){
 function greet(){const h=new Date().getHours();return h<6?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好'}
 /* 顶部看哪一天：日历里选中了某天就跟着它走，否则就是今天 */
 function focusKey(){
-  let tab='today';
-  try{tab=(document.querySelector('.tabbar .tab.on')||{}).dataset.tab||'today'}catch(e){}
-  if(tab==='calendar'&&typeof calSelected!=='undefined'&&calSelected)return calSelected;
+  // 日历里选中哪天，今日 / 提醒 / 顶部都看那天；没选就是今天
+  if(typeof calSelected!=='undefined'&&calSelected)return calSelected;
   return dayKey(Date.now());
 }
 function renderTop(){
@@ -2858,6 +2869,7 @@ function renderTop(){
       s+=' · 共 '+total+' 件';
     }
     $('summaryTxt').innerHTML=s;
+    if($('backToday'))$('backToday').style.display='inline-flex';
     return;
   }
   const leftToday=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0).length;
@@ -2880,6 +2892,7 @@ function renderTop(){
     if(!urgent&&!overdueN&&!laterN)sumTxt+=' · '+dayHint();
   }
   $('summaryTxt').innerHTML=sumTxt;
+  if($('backToday'))$('backToday').style.display='none';
 }
 function cardHTML(t,opts){
   opts=opts||{};
@@ -2962,14 +2975,16 @@ function render(){
   renderTop();
   const todayEnd=today0()+86400000-1;
   const tk=dayKey(Date.now());
+  const vk=focusKey();                        // 日历选中的那天（默认今天）
+  const isTodayView=vk===tk;
   const pending=tasks.filter(t=>!t.done);
-  // 今日页只放「今天」的事；过去没做的留在「已过时间」，将来的去日历看
-  const overdue=pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk).sort((a,b)=>a.ts-b.ts);
-  const todayList=pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk);
-  // 重要任务：截止前 2 天内就提前出现在待办里
-  const earlyList=pending.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>tk&&t.ts<=Date.now()+2*86400000);
+  // 选中某天就看那天；只有「今天」才把过去没做的放进「已过时间」，
+  // 也只有「今天」才让重要任务提前 2 天出现
+  const overdue=isTodayView?pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk).sort((a,b)=>a.ts-b.ts):[];
+  const todayList=pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===vk);
+  const earlyList=isTodayView?pending.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>vk&&t.ts<=Date.now()+2*86400000):[];
   const normal=todayList.concat(earlyList).sort((a,b)=>a.ts-b.ts);
-  const done=tasks.filter(t=>t.done&&dayKey(t.ts)===tk).sort((a,b)=>b.ts-a.ts);
+  const done=tasks.filter(t=>t.done&&dayKey(t.ts)===vk).sort((a,b)=>b.ts-a.ts);
   $('overdueSec').style.display=overdue.length?'block':'none';
   $('overdueList').innerHTML=overdue.map(cardHTML).join('');
   $('doneCount').textContent=done.length?done.length+' 件':'';
@@ -2984,7 +2999,8 @@ function render(){
     $('termCount').textContent=termAll.length?(termDoneN?('已完成 '+termDoneN+' / '+termAll.length):(termAll.length+' 条')):'';
   }
   const dj=$('dayJump');
-  if(dj){
+  if(dj&&!isTodayView){dj.innerHTML='';dj.style.display='none'}
+  if(dj&&isTodayView){
     const later=pending.filter(t=>dayKey(t.ts)>tk&&t.special!=='terminus'
       &&!(t.lv===3&&t.ts<=Date.now()+2*86400000));
     const grp={};
@@ -3003,25 +3019,33 @@ function render(){
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
   const hk2=dayKey(Date.now());
-  const habitTodoCards=habits.filter(h=>!h.days[hk2]).map(h=>habitCardHTML(h,false)).join('');
+  const habitTodoCards=isTodayView?habits.filter(h=>!h.days[hk2]).map(h=>habitCardHTML(h,false)).join(''):'';
   const taskCards=normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ').replace('data-id="','style="--i:'+Math.min(i,12)+'" data-id="')}).join('');
   const todoHTML=habitTodoCards+taskCards;
   $('todoList').innerHTML=(habitTodoCards||taskCards)?todoHTML:'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
   const habitDoneCards=habits.filter(h=>h.days[hk2]).map(h=>habitCardHTML(h,true)).join('');
   $('doneList').innerHTML=(habitDoneCards||done.length)?(habitDoneCards+done.map(cardHTML).join('')):'';
-  $('doneSec').style.display=(done.length||habitDoneCards)?'block':'none';
+  $('doneSec').style.display=(done.length||(isTodayView&&habitDoneCards))?'block':'none';
+  try{
+    const dt=$('doneSec').querySelector('.sec-title');
+    if(dt)dt.textContent=isTodayView?'今天完成':((+vk.slice(5,7))+'月'+(+vk.slice(8,10))+'日完成');
+  }catch(e){}
   const hdCount=$('doneCount');
   if(hdCount)hdCount.textContent=(done.length+(habitDoneCards?habits.filter(h=>h.days[hk2]).length:0))+' 件';
   // 提醒只放「今天」的：今天到点的、今天已经过点的，都在这
   // （重要任务距截止不到 2 天仍提前出现；终焉走专属区，规则不变）
   const soon=pending.filter(function(t){
     if(t.special==='terminus')return false;
-    if(dayKey(t.ts)===tk)return true;
-    return t.lv===3&&t.ts<=Date.now()+2*86400000&&dayKey(t.ts)>tk;
+    if(dayKey(t.ts)===vk)return true;
+    return isTodayView&&t.lv===3&&t.ts<=Date.now()+2*86400000&&dayKey(t.ts)>vk;
   }).sort((a,b)=>a.ts-b.ts);
+  try{
+    const at=$('alertCount').closest('.sec').querySelector('.sec-title');
+    if(at)at.textContent=isTodayView?'今 天 要 提 醒 的':((+vk.slice(5,7))+'月'+(+vk.slice(8,10))+'日 要 提 醒 的');
+  }catch(e){}
   $('alertCount').textContent=soon.length?soon.length+' 条':'';
   $('alertList').innerHTML=soon.length?soon.map(cardHTML).join('')
-    :'<div class="empty"><p>今天没有要提醒的<br>可以安心做点别的</p></div>';
+    :'<div class="empty"><p>'+(isTodayView?'今天没有要提醒的':'这天没有要提醒的')+'<br>可以安心做点别的</p></div>';
   try{renderHabits()}catch(e){}
   markClippedNotes();
   renderStats();
@@ -4867,6 +4891,12 @@ function openDetailFromQuick(){
   if(v){renderParsePreview(v,'parsePreviewSheet',true);const p=parseWhen(v);if(p){pendingTime=p;sheetTimePicked=false;updateSheetSummary();}}
 }
 $('quickAdd').onclick=openDetailFromQuick;
+if($('backToday'))$('backToday').onclick=function(){
+  calSelected=null;
+  const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();
+  try{renderCalendar()}catch(e){}
+  render();
+};
 $('xiaobuBtn').onclick=()=>{if(window.XiaoBu)window.XiaoBu.open();else toast('小步正在准备中')};
 function quickCommit(){
   const v=$('quickInput').value.trim();
@@ -4994,7 +5024,7 @@ document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
   oldView.classList.remove('slide-r','slide-l');
   document.querySelector('.scroll').scrollTop=0;
   activeTab=next;
-  try{renderTop()}catch(e){}
+  try{render()}catch(e){}       // 顶部 + 三个列表一起按焦点日重绘
   if(next==='me'){refreshNotifyStatus();renderStats();initDnd();renderAccount()}
   if(next==='calendar')renderCalendar();
   if(next==='alerts'){try{renderHabits()}catch(e){}}
@@ -5445,13 +5475,14 @@ $('voiceMic').onclick=()=>{
   voiceRestarts=0;
   startVoice();          // 在点击手势里同步启动，安卓才认
 };
-$('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar();try{renderTop()}catch(e){}};
-$('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar();try{renderTop()}catch(e){}};
-$('calToday').onclick=()=>{const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();calSelected=dayKey(Date.now());renderCalendar();try{renderTop()}catch(e){}};
+$('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar();render()};
+$('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar();render()};
+$('calToday').onclick=()=>{const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();calSelected=dayKey(Date.now());renderCalendar();render()};
 $('calGrid').onclick=e=>{
   const c=e.target.closest('.cal-cell');if(!c)return;
-  calSelected=c.dataset.key;renderCalendar();
-  try{renderTop()}catch(err){}
+  calSelected=c.dataset.key;
+  renderCalendar();
+  render();                     // 待办 / 完成 / 提醒 三个列表都切到这一天
 };
 $('calAdd').onclick=()=>{
   resetSheet();
@@ -5518,6 +5549,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
