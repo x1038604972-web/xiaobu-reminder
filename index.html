@@ -965,6 +965,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4058,6 +4061,8 @@ function voiceRender(){
    现在：点一下就在手势里同步 start，断了自动续，错误说人话，还能一键改用打字。
    ══════════════════════════════════════════════════════════ */
 let voiceWanting=false, voiceStarting=false, voiceRestarts=0, voiceRestartTimer=null, voiceErrAt=0;
+let voiceCooldownUntil=0;      // abort 之后引擎真正松手需要一点时间
+let voiceGotResult=false, voiceMicOk=false, voiceStalls=0, voiceStallTimer=null;
 let voiceLocalOk=false;   // 支持端上离线识别（Chrome 138+）时为 true
 
 (function probeLocalSpeech(){
@@ -4086,11 +4091,22 @@ function voiceIdleUI(){
 function stopVoice(){
   voiceWanting=false;voiceStarting=false;voiceActive=false;
   clearTimeout(voiceRestartTimer);voiceRestartTimer=null;
-  if(recog){try{recog.onend=null;recog.abort()}catch(e){}recog=null}
+  clearTimeout(voiceStallTimer);voiceStallTimer=null;
+  if(recog){
+    try{
+      recog.onstart=recog.onresult=recog.onerror=recog.onend=null;
+      recog.abort();
+    }catch(e){}
+    recog=null;
+  }
+  // 引擎释放麦克风是异步的：留出冷却，避免下一次会话抢不到音频
+  voiceCooldownUntil=Date.now()+350;
   voiceIdleUI();
 }
 
 function openVoice(){
+  voiceRestarts=0;voiceStalls=0;voiceGotResult=false;
+  clearTimeout(voiceStallTimer);voiceStallTimer=null;
   // 导览正在显示时先收起来，否则会盖住语音面板
   try{ if(typeof guideActive!=='undefined'&&guideActive&&typeof endGuide==='function') endGuide(); }catch(e){}
   buildWave();voiceFinal='';voiceInterim='';
@@ -4138,7 +4154,15 @@ function voiceErrorHint(err){
 function startVoice(){
   if(!SpeechRec){voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');return}
   if(voiceStarting||voiceActive)return;
-  voiceStarting=true;voiceWanting=true;
+  voiceWanting=true;            // 用户意图先记下来，冷却期结束后靠它续启动
+  const cool=voiceCooldownUntil-Date.now();
+  if(cool>0){
+    // 上一次刚 abort，等引擎松手再开，否则新会话收不到任何结果
+    voiceStarting=true;
+    setTimeout(function(){voiceStarting=false;if(voiceWanting&&voicePanelOpen())startVoice()},cool+20);
+    return;
+  }
+  voiceStarting=true;voiceGotResult=false;voiceMicOk=false;
   voiceSay('正在启动麦克风…','如果弹出麦克风授权，请点「允许」');
   try{
     if(recog){try{recog.abort()}catch(e){}}
@@ -4150,12 +4174,34 @@ function startVoice(){
     if(voiceLocalOk){try{recog.processLocally=true}catch(e){}}
 
     recog.onstart=()=>{
-      voiceStarting=false;voiceActive=true;
+      voiceStarting=false;voiceActive=true;voiceGotResult=false;
       voiceSay('正在聆听…','说完会自动断句，停了也会继续听；确认后点「记下」');
       $('voicePanel').classList.add('rec');
       $('voiceMic').classList.add('rec');
       voiceRender();
+      // 看门狗：起来了却连音频都没有，多半是麦克风还挂在旧会话上
+      voiceMicOk=false;
+      clearTimeout(voiceStallTimer);
+      voiceStallTimer=setTimeout(function(){
+        if(!voiceActive||voiceGotResult||voiceMicOk)return;
+        if(!voicePanelOpen())return;
+        try{recog&&recog.abort()}catch(e){}
+        voiceActive=false;voiceStarting=false;
+        voiceStalls++;
+        if(voiceStalls<=2){
+          voiceSay('正在重新连接麦克风…','上一次的识别可能没放开，稍等一下');
+          voiceCooldownUntil=Date.now()+250;
+          startVoice();
+        }else{
+          voiceWanting=false;
+          voiceSay('没收到识别结果',
+            '可能是麦克风被别的 App 占用，或在线识别服务连不上。<br>可以点下面的「改用打字」。');
+        }
+      },3500);
     };
+
+    recog.onaudiostart=function(){voiceMicOk=true;clearTimeout(voiceStallTimer)};
+    recog.onspeechstart=function(){voiceMicOk=true;clearTimeout(voiceStallTimer)};
 
     recog.onresult=e=>{
       let interim='',final='';
@@ -4169,6 +4215,7 @@ function startVoice(){
         // 最终结果已经包含上一段临时结果时，清掉它，避免「交作业 交作业」
         if(add&&(!interim||add.indexOf(interim.trim())>=0))interim='';
       }
+      if(interim||final)voiceGotResult=true;
       voiceInterim=interim;
       voiceRender();
     };
@@ -4829,6 +4876,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
