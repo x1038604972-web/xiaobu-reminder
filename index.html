@@ -995,6 +995,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1884,6 +1886,10 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 .note-line.readonly{cursor:default;opacity:.9}
 .note-line.readonly:active{background:transparent}
 
+
+/* 日历里选中非今天时，顶部日期标注一下 */
+#dateTxt.away{color:var(--brand);font-weight:800}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -2693,11 +2699,29 @@ function parseSmart(text){
 }
 
 function greet(){const h=new Date().getHours();return h<6?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好'}
+/* 顶部看哪一天：日历里选中了某天就跟着它走，否则就是今天 */
+function focusKey(){
+  let tab='today';
+  try{tab=(document.querySelector('.tabbar .tab.on')||{}).dataset.tab||'today'}catch(e){}
+  if(tab==='calendar'&&typeof calSelected!=='undefined'&&calSelected)return calSelected;
+  return dayKey(Date.now());
+}
 function renderTop(){
   $('greet').textContent=greet();
-  const d=new Date(),wk='日一二三四五六'[d.getDay()];
-  $('dateTxt').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+wk;
-  const tk0=dayKey(Date.now());
+  const todayKey=dayKey(Date.now());
+  const fk=focusKey();
+  const isToday=fk===todayKey;
+  const fd=new Date(fk+'T09:00:00');
+  const wk='日一二三四五六'[fd.getDay()];
+  if(isToday){
+    const d=new Date();
+    $('dateTxt').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+wk;
+    $('dateTxt').classList.remove('away');
+  }else{
+    $('dateTxt').textContent=(fd.getMonth()+1)+'月'+fd.getDate()+'日 · 星期'+wk+' · 不是今天';
+    $('dateTxt').classList.add('away');
+  }
+  const tk0=fk;
   const todayTasks=tasks.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0);
   const total=todayTasks.length,done=todayTasks.filter(t=>t.done).length;
   const pct=total?done/total:0;
@@ -2708,6 +2732,20 @@ function renderTop(){
     $('ringNum').classList.remove('bump');void $('ringNum').offsetWidth;$('ringNum').classList.add('bump');
   }
   const pend=tasks.filter(t=>!t.done);
+  if(!isToday){
+    const left=todayTasks.filter(t=>!t.done).length;
+    const over=todayTasks.filter(t=>!t.done&&isOver(t.ts)).length;
+    let s;
+    if(!total)s='这一天没有安排 · 可以加一件';
+    else if(!left)s='这一天的 '+total+' 件事都完成了';
+    else{
+      s='这一天还有 <b>'+left+'</b> 件事';
+      if(over)s+='，<b>'+over+'</b> 件已过时间';
+      s+=' · 共 '+total+' 件';
+    }
+    $('summaryTxt').innerHTML=s;
+    return;
+  }
   const leftToday=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0).length;
   const overdueN=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk0).length;
   const laterN=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)>tk0
@@ -4829,6 +4867,7 @@ document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
   oldView.classList.remove('slide-r','slide-l');
   document.querySelector('.scroll').scrollTop=0;
   activeTab=next;
+  try{renderTop()}catch(e){}
   if(next==='me'){refreshNotifyStatus();renderStats();initDnd();renderAccount()}
   if(next==='calendar')renderCalendar();
   if(next==='alerts'){try{renderHabits()}catch(e){}}
@@ -5240,12 +5279,13 @@ $('voiceMic').onclick=()=>{
   voiceRestarts=0;
   startVoice();          // 在点击手势里同步启动，安卓才认
 };
-$('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar()};
-$('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar()};
-$('calToday').onclick=()=>{const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();calSelected=dayKey(Date.now());renderCalendar()};
+$('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar();try{renderTop()}catch(e){}};
+$('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar();try{renderTop()}catch(e){}};
+$('calToday').onclick=()=>{const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();calSelected=dayKey(Date.now());renderCalendar();try{renderTop()}catch(e){}};
 $('calGrid').onclick=e=>{
   const c=e.target.closest('.cal-cell');if(!c)return;
   calSelected=c.dataset.key;renderCalendar();
+  try{renderTop()}catch(err){}
 };
 $('calAdd').onclick=()=>{
   resetSheet();
@@ -5307,11 +5347,13 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261124-xb4').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261125-xb5').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
 
 
 
