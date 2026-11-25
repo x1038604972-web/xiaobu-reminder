@@ -973,6 +973,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1761,6 +1764,35 @@ html[data-elder="on"] .habit-week{font-size:12px}
 .sub-txt{flex:1;min-width:0}
 html[data-elder="on"] .sub-row{font-size:15px}
 html[data-elder="on"] .sub-box{width:20px;height:20px}
+
+
+/* ── 卡片操作行：备注 / 编辑 并排常显 ───────────────── */
+.card-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:9px}
+.card-tools .note-add{margin-top:0}
+.card-edit{
+  display:inline-flex!important;
+  align-items:center;height:26px;padding:0 11px;border-radius:9px;
+  border:1px solid var(--line);background:transparent;color:var(--ink3);
+  font-family:inherit;font-size:11.5px;font-weight:700;line-height:1;cursor:pointer;
+  transition:background .16s,color .16s,transform .12s var(--ease);
+}
+.card-edit:active{background:var(--line2);color:var(--ink2);transform:scale(.96)}
+.note-edit{
+  height:26px;padding:0 11px;border-radius:9px;border:1px dashed var(--line);
+  background:transparent;color:var(--ink3);font-family:inherit;font-size:11.5px;
+  font-weight:700;line-height:1;cursor:pointer;transition:background .16s,color .16s;
+}
+.note-edit:active{background:var(--line2);color:var(--ink2)}
+.card.terminus .card-edit,.card.terminus .note-edit{
+  color:rgba(233,200,122,.78)!important;border-color:rgba(233,200,122,.34)!important;
+}
+html[data-elder="on"] .card-edit,html[data-elder="on"] .note-edit{height:32px;font-size:13px}
+html[data-elder="on"] .card-tools .note-add{height:32px}
+
+
+/* 已完成卡片：没有左滑层，也不显示删除键 */
+.card.done .swipe-actions{display:none!important}
+.card.done{overscroll-behavior:none}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2628,7 +2660,7 @@ function cardHTML(t,opts){
   if(terminus)cls.push('terminus');
   else if(urgent)cls.push('urgent');else if(soonColor)cls.push('soon-card');
   return '<div class="'+cls.join(' ')+'" data-id="'+t.id+'">'+
-    '<div class="swipe-actions"><button class="sw-done ios-host" data-act="check">✓<span>完成</span>'+iosTickHTML()+'</button><button class="sw-later" data-act="swipe-later">⏱<span>推迟</span></button><button class="sw-del" data-act="del">✕<span>删除</span></button></div>'+
+    (t.done?'':'<div class="swipe-actions"><button class="sw-done ios-host" data-act="check">✓<span>完成</span>'+iosTickHTML()+'</button><button class="sw-later" data-act="swipe-later">⏱<span>推迟</span></button><button class="sw-del" data-act="del">✕<span>删除</span></button></div>')+
     '<div class="body-shift" style="display:flex;gap:13px;align-items:flex-start;width:100%">'+left+
     '<div class="body" data-act="open"><div class="title">'+esc(t.title)+'</div>'+
     '<div class="meta">'+nextTip+(terminus
@@ -2654,10 +2686,13 @@ function cardHTML(t,opts){
       : '')+
     (t.note
       ? '<div class="note-line" data-act="note" role="button" tabindex="0">'+esc(t.note)+'<span class="note-pen">改</span></div>'
-      : '<button class="note-add" data-act="note" type="button">＋ 备注</button>')+
-    '<span class="card-edit" data-act="edit">编辑</span></div>'+
+      : '')+
+    '<div class="card-tools">'+
+      (t.note?'':'<button class="note-add" data-act="note" type="button">＋ 备注</button>')+
+      '<button class="card-edit" data-act="edit" type="button">编辑</button>'+
+    '</div></div>'+
     '<div class="act">'+((t.done||terminus)?'':'<button class="postpone-btn" data-act="postpone-one" aria-label="推迟">推迟</button>')+
-    '<button class="icon-btn del" data-act="del" aria-label="删除"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div></div></div>';
+    (t.done?'':'<button class="icon-btn del" data-act="del" aria-label="删除"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>')+'</div></div></div>';
 }
 function captureCardY(){
   const m={};document.querySelectorAll('.card[data-id]').forEach(el=>{m[el.dataset.id]=el.getBoundingClientRect().top});return m;
@@ -2965,10 +3000,32 @@ function recordHistory(t,isRepeat){
   meta.history.push({title:t.title,at:Date.now(),repeat:!!isRepeat});
   if(meta.history.length>500)meta.history=meta.history.slice(-500);
 }
+function closeTaskEditors(id){
+  // 备注就地编辑器
+  const card=document.querySelector('.card[data-id="'+id+'"]');
+  if(card){
+    const ed=card.querySelector('.note-editor');
+    if(ed){
+      ed.remove();
+      const again=card.querySelector('[data-act="note"]');
+      if(again)again.style.display='';
+    }
+  }
+  // 「＋」面板正在编辑这条
+  try{
+    if(typeof editingId!=='undefined'&&editingId===id){
+      const sheet=document.getElementById('sheet');
+      if(sheet&&sheet.classList.contains('on')){closeSheet();resetSheet()}
+    }
+  }catch(e){}
+  // 详情弹窗
+  try{if(typeof modalId!=='undefined'&&modalId===id)closeModal()}catch(e){}
+}
 function toggleDone(id,skipFx){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   const card=document.querySelector('.card[data-id="'+id+'"]');
   const goingDone=!t.done;
+  if(goingDone)closeTaskEditors(id);   // 一完成就收起编辑浮层
   const burst=()=>{
     if(!goingDone||skipFx||!card)return;
     playDoneFx(card);
@@ -2999,6 +3056,7 @@ function toggleDone(id,skipFx){
 function delTask(id){
   const i=tasks.findIndex(x=>x.id===id);if(i<0)return;
   const t=tasks[i];
+  if(t.done){toast('已完成的先恢复到待办，才能删除');return}
   if(!confirm('确认删除「'+t.title+'」？该操作不可恢复（5 秒内可撤销）'))return;
   const card=document.querySelector('.card[data-id="'+id+'"]');
   const finish=()=>{
@@ -4909,6 +4967,7 @@ let swipe=null;
 document.querySelector('.scroll').addEventListener('touchstart',e=>{
   if(e.target.closest('.swipe-actions')){swipe=null;return}
   const card=e.target.closest('.card');if(!card||batchMode)return;
+  if(card.classList.contains('done')||card.classList.contains('habit-card'))return;  // 已完成/习惯卡不左滑
   swipe={card,x:e.touches[0].clientX,y:e.touches[0].clientY,dx:0,lock:null};
 },{passive:true});
 document.querySelector('.scroll').addEventListener('touchmove',e=>{
@@ -5137,6 +5196,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
