@@ -984,6 +984,10 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -5363,6 +5367,10 @@ try{
 
 
 
+
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -5444,6 +5452,7 @@ try{
     open: false, busy: false,
     msgs: [],
     pending: null,
+    multi: null,
     chips: [],
     mem: { name: '', notes: [] },
     chatStreak: 0,
@@ -6219,6 +6228,13 @@ try{
 
   /* ── 主处理 ───────────────────────────────────────────── */
   function handle(text) {
+    // 多件事确认中：直接说「都记下」也行
+    if (S.multi && S.multi.length) {
+      var mt = String(text).replace(/\s/g, '');
+      if (/^(都记下|都记|全部记|一起记|都要|全记)/.test(mt)) { commitMulti(); return; }
+      if (/只(记|要)?(第一件|一件|第一个)/.test(mt)) { commitMulti(1); return; }
+      if (/^(算了|不用了|不记了|取消)/.test(mt)) { cancelMulti(); return; }
+    }
     if (S.pending) {
       // 在等「时间/事情/新建」的时候，用户突然问列表、问统计、改设置 → 先放下槽位，按新意图走
       if (!slotEscape(text) && fillSlot(text)) return;
@@ -6260,10 +6276,46 @@ try{
     if (multi) { doCreateMulti(multi); return; }
 
     var draft = parseDraft(text);
+    // 本地拆分没成，但蒸馏多听出了「顺便…」这类第二件 → 一起确认
+    var extras = [], ddRef = null;
+    try {
+      // 只有句子里真的出现并列词，才认为「还有第二件」；否则多半是蒸馏切出来的碎句
+      var joinWord = /(顺便|然后|另外|还有|以及|再帮|顺便帮|同时)/.test(text);
+      if (!multi && joinWord && window.distillSpeech) {
+        var dd = window.distillSpeech(text);
+        ddRef = dd;
+        if (dd && dd.extras && dd.extras.length) {
+          extras = dd.extras.map(function (e) {
+            return { title: shrinkTitle(e.title), ts: e.ts || draft.ts, lv: draft.lv, repeat: 'none', weekMask: 0, note: '' };
+          }).filter(function (e) {
+            return e.title && e.title.length >= 3 && !/^(提醒|记得|别忘了|到时候)/.test(e.title);
+          });
+        }
+      }
+    } catch (e) {}
     var wantCreate = /(提醒|记一下|记下|记住|添加|新建|加一条|加一个|安排|别忘|要记|帮我记|定个|设个|存一下)/.test(text);
     if (wantCreate || draft.ts) {
       // 只有时间没有事，或者事太不像事 → 追问，不要凭空建
       if (!canCreate(text, draft)) return;
+      // 本地只拆出一件，但蒸馏还听出「顺便…」→ 一起列出来确认
+      if (extras.length && draft.title) {
+        var mainTitle = draft.title;
+        try {
+          if (ddRef && ddRef.title) {
+            var dt = shrinkTitle(ddRef.title);
+            if (dt.length >= 2 && dt.length < mainTitle.length) mainTitle = dt;
+          }
+        } catch (e) {}
+        // extras 里和首件是同一件事的（互相包含）就丢掉
+        var uniq = extras.filter(function (e) {
+          var a = String(e.title || ''), b = String(mainTitle || '');
+          if (!a) return false;
+          return a.indexOf(b) < 0 && b.indexOf(a) < 0;
+        });
+        if (!uniq.length) { doCreate(text, draft); return; }
+        doCreateMulti([{ title: mainTitle, ts: draft.ts, lv: draft.lv, repeat: draft.repeat, weekMask: draft.weekMask, note: shrinkNote(text, mainTitle) }].concat(uniq), true);
+        return;
+      }
       doCreate(text, draft);
       return;
     }
@@ -6523,7 +6575,27 @@ try{
     return out.length >= 2 ? out : null;
   }
 
-  function doCreateMulti(parts) {
+  /* 多件事：先把听出来的列清楚，让用户点头再建，别抢着建 */
+  function doCreateMulti(parts, askOnly) {
+    if (!parts || !parts.length) { say('没记下来，再说一次？'); return; }
+    S.multi = parts;
+    var preview = parts.map(function (p, i) {
+      return (i + 1) + '. ' + (p.ts ? ft(p.ts) + '  ' : '') + p.title;
+    }).join('\n');
+    if (askOnly === false || parts.length === 1) {
+      commitMulti(parts.length);
+      return;
+    }
+    say('我听到 ' + parts.length + ' 件事：\n' + preview + '\n\n要一起记下来吗？', {
+      k: '多件', title: parts.length + ' 件待确认',
+      meta: '点「都记下」一起建；只要第一件也行',
+      acts: [{ k: 'multi-ok', t: '都记下', p: true }, { k: 'multi-first', t: '只记第一件' }]
+    }, ['都记下', '只记第一件', '算了']);
+  }
+
+  function commitMulti(n) {
+    var parts = (S.multi || []).slice(0, n || 999);
+    S.multi = null;
     var ids = [], lines = [];
     for (var i = 0; i < parts.length; i++) {
       var p = parts[i];
@@ -6543,6 +6615,11 @@ try{
     });
     doToast('已记下 ' + ids.length + ' 件', 'undo');
     say('一口气记了 ' + ids.length + ' 件：\n' + lines.join('\n'), null, ['再说一件', '看看今天剩下的']);
+  }
+
+  function cancelMulti() {
+    S.multi = null;
+    say('好，那先不记。', null, ['明天 9 点交作业', '我今天还有几件事']);
   }
 
   function doCreate(text, draft) {
@@ -7288,6 +7365,9 @@ try{
     var act = b.dataset.xbAct, id = b.dataset.id;
     var t = id ? allList().filter(function (x) { return x.id === id; })[0] : null;
 
+    if (act === 'multi-ok') { commitMulti(); return; }
+    if (act === 'multi-first') { commitMulti(1); return; }
+    if (act === 'multi-no') { cancelMulti(); return; }
     if (act === 'undo') { doUndo(); return; }
     if (act === 'no') { S.pending = null; say('好，那你说个更准的名字。'); return; }
     if (act === 'edit' && t) { close(); openEditX(t.id); return; }
@@ -7351,6 +7431,9 @@ try{
   function applyAct(act, id) {
     var arr = T();
     var t = id ? arr.filter(function (x) { return x.id === id; })[0] : null;
+    if (act === 'multi-ok') { commitMulti(); return; }
+    if (act === 'multi-first') { commitMulti(1); return; }
+    if (act === 'multi-no') { cancelMulti(); return; }
     if (act === 'open') {
       if (t) { try { openModal(t.id, true); } catch (e) {} }
       return;
