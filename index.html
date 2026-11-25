@@ -990,6 +990,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1955,11 +1956,6 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
     </section>
 
     <section class="view" id="view-alerts">
-      <div class="sec">
-        <div class="sec-head"><span class="sec-title">即 将 到 来 · 未来三天</span><span class="sec-count" id="alertCount"></span></div>
-        <div id="alertList"></div>
-      </div>
-
       <div class="sec" id="habitSec">
         <div class="sec-head">
           <span class="sec-title">小 步 习 惯</span>
@@ -1974,6 +1970,12 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
         <button class="habit-add" id="habitAddBtn">＋ 加一个小习惯</button>
         <div class="habit-tip">格子是本周一到周日。当天点一下就打卡；过了那天没打会变红并锁定，不能补。连续 3 / 7 / 21 / 30 天会有徽章。</div>
       </div>
+
+      <div class="sec">
+        <div class="sec-head"><span class="sec-title">即 将 到 来 · 未来三天</span><span class="sec-count" id="alertCount"></span></div>
+        <div id="alertList"></div>
+      </div>
+
 
       <div class="sec">
         <div class="set-card">
@@ -5261,6 +5263,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
