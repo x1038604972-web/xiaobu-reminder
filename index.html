@@ -1016,6 +1016,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2348,19 +2349,9 @@ html[data-elder="on"] .quick .quick-more em{
           <div class="set-desc" id="notifyStatus">未授权 · 点击开启，后台也能提醒</div>
         </div>
         <div class="set-card" data-set>
-          <div class="set-title">怎么记最快<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          <div class="set-desc">底部输入一句话，回车就直接记下。想改时间，点提示里的「改时间」；长按「记下」或点「…」填详情。</div>
-          <div class="set-detail">文字里带「明天下午三点」「下周三」会自动识别时间。重复任务完成后会自动排到下一次，不会堆在已完成里。</div>
-        </div>
-        <div class="set-card" data-set>
           <div class="set-title">勿扰时段<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           <div class="set-desc dnd-desc"><label><input type="checkbox" id="dndOn"> 开启后，时段内只静默记录，不弹窗</label></div>
           <div class="set-detail dnd-desc"><select id="dndFrom"></select> 至 <select id="dndTo"></select><div id="dndState" style="margin-top:6px;color:var(--ink3);font-size:11.5px"></div></div>
-        </div>
-        <div class="set-card" data-set>
-          <div class="set-title">完成历史<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          <div class="set-desc" id="histDesc">还没有完成记录。每走一小步，都会记在这里。</div>
-          <div class="set-detail" id="histList"></div>
         </div>
         <div class="set-card clickable" id="guideCard">
           <div class="set-title">新手导览<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
@@ -3188,13 +3179,17 @@ function renderStats(){
   ];
   $('achView').innerHTML=ach.map(a=>'<span class="badge'+(a.got?' got':'')+'"><b>'+a.n+'</b>'+a.b+'</span>').join('');
 
-  if(!hist.length){$('histDesc').textContent='还没有完成记录。每走一小步，都会记在这里。';$('histList').innerHTML='';return}
-  $('histDesc').textContent='累计走完 '+hist.length+' 步，最近 7 天：';
-  const groups={};
-  hist.slice(-30).forEach(h=>{const k=dayKey(h.at);(groups[k]=groups[k]||[]).push(h)});
-  $('histList').innerHTML=Object.keys(groups).sort().reverse().slice(0,7).map(k=>
-    '<div class="hist-day">'+k+'</div>'+groups[k].map(h=>'<div class="hist-item"><span class="hck">✓</span>'+esc(h.title)+'<span class="hm">'+timeStr(h.at)+'</span></div>').join('')
-  ).join('');
+  // 「完成历史」卡片已移除：这两个节点不存在时直接跳过，别让 render 挂掉
+  const hd=$('histDesc'), hl=$('histList');
+  if(hd&&hl){
+    if(!hist.length){hd.textContent='还没有完成记录。每走一小步，都会记在这里。';hl.innerHTML='';return}
+    hd.textContent='累计走完 '+hist.length+' 步，最近 7 天：';
+    const groups={};
+    hist.slice(-30).forEach(h=>{const k=dayKey(h.at);(groups[k]=groups[k]||[]).push(h)});
+    hl.innerHTML=Object.keys(groups).sort().reverse().slice(0,7).map(k=>
+      '<div class="hist-day">'+k+'</div>'+groups[k].map(h=>'<div class="hist-item"><span class="hck">✓</span>'+esc(h.title)+'<span class="hm">'+timeStr(h.at)+'</span></div>').join('')
+    ).join('');
+  }
 }
 
 function toast(msg,kind){
@@ -5667,6 +5662,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
