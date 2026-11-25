@@ -955,6 +955,12 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1600,6 +1606,34 @@ html[data-elder="on"] .cal-flag,html[data-elder="on"] .cal-flag.shown{font-size:
 }
 .cal-grid .cal-w,.cal-grid .cal-cell{min-width:0}
 
+
+/* ── 今日页：别的日子入口 ─────────────────────────── */
+.day-jump{display:none;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 11px}
+.dj-label{font-size:11.5px;color:var(--ink3)}
+.dj-chip{
+  padding:6px 11px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink2);font-family:inherit;
+  font-size:11.5px;font-weight:700;cursor:pointer;
+  transition:background .16s,color .16s,transform .12s var(--ease);
+}
+.dj-chip:active{transform:scale(.96);background:var(--line2)}
+.dj-chip.more{color:var(--brand);border-color:var(--brand-soft);background:var(--brand-soft)}
+html[data-elder="on"] .dj-chip{font-size:13px;padding:8px 13px}
+html[data-elder="on"] .dj-label{font-size:13px}
+
+/* ── 日历当天列表可勾选 ───────────────────────────── */
+#calDayList .hist-item{cursor:pointer;border-radius:8px;transition:background .16s}
+#calDayList .hist-item:active{background:var(--line2)}
+#calDayList .hist-item.on{opacity:.62}
+#calDayList .hist-item.on .hck{color:var(--brand)}
+
+/* 选中某天（非今天）：只描边不填充，避免和「今天」撞视觉 */
+.cal-cell.sel:not(.today){
+  background:transparent!important;color:var(--ink)!important;
+  box-shadow:inset 0 0 0 1.5px var(--brand)!important;transform:none!important;
+}
+.cal-cell.sel:not(.today) .cal-num{color:var(--brand)}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -1673,11 +1707,17 @@ html[data-elder="on"] .cal-flag,html[data-elder="on"] .cal-flag.shown{font-size:
       <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 <em id="guideCount" style="font-style:normal">7</em> 步新手导览 <b>→</b></div>
       <div class="sec">
         <div class="sec-head"><span class="sec-title">待 办</span><button class="mini-btn" id="batchToggle">批量</button></div>
+        <div class="day-jump" id="dayJump"></div>
         <div id="todoList"></div>
       </div>
       <div class="sec" id="doneSec">
-        <div class="sec-head"><span class="sec-title">已完成</span><span class="sec-count" id="doneCount"></span></div>
+        <div class="sec-head"><span class="sec-title">今天完成</span><span class="sec-count" id="doneCount"></span></div>
         <div id="doneList"></div>
+      </div>
+      <div class="sec" id="termSec" style="display:none">
+        <div class="sec-head"><span class="sec-title">终 焉 时 刻</span><span class="sec-count" id="termCount"></span></div>
+        <div id="termList"></div>
+        <div class="habit-tip">一万年后的提醒，留在今天的自己手里。</div>
       </div>
     </section>
 
@@ -1698,7 +1738,7 @@ html[data-elder="on"] .cal-flag,html[data-elder="on"] .cal-flag.shown{font-size:
 
     <section class="view" id="view-alerts">
       <div class="sec">
-        <div class="sec-head"><span class="sec-title">即 将 到 来</span><span class="sec-count" id="alertCount"></span></div>
+        <div class="sec-head"><span class="sec-title">即 将 到 来 · 未来三天</span><span class="sec-count" id="alertCount"></span></div>
         <div id="alertList"></div>
       </div>
 
@@ -2391,7 +2431,8 @@ function renderTop(){
   $('greet').textContent=greet();
   const d=new Date(),wk='日一二三四五六'[d.getDay()];
   $('dateTxt').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+wk;
-  const todayTasks=tasks.filter(t=>t.ts<Date.now()+86400000);
+  const tk0=dayKey(Date.now());
+  const todayTasks=tasks.filter(t=>dayKey(t.ts)===tk0);
   const total=todayTasks.length,done=todayTasks.filter(t=>t.done).length;
   const pct=total?done/total:0;
   $('ringFill').style.strokeDashoffset=144.5*(1-pct);
@@ -2400,9 +2441,22 @@ function renderTop(){
     $('ringNum').textContent=label;
     $('ringNum').classList.remove('bump');void $('ringNum').offsetWidth;$('ringNum').classList.add('bump');
   }
-  const left=tasks.filter(t=>!t.done).length;
-  const urgent=tasks.filter(t=>!t.done&&t.lv===3).length;
-  $('summaryTxt').innerHTML=left===0?dayHint():('还有 <b>'+left+'</b> 件事'+(urgent?'，其中 <b>'+urgent+'</b> 件重要':' · '+dayHint()));
+  const pend=tasks.filter(t=>!t.done);
+  const leftToday=pend.filter(t=>dayKey(t.ts)===tk0).length;
+  const overdueN=pend.filter(t=>dayKey(t.ts)<tk0).length;
+  const laterN=pend.filter(t=>dayKey(t.ts)>tk0).length;
+  const urgent=pend.filter(t=>dayKey(t.ts)===tk0&&t.lv===3).length;
+  let sumTxt;
+  if(leftToday===0&&overdueN===0){
+    sumTxt=laterN?('今天清空了 · 别的日子还有 <b>'+laterN+'</b> 件'):dayHint();
+  }else{
+    sumTxt='今天还有 <b>'+leftToday+'</b> 件事';
+    if(urgent)sumTxt+='，其中 <b>'+urgent+'</b> 件重要';
+    if(overdueN)sumTxt+='，<b>'+overdueN+'</b> 件已过时间';
+    if(laterN)sumTxt+=' · 别处 <b>'+laterN+'</b> 件';
+    if(!urgent&&!overdueN&&!laterN)sumTxt+=' · '+dayHint();
+  }
+  $('summaryTxt').innerHTML=sumTxt;
 }
 function cardHTML(t,opts){
   opts=opts||{};
@@ -2462,23 +2516,44 @@ function render(){
   const before=captureCardY();
   renderTop();
   const todayEnd=today0()+86400000-1;
-  const todo=tasks.filter(t=>{
-    if(t.done)return false;
-    if(t.repeat&&t.repeat!=='none'&&t.ts>todayEnd)return false;
-    return true;
-  }).sort((a,b)=>a.ts-b.ts);
-  const overdue=todo.filter(t=>isOver(t.ts));
-  const normal=todo.filter(t=>!isOver(t.ts));
-  const done=tasks.filter(t=>t.done).sort((a,b)=>b.ts-a.ts);
+  const tk=dayKey(Date.now());
+  const pending=tasks.filter(t=>!t.done);
+  // 今日页只放「今天」的事；过去没做的留在「已过时间」，将来的去日历看
+  const overdue=pending.filter(t=>dayKey(t.ts)<tk).sort((a,b)=>a.ts-b.ts);
+  const normal=pending.filter(t=>dayKey(t.ts)===tk).sort((a,b)=>a.ts-b.ts);
+  const done=tasks.filter(t=>t.done&&dayKey(t.ts)===tk).sort((a,b)=>b.ts-a.ts);
   $('overdueSec').style.display=overdue.length?'block':'none';
   $('overdueList').innerHTML=overdue.map(cardHTML).join('');
   $('doneCount').textContent=done.length?done.length+' 件':'';
+  // 「别的日子」快捷入口：按日期分组，最多 3 个 + 去日历
+  const termTasks=tasks.filter(t=>t.special==='terminus'&&!t.done);
+  if($('termSec')){
+    $('termSec').style.display=termTasks.length?'block':'none';
+    $('termList').innerHTML=termTasks.map(cardHTML).join('');
+    $('termCount').textContent=termTasks.length?termTasks.length+' 条':'';
+  }
+  const dj=$('dayJump');
+  if(dj){
+    const later=pending.filter(t=>dayKey(t.ts)>tk&&t.special!=='terminus');
+    const grp={};
+    later.forEach(t=>{const k=dayKey(t.ts);(grp[k]=grp[k]||[]).push(t)});
+    const keys=Object.keys(grp).sort().slice(0,3);
+    if(keys.length){
+      dj.innerHTML='<span class="dj-label">别的日子还有 '+later.length+' 件</span>'+
+        keys.map(function(k){
+          const ts=new Date(k+'T12:00:00').getTime();
+          return '<button class="dj-chip" data-jump="'+k+'">'+dayStr(ts)+' '+grp[k].length+' 件</button>';
+        }).join('')+
+        '<button class="dj-chip more" data-jump="all">去日历看 →</button>';
+      dj.style.display='flex';
+    }else{dj.innerHTML='';dj.style.display='none'}
+  }
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
   $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ').replace('data-id="','style="--i:'+Math.min(i,12)+'" data-id="')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
   $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
   $('doneSec').style.display=done.length?'block':'none';
-  const soon=normal.filter(t=>t.ts<Date.now()+86400000).sort((a,b)=>a.ts-b.ts);
+  const soon=pending.filter(t=>!isOver(t.ts)&&t.ts<Date.now()+3*86400000).sort((a,b)=>a.ts-b.ts);
   $('alertCount').textContent=soon.length?soon.length+' 条':'';
   $('alertList').innerHTML=soon.length?soon.map(cardHTML).join(''):'<div class="empty"><p>未来一天没有安排<br>可以安心做点别的</p></div>';
   try{renderHabits()}catch(e){}
@@ -2994,12 +3069,34 @@ function renderCalendar(){
   }
   renderCalDay();
 }
+
+/* 跳到某一天的日历视图（k 为 'YYYY-MM-DD'，'all' 表示不停留具体某天） */
+function gotoCalDay(k){
+  if(k&&k!=='all'){
+    const d=new Date(k+'T12:00:00');
+    calYear=d.getFullYear();calMonth=d.getMonth();calSelected=k;
+  }else{
+    calSelected=null;
+    const n=new Date();calYear=n.getFullYear();calMonth=n.getMonth();
+  }
+  const tab=document.querySelector('[data-tab="calendar"]');
+  if(tab)tab.click(); else renderCalendar();
+}
+document.addEventListener('click',function(e){
+  const j=e.target.closest('[data-jump]');
+  if(j){gotoCalDay(j.dataset.jump);return}
+  const row=e.target.closest('#calDayList .hist-item');
+  if(row&&row.dataset.id){toggleDone(row.dataset.id)}
+});
+
 function renderCalDay(){
   const key=calSelected||dayKey(Date.now());
   const dt=new Date(key+'T00:00:00');
-  $('calDayTitle').textContent=(dt.getMonth()+1)+'月'+dt.getDate()+'日 · '+'日一二三四五六'[dt.getDay()];
   const list=tasks.filter(t=>dayKey(t.ts)===key).sort((a,b)=>a.ts-b.ts);
-  $('calDayList').innerHTML=list.length?list.map(t=>'<div class="hist-item" data-id="'+t.id+'">'+
+  const left=list.filter(t=>!t.done).length;
+  $('calDayTitle').textContent=(dt.getMonth()+1)+'月'+dt.getDate()+'日 · '+'日一二三四五六'[dt.getDay()]+
+    (list.length?('  ·  '+left+'/'+list.length+' 件未完成·点一行可勾选'):'');
+  $('calDayList').innerHTML=list.length?list.map(t=>'<div class="hist-item'+(t.done?' on':'')+'" data-id="'+t.id+'" role="button" tabindex="0">'+
     '<span class="hck">'+(t.done?'✓':'○')+'</span>'+esc(t.title)+'<span class="hm">'+timeStr(t.ts)+'</span></div>').join('')
     :'<div class="empty" style="padding:24px"><p>这一天还没有安排</p></div>';
 }
@@ -4719,6 +4816,12 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
 
 
 
