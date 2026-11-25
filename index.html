@@ -988,6 +988,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3409,7 +3410,7 @@ document.addEventListener('click',function(e){
   const hb=e.target.closest('[data-habit-act]');
   if(hb){
     const card=hb.closest('[data-habit]');
-    if(card){toggleHabitDay(card.dataset.habit,dayKey(Date.now()));renderHabits();render()}
+    if(card){toggleHabitDay(card.dataset.habit,dayKey(Date.now()))}
     return;
   }
   const j=e.target.closest('[data-jump]');
@@ -4787,6 +4788,10 @@ function loadHabits(){
       }).slice(0,8);
   }catch(e){habits=[]}
 }
+/* 习惯数据一变，今日页的蓝卡和提醒页的格子都要跟着变 */
+function refreshHabitUI(){
+  try{render()}catch(e){ try{renderHabits()}catch(e2){} }
+}
 function saveHabits(){try{localStorage.setItem(HABITS_KEY,JSON.stringify(habits))}catch(e){}}
 function habitStreak(h){
   let n=0;const d=new Date();d.setHours(12,0,0,0);
@@ -4876,7 +4881,7 @@ function addHabit(title){
   if(habits.length>=8){toast('最多 8 个，先把手上的走完');return}
   if(habits.some(function(h){return h.title===v})){toast('已经有这个习惯了');return}
   habits.push({id:'h'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),title:v,created:Date.now(),days:{}});
-  saveHabits();renderHabits();
+  saveHabits();refreshHabitUI();
   toast('加好了：「'+v+'」，点圆圈开始今天');
 }
 function delHabit(id){
@@ -4885,8 +4890,8 @@ function delHabit(id){
   const i=habits.findIndex(function(x){return x.id===id});
   const backup=h;
   habits.splice(i,1);
-  undoAction=function(){habits.splice(Math.min(i,habits.length),0,backup);saveHabits();renderHabits();toast('已恢复')};
-  saveHabits();renderHabits();toast('已删除「'+h.title+'」','undo');
+  undoAction=function(){habits.splice(Math.min(i,habits.length),0,backup);saveHabits();refreshHabitUI();toast('已恢复')};
+  saveHabits();refreshHabitUI();toast('已删除「'+h.title+'」','undo');
 }
 function startRenameHabit(id){
   const h=habits.find(function(x){return x.id===id});if(!h)return;
@@ -4900,7 +4905,7 @@ function startRenameHabit(id){
     if(done)return;done=true;
     const v=(input.value||'').trim().slice(0,14);
     if(ok&&v&&v!==h.title){h.title=v;saveHabits()}
-    renderHabits();
+    refreshHabitUI();
   }
   input.addEventListener('blur',function(){finish(true)});
   input.addEventListener('keydown',function(ev){
@@ -4922,7 +4927,7 @@ function toggleHabitDay(id,key){
   }
   const before=habitStreak(h);
   if(h.days[key])delete h.days[key];else h.days[key]=1;
-  saveHabits();renderHabits();
+  saveHabits();refreshHabitUI();
   const after=habitStreak(h);
   const MS=[3,7,21,30,50,100];
   if(h.days[key]&&MS.indexOf(after)>=0&&after!==before){
@@ -5235,6 +5240,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
