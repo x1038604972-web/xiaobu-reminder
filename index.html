@@ -1023,6 +1023,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2137,6 +2139,17 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
 @media (prefers-reduced-motion: reduce){
   .shard{animation:none;display:none}
 }
+
+
+/* ── 主题色：选中的色块会放大 1.1 倍，最左边那个会被容器裁掉一圈 ──
+   给 .swatches 留 4px 内边距（用负边距抵消，视觉位置不变），
+   选中环就落在容器里，不会出现「缺一个口」的圆。 */
+.swatches{
+  padding:4px 4px 4px 3px!important;   /* 用内边距给选中环留位置，不用负边距（负边距会顶出卡片被裁） */
+  margin:6px 0 0!important;
+  overflow:visible;
+}
+.sw{flex:none}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -5705,6 +5718,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
