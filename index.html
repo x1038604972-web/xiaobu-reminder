@@ -1003,6 +1003,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1978,6 +1979,21 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   .hfx-ripple,.hfx-plus{animation:none!important}
   .hfx-ripple,.hfx-plus{display:none}
 }
+
+
+/* ── 终焉卡片圆圈：未完成是干净的描边，完成是实心金 ─── */
+.card.terminus .check{
+  box-shadow:none!important;                     /* 去掉那道白色内高光，否则像没填满 */
+  background:rgba(233,200,122,.06)!important;
+  border:2px solid rgba(233,200,122,.55)!important;
+}
+.card.terminus.done .check{
+  border:0!important;
+  background:linear-gradient(145deg,#F2DCA6,#C9A24E)!important;
+  box-shadow:0 2px 8px rgba(201,162,78,.35)!important;
+}
+.card.terminus.done .check svg path{stroke:#2E2618!important}
+.card.terminus.done .check::after{content:none!important}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2955,12 +2971,14 @@ function render(){
   $('overdueList').innerHTML=overdue.map(cardHTML).join('');
   $('doneCount').textContent=done.length?done.length+' 件':'';
   // 「别的日子」快捷入口：按日期分组，最多 3 个 + 去日历
-  const termTasks=tasks.filter(t=>t.special==='terminus'&&!t.done)
-    .sort((a,b)=>(Number(b.created)||0)-(Number(a.created)||0));  // 最新建立的在最上面
+  const termAll=tasks.filter(t=>t.special==='terminus');
+  const termTasks=termAll.filter(t=>!t.done).sort((a,b)=>(Number(b.created)||0)-(Number(a.created)||0))   // 最新建立的在最上面
+    .concat(termAll.filter(t=>t.done).sort((a,b)=>(Number(b.created)||0)-(Number(a.created)||0)));        // 完成的排在后面
   if($('termSec')){
-    $('termSec').style.display=termTasks.length?'block':'none';
+    $('termSec').style.display=termAll.length?'block':'none';
     $('termList').innerHTML=termTasks.map(cardHTML).join('');
-    $('termCount').textContent=termTasks.length?termTasks.length+' 条':'';
+    const termDoneN=termAll.filter(t=>t.done).length;
+    $('termCount').textContent=termAll.length?(termDoneN?('已完成 '+termDoneN+' / '+termAll.length):(termAll.length+' 条')):'';
   }
   const dj=$('dayJump');
   if(dj){
@@ -5497,6 +5515,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
