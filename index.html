@@ -1014,6 +1014,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2059,6 +2060,21 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
 }
 .ripple-ring{mix-blend-mode:normal!important}
 .fx-flash{mix-blend-mode:normal!important}
+
+
+/* ── 适老化下圆圈保持正的 24px ─────────────────────────
+   原来有一条 html[data-elder="on"] .card .check{min-height:50px;min-width:50px}，
+   习惯卡因为宽度被固定在 24px，被拉成了竖椭圆。
+   现在统一压回 24×24，点击热区仍由 .check::after 负责放大。 */
+html[data-elder="on"] .card .check,
+html[data-elder="on"] .card.habit-card .check,
+html[data-elder="on"] .card.done .check{
+  width:24px!important;height:24px!important;
+  min-width:24px!important;min-height:24px!important;
+  max-width:24px!important;max-height:24px!important;
+  border-radius:50%!important;
+  flex:0 0 24px!important;
+}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -5627,6 +5643,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
