@@ -1046,6 +1046,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2306,16 +2308,16 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
 
   <div class="scroll">
     <section class="view on" id="view-today">
-      <div class="sec" id="overdueSec" style="display:none">
-        <div class="sec-head"><span class="sec-title">已 过 时 间</span><button class="mini-btn" id="postponeAll">全部推迟到今天 20:00</button></div>
-        <div id="overdueList"></div>
-      </div>
-      <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 <em id="guideCount" style="font-style:normal">7</em> 步新手导览 <b>→</b></div>
       <div class="sec" id="termSec" style="display:none">
         <div class="sec-head"><span class="sec-title">终 焉 时 刻</span><span class="sec-count" id="termCount"></span></div>
         <div id="termList"></div>
         <div class="habit-tip">一万年后的提醒，留在今天的自己手里。</div>
       </div>
+      <div class="sec" id="overdueSec" style="display:none">
+        <div class="sec-head"><span class="sec-title">已 过 时 间</span><button class="mini-btn" id="postponeAll">全部推迟到今天 20:00</button></div>
+        <div id="overdueList"></div>
+      </div>
+      <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 <em id="guideCount" style="font-style:normal">7</em> 步新手导览 <b>→</b></div>
       <div class="sec">
         <div class="sec-head"><span class="sec-title">待 办</span><button class="mini-btn" id="batchToggle">批量</button></div>
         <div class="day-jump" id="dayJump"></div>
@@ -3253,7 +3255,7 @@ function renderTop(){
   const leftToday=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0).length;
   const overdueN=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk0).length;
   const laterN=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)>tk0
-    &&!(t.lv===3&&t.ts<=Date.now()+2*86400000)).length;   // 已提前显示的不重复计数
+    &&!(t.lv===3&&t.ts<today0()+3*86400000)).length;   // 已提前显示的不重复计数
   const urgent=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0&&t.lv===3).length;
   let sumTxt;
   if(leftToday===0&&overdueN===0){
@@ -3262,7 +3264,7 @@ function renderTop(){
     sumTxt='今天还有 <b>'+leftToday+'</b> 件事';
     if(urgent)sumTxt+='，其中 <b>'+urgent+'</b> 件重要';
     if(overdueN)sumTxt+='，<b>'+overdueN+'</b> 件已过时间';
-    const earlyN=pend.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>tk0&&t.ts<=Date.now()+2*86400000).length;
+    const earlyN=pend.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>tk0&&t.ts<today0()+3*86400000).length;
     if(earlyN)sumTxt+='，<b>'+earlyN+'</b> 件重要已提前显示';
     const habitLeft=habits.filter(h=>!h.days[dayKey(Date.now())]).length;
     if(habitLeft)sumTxt+='，'+habitLeft+' 个习惯待打卡';
@@ -3360,7 +3362,7 @@ function render(){
   // 也只有「今天」才让重要任务提前 2 天出现
   const overdue=isTodayView?pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk).sort((a,b)=>a.ts-b.ts):[];
   const todayList=pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===vk);
-  const earlyList=isTodayView?pending.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>vk&&t.ts<=Date.now()+2*86400000):[];
+  const earlyList=isTodayView?pending.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>vk&&t.ts<today0()+3*86400000):[];
   const normal=todayList.concat(earlyList).sort((a,b)=>a.ts-b.ts);
   const done=tasks.filter(t=>t.done&&dayKey(t.ts)===vk).sort((a,b)=>b.ts-a.ts);
   $('overdueSec').style.display=overdue.length?'block':'none';
@@ -3380,7 +3382,7 @@ function render(){
   if(dj&&!isTodayView){dj.innerHTML='';dj.style.display='none'}
   if(dj&&isTodayView){
     const later=pending.filter(t=>dayKey(t.ts)>tk&&t.special!=='terminus'
-      &&!(t.lv===3&&t.ts<=Date.now()+2*86400000));
+      &&!(t.lv===3&&t.ts<today0()+3*86400000));
     const grp={};
     later.forEach(t=>{const k=dayKey(t.ts);(grp[k]=grp[k]||[]).push(t)});
     const keys=Object.keys(grp).sort().slice(0,3);
@@ -3419,7 +3421,7 @@ function render(){
   const soon=pending.filter(function(t){
     if(t.special==='terminus')return false;
     if(dayKey(t.ts)===vk)return true;
-    return isTodayView&&t.lv===3&&t.ts<=Date.now()+2*86400000&&dayKey(t.ts)>vk;
+    return isTodayView&&t.lv===3&&t.ts<today0()+3*86400000&&dayKey(t.ts)>vk;
   }).sort((a,b)=>a.ts-b.ts);
   try{
     const at=$('alertCount').closest('.sec').querySelector('.sec-title');
@@ -6164,6 +6166,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
