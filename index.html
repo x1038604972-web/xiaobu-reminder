@@ -1001,6 +1001,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2703,6 +2705,12 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function parseWhen(text){
   if(!text)return null;
   const s=String(text).replace(/\s+/g,''),now=new Date();
+  // 「现在 / 这个时候 / 这会儿」= 就现在这个钟点（配合「每天」就是每天这一刻）
+  if(/(现在|这个时候|这会儿|这时候|当下|马上|立刻)/.test(s)){
+    const t0=new Date(now.getTime()+60000);
+    t0.setSeconds(0,0);
+    return t0.getTime();
+  }
   let dayOffset=0,daySet=false,morningDefault=false,h=null,m=0,hasTime=false,hourOff=0,minOff=0,fixedHour=false;
   const cnNum=v=>{const m={'零':0,'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12};return m[v]!=null?m[v]:(/^\d+$/.test(v)?parseInt(v):null)};
   const dm={'今天':0,'明天':1,'后天':2,'大后天':3};
@@ -5638,6 +5646,8 @@ try{
 
 
 
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -6446,6 +6456,8 @@ try{
     s = s.replace(/(提醒我|提醒|提示我|提示|记一下|记下|记住|添加|新建|加一条|加一个|安排一下|安排|定个|设个|帮我记|存一下|一下)/g, '');
     s = s.replace(/每(周|星期)[一二三四五六日天]+/g, '');   // 每周三四
     s = s.replace(/每(周|星期|天|日|个月)/g, '');
+    // 「这个时候 / 这会儿」要整体去掉，否则会留下「时候」这种残句
+    s = s.replace(/(每天|每日|天天)?(的)?(这个时候|这时候|这会儿|这时|现在|当下)/g, '');
     s = s.replace(/(待会儿|待会|过会儿|过会|等会儿|等会|一会儿|一会|马上|这就|立刻|立即|晚点|稍后|过一阵)/g, '');
     s = s.replace(/(大后天|后天|明天|今天|今晚|明早|明晚|上午|中午|下午|晚上|早上|早晨|凌晨|周末|月底|夜里|傍晚)/g, '');
     s = s.replace(/(下下|下|这|本|上)(周|星期)[一二三四五六日天]/g, '');
@@ -6459,7 +6471,8 @@ try{
     s = s.replace(/一刻钟(后|以后)?/g, '');
     s = s.replace(/[，,。.！!？?、~～]/g, '');
     s = s.replace(/^(我|要|得|去|把)/, '');
-    s = s.replace(/(的|了|吧|呢|啊|呀|嘛|哦)$/, '');
+    // 句尾语气词一次清干净（买水呗 → 买水）
+    for (var _k = 0; _k < 3; _k++) s = s.replace(/(的|了|吧|呢|啊|呀|嘛|哦|呗|哈|啦|咯|喔|噢|哇)$/, '');
     return s.replace(/\s+/g, '').trim();
   }
 
@@ -6893,6 +6906,12 @@ try{
     if (!draft.title) {
       say('要记的是什么事？比如「明天 9 点提醒我交作业」。');
       return;
+    }
+    // 「每天这个时候」已经说清时间了，别再追问几点
+    if (!draft.ts && /(这个时候|这会儿|这时候|现在|当下)/.test(String(text))) {
+      var n1 = new Date(Date.now() + 60000);
+      n1.setSeconds(0, 0);
+      draft.ts = n1.getTime();
     }
     if (!draft.ts) {
       S.pending = { kind: 'time', title: draft.title, lv: draft.lv, repeat: draft.repeat, weekMask: draft.weekMask, note: draft.note || '' };
