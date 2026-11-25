@@ -961,6 +961,10 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1705,6 +1709,11 @@ html[data-elder="on"] .dj-label{font-size:13px}
         <div id="overdueList"></div>
       </div>
       <div class="guide-entry" id="guideEntry"><span>?</span> 第一次用？点这里看 <em id="guideCount" style="font-style:normal">7</em> 步新手导览 <b>→</b></div>
+      <div class="sec" id="termSec" style="display:none">
+        <div class="sec-head"><span class="sec-title">终 焉 时 刻</span><span class="sec-count" id="termCount"></span></div>
+        <div id="termList"></div>
+        <div class="habit-tip">一万年后的提醒，留在今天的自己手里。</div>
+      </div>
       <div class="sec">
         <div class="sec-head"><span class="sec-title">待 办</span><button class="mini-btn" id="batchToggle">批量</button></div>
         <div class="day-jump" id="dayJump"></div>
@@ -1714,11 +1723,7 @@ html[data-elder="on"] .dj-label{font-size:13px}
         <div class="sec-head"><span class="sec-title">今天完成</span><span class="sec-count" id="doneCount"></span></div>
         <div id="doneList"></div>
       </div>
-      <div class="sec" id="termSec" style="display:none">
-        <div class="sec-head"><span class="sec-title">终 焉 时 刻</span><span class="sec-count" id="termCount"></span></div>
-        <div id="termList"></div>
-        <div class="habit-tip">一万年后的提醒，留在今天的自己手里。</div>
-      </div>
+
     </section>
 
     <section class="view" id="view-calendar">
@@ -2432,7 +2437,7 @@ function renderTop(){
   const d=new Date(),wk='日一二三四五六'[d.getDay()];
   $('dateTxt').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+wk;
   const tk0=dayKey(Date.now());
-  const todayTasks=tasks.filter(t=>dayKey(t.ts)===tk0);
+  const todayTasks=tasks.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0);
   const total=todayTasks.length,done=todayTasks.filter(t=>t.done).length;
   const pct=total?done/total:0;
   $('ringFill').style.strokeDashoffset=144.5*(1-pct);
@@ -2442,10 +2447,11 @@ function renderTop(){
     $('ringNum').classList.remove('bump');void $('ringNum').offsetWidth;$('ringNum').classList.add('bump');
   }
   const pend=tasks.filter(t=>!t.done);
-  const leftToday=pend.filter(t=>dayKey(t.ts)===tk0).length;
-  const overdueN=pend.filter(t=>dayKey(t.ts)<tk0).length;
-  const laterN=pend.filter(t=>dayKey(t.ts)>tk0).length;
-  const urgent=pend.filter(t=>dayKey(t.ts)===tk0&&t.lv===3).length;
+  const leftToday=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0).length;
+  const overdueN=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk0).length;
+  const laterN=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)>tk0
+    &&!(t.lv===3&&t.ts<=Date.now()+2*86400000)).length;   // 已提前显示的不重复计数
+  const urgent=pend.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk0&&t.lv===3).length;
   let sumTxt;
   if(leftToday===0&&overdueN===0){
     sumTxt=laterN?('今天清空了 · 别的日子还有 <b>'+laterN+'</b> 件'):dayHint();
@@ -2453,6 +2459,8 @@ function renderTop(){
     sumTxt='今天还有 <b>'+leftToday+'</b> 件事';
     if(urgent)sumTxt+='，其中 <b>'+urgent+'</b> 件重要';
     if(overdueN)sumTxt+='，<b>'+overdueN+'</b> 件已过时间';
+    const earlyN=pend.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>tk0&&t.ts<=Date.now()+2*86400000).length;
+    if(earlyN)sumTxt+='，<b>'+earlyN+'</b> 件重要已提前显示';
     if(laterN)sumTxt+=' · 别处 <b>'+laterN+'</b> 件';
     if(!urgent&&!overdueN&&!laterN)sumTxt+=' · '+dayHint();
   }
@@ -2519,14 +2527,18 @@ function render(){
   const tk=dayKey(Date.now());
   const pending=tasks.filter(t=>!t.done);
   // 今日页只放「今天」的事；过去没做的留在「已过时间」，将来的去日历看
-  const overdue=pending.filter(t=>dayKey(t.ts)<tk).sort((a,b)=>a.ts-b.ts);
-  const normal=pending.filter(t=>dayKey(t.ts)===tk).sort((a,b)=>a.ts-b.ts);
+  const overdue=pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)<tk).sort((a,b)=>a.ts-b.ts);
+  const todayList=pending.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk);
+  // 重要任务：截止前 2 天内就提前出现在待办里
+  const earlyList=pending.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>tk&&t.ts<=Date.now()+2*86400000);
+  const normal=todayList.concat(earlyList).sort((a,b)=>a.ts-b.ts);
   const done=tasks.filter(t=>t.done&&dayKey(t.ts)===tk).sort((a,b)=>b.ts-a.ts);
   $('overdueSec').style.display=overdue.length?'block':'none';
   $('overdueList').innerHTML=overdue.map(cardHTML).join('');
   $('doneCount').textContent=done.length?done.length+' 件':'';
   // 「别的日子」快捷入口：按日期分组，最多 3 个 + 去日历
-  const termTasks=tasks.filter(t=>t.special==='terminus'&&!t.done);
+  const termTasks=tasks.filter(t=>t.special==='terminus'&&!t.done)
+    .sort((a,b)=>(Number(b.created)||0)-(Number(a.created)||0));  // 最新建立的在最上面
   if($('termSec')){
     $('termSec').style.display=termTasks.length?'block':'none';
     $('termList').innerHTML=termTasks.map(cardHTML).join('');
@@ -2534,7 +2546,8 @@ function render(){
   }
   const dj=$('dayJump');
   if(dj){
-    const later=pending.filter(t=>dayKey(t.ts)>tk&&t.special!=='terminus');
+    const later=pending.filter(t=>dayKey(t.ts)>tk&&t.special!=='terminus'
+      &&!(t.lv===3&&t.ts<=Date.now()+2*86400000));
     const grp={};
     later.forEach(t=>{const k=dayKey(t.ts);(grp[k]=grp[k]||[]).push(t)});
     const keys=Object.keys(grp).sort().slice(0,3);
@@ -4816,6 +4829,10 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
 
 
 
