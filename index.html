@@ -1034,6 +1034,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1220,10 +1223,6 @@ html[data-elder="on"] .xb-hero-tip{font-size:15px}
 html[data-perf="on"] .xb-hero-img{animation:none}
 @media (prefers-reduced-motion: reduce){.xb-hero-img{animation:none}}
 
-
-
-
-
 /* ── 模型胶囊 ─────────────────────────────── */
 .xb-models{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 .xb-chip{border:1px solid var(--line);background:var(--surface);border-radius:10px;
@@ -1234,7 +1233,6 @@ html[data-perf="on"] .xb-hero-img{animation:none}
 .xb-chip.on i{color:var(--brand)}
 html[data-elder="on"] .xb-chip{font-size:13px;padding:8px 12px}
 
-
 /* ── 小步记得的事 ─────────────────────────── */
 .xb-mem{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .xb-memitem{font-size:11.5px;padding:5px 9px;border-radius:9px;background:var(--brand-soft);
@@ -1242,11 +1240,9 @@ html[data-elder="on"] .xb-chip{font-size:13px;padding:8px 12px}
 .xb-memitem.ghost{background:transparent;border-style:dashed;border-color:var(--line);color:var(--ink3)}
 html[data-elder="on"] .xb-memitem{font-size:13px}
 
-
 /* 面板收起时彻底移出布局：避免页面滚动时从底部露出标题，也不撑高文档 */
 .xb:not(.on){display:none!important}
 .xb.on{display:flex}
-
 
 /* 浮层（登录 / 小步）是绝对定位，会把文档撑高，导致页面能滚到它们——
    滚动统一交给 .scroll，文档本身不滚 */
@@ -1262,13 +1258,11 @@ html,body{overflow:hidden}
 /* 导览遮罩：必须跟着 .app 走（.phone 内部）。
    之前用 position:fixed 是为了盖住底部，但那是按浏览器窗口定位的——
    桌面预览里 .phone 只有 390x844 居中，遮罩和卡片会跑到手机框外面。 */
-#guideMask{position:absolute!important;inset:0!important;height:auto!important;width:auto!important}
 
 /* 底部抽屉（登录 / 配置 / 邮箱）收起时只移出 88%，会从底边漏出一条——
    收起状态直接不可见 */
 .sheet:not(.on){visibility:hidden!important;pointer-events:none!important}
 .sheet.on{visibility:visible!important}
-
 
 /* ── 终焉时刻：特殊卡片 ───────────────────────── */
 .terminus-chip{color:#8A6B1F!important;border-color:#E4D3A8!important;background:#FBF3DF!important}
@@ -1302,7 +1296,6 @@ html[data-elder="on"] .terminus-when{font-size:13px}
 .card.terminus.done{opacity:.62}
 .card.terminus.done .title{text-decoration:line-through;color:rgba(243,228,190,.55)!important}
 
-
 /* ── 「小步」按钮：与「说话」同款（图标在上、文字在下、带底色矩形） ── */
 .quick-more{
   width:44px;height:44px;min-height:0;padding:0;border-radius:12px;
@@ -1317,7 +1310,6 @@ html[data-elder="on"] .quick-more{width:54px;height:54px;border-radius:14px}
 html[data-elder="on"] .quick-more svg{width:22px;height:22px}
 html[data-elder="on"] .quick-more em{font-size:11px}
 
-
 /* ── 语音面板：改用打字 ───────────────────────── */
 .voice-type{
   display:block;width:100%;margin:2px 0 4px;padding:9px 12px;border-radius:11px;
@@ -1327,7 +1319,6 @@ html[data-elder="on"] .quick-more em{font-size:11px}
 .voice-type:active{background:var(--line2)}
 .voice-hint{line-height:1.6}
 html[data-elder="on"] .voice-type{font-size:14px;padding:11px 14px}
-
 
 /* ── 终焉：第 N 天 ───────────────────────────── */
 .terminus-days{
@@ -1345,7 +1336,6 @@ html[data-elder="on"] .terminus-days{font-size:12px}
 .xb-trouble ul{margin:8px 0 0;padding-left:16px;font-size:11.5px;color:var(--ink3);line-height:1.75}
 .xb-trouble li{margin-bottom:3px}
 .xb-trouble b{color:var(--ink2);font-weight:700}
-
 
 /* ══════════════════════════════════════════════════════════
    体验优化（QA 走查后）
@@ -1475,14 +1465,13 @@ html[data-mode="dark"] .top .date,html[data-mode="dark"] .top .summary{text-shad
 .scroll{clip-path:inset(0 0 26px 0)}
 
 /* ── 导览卡片：短屏幕上不裁切，内部滚动 ─────────────── */
-.guide-tip{max-height:calc(100% - 20px);overflow-y:auto;overscroll-behavior:contain}
-@media (max-height:620px){
-  .guide-tip{padding:12px}
-  .guide-title{font-size:15px;margin-top:5px}
-  .guide-body{font-size:12px;line-height:1.55}
-  .guide-actions{margin-top:10px}
-}
 
+@media (max-height:620px){
+  
+  
+  
+  
+}
 
 /* ══════════════════════════════════════════════════════════
    小步习惯
@@ -1572,7 +1561,6 @@ html[data-elder="on"] .habit-sug-btn{font-size:14px;padding:10px 16px}
   .habit-check,.hd,.habit-sug-btn{transition:none}
 }
 
-
 /* ── 卡片备注 ─────────────────────────────────────── */
 .note-line{
   position:relative;padding-right:26px;cursor:text;margin-top:9px;
@@ -1609,7 +1597,6 @@ html[data-elder="on"] .note-line{font-size:14px}
 html[data-elder="on"] .note-add{font-size:13px;padding:7px 12px}
 html[data-elder="on"] .note-editor textarea{font-size:15px}
 html[data-elder="on"] .note-btns button{height:40px;font-size:14px}
-
 
 /* ══════════════════════════════════════════════════════════
    日历可读性 + 「全部完成」小旗
@@ -1679,7 +1666,6 @@ html[data-elder="on"] .cal-flag,html[data-elder="on"] .cal-flag.shown{font-size:
 }
 .cal-grid .cal-w,.cal-grid .cal-cell{min-width:0}
 
-
 /* ── 今日页：别的日子入口 ─────────────────────────── */
 .day-jump{display:none;flex-wrap:wrap;gap:8px;align-items:center;margin:2px 0 11px}
 .dj-label{font-size:11.5px;color:var(--ink3)}
@@ -1706,7 +1692,6 @@ html[data-elder="on"] .dj-label{font-size:13px}
   box-shadow:inset 0 0 0 1.5px var(--brand)!important;transform:none!important;
 }
 .cal-cell.sel:not(.today) .cal-num{color:var(--brand)}
-
 
 /* ══════════════════════════════════════════════════════════
    今日页里的「小步习惯」卡片：蓝底，区别于普通（米白）和终焉（金）
@@ -1770,7 +1755,6 @@ html[data-mode="dark"] .tag.habit-tag{
 html[data-mode="dark"] .card.habit-card .habit-streak{background:rgba(107,178,232,.16);color:var(--hb-acc-dk)}
 .card.habit-card .meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:6px}
 
-
 /* ── 习惯格子：本周一→周日 / 过期红格锁定 ─────────── */
 .hd.lock{cursor:default}
 .hd.miss{
@@ -1788,7 +1772,6 @@ html[data-mode="dark"] .hd.miss{
   border-radius:999px;padding:2px 8px;letter-spacing:.02em;
 }
 html[data-elder="on"] .habit-week{font-size:12px}
-
 
 /* ══════════════════════════════════════════════════════════
    子任务：面板内编辑 + 卡片上勾选（划线，无特效）
@@ -1846,7 +1829,6 @@ html[data-elder="on"] .habit-week{font-size:12px}
 html[data-elder="on"] .sub-row{font-size:15px}
 html[data-elder="on"] .sub-box{width:20px;height:20px}
 
-
 /* ── 卡片操作行：备注 / 编辑 并排常显 ───────────────── */
 .card-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:9px}
 .card-tools .note-add{margin-top:0}
@@ -1870,11 +1852,9 @@ html[data-elder="on"] .sub-box{width:20px;height:20px}
 html[data-elder="on"] .card-edit,html[data-elder="on"] .note-edit{height:32px;font-size:13px}
 html[data-elder="on"] .card-tools .note-add{height:32px}
 
-
 /* 已完成卡片：没有左滑层，也不显示删除键 */
 .card.done .swipe-actions{display:none!important}
 .card.done{overscroll-behavior:none}
-
 
 /* ── 页签条中央的矩形加号 ─────────────────────────── */
 .tabbar{align-items:center!important;padding-top:6px!important}
@@ -1894,7 +1874,6 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 /* 加号在页签条里，就不再是圆形按钮 */
 .tabbar .add-btn{width:auto;height:auto;border-radius:11px;position:static}
 .tabbar .tab{flex:1 1 0;min-width:0}
-
 
 /* ══════════════════════════════════════════════════════════
    圆圈统一 24px；完成态彻底实心（去边框，不留任何缺口）
@@ -1923,10 +1902,8 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 .note-line.readonly{cursor:default;opacity:.9}
 .note-line.readonly:active{background:transparent}
 
-
 /* 日历里选中非今天时，顶部日期标注一下 */
 #dateTxt.away{color:var(--brand);font-weight:800}
-
 
 /* 卡片操作行：彻底对齐（.card-edit 原本带 margin-top:9px，会把编辑按钮压低） */
 .card-tools{align-items:center}
@@ -1937,7 +1914,6 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 html[data-elder='on'] .card-tools .card-edit,
 html[data-elder='on'] .card-tools .note-add{height:32px}
 
-
 /* 备注后面的「改」：跟着文字走，不再钉在行尾 */
 .note-line{padding-right:0!important}
 .note-pen{
@@ -1947,10 +1923,8 @@ html[data-elder='on'] .card-tools .note-add{height:32px}
 }
 html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
 
-
 /* 备注被截断时不显示行内「改」（否则会掉到块外） */
 .note-line.clipped .note-pen{display:none!important}
-
 
 /* ══════════════════════════════════════════════════════════
    小步习惯专属完成效果
@@ -2010,7 +1984,6 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   .hfx-ripple,.hfx-plus{display:none}
 }
 
-
 /* ── 终焉卡片圆圈：未完成是干净的描边，完成是实心金 ─── */
 .card.terminus .check{
   box-shadow:none!important;                     /* 去掉那道白色内高光，否则像没填满 */
@@ -2025,7 +1998,6 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
 .card.terminus.done .check svg path{stroke:#2E2618!important}
 .card.terminus.done .check::after{content:none!important}
 
-
 /* 非今天时摘要旁边给一个「回到今天」 */
 .back-today{
   display:none;align-items:center;margin-left:8px;padding:3px 9px;
@@ -2034,7 +2006,6 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   vertical-align:1px;
 }
 .back-today:active{transform:scale(.96)}
-
 
 /* ── 星光 / 涟漪 增强：更亮、更粗、带辉光与中心闪光 ─── */
 .sparkle{
@@ -2063,7 +2034,6 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   .fx-flash{display:none}
 }
 
-
 /* 星光/涟漪：不用 mix-blend（会整块矩形泛白），靠亮色 + 双层辉光出效果 */
 .sparkle{
   mix-blend-mode:normal!important;
@@ -2072,7 +2042,6 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   filter:drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor)!important;
 }
 .fx-flash{mix-blend-mode:normal!important}
-
 
 /* ── 适老化下圆圈保持正的 24px ─────────────────────────
    原来有一条 html[data-elder="on"] .card .check{min-height:50px;min-width:50px}，
@@ -2087,7 +2056,6 @@ html[data-elder="on"] .card.done .check{
   border-radius:50%!important;
   flex:0 0 24px!important;
 }
-
 
 /* ── 适老化：输入行两个圆角按钮保持同样大小 ────────────
    原来只有 .quick-more 有适老化放大规则（54×54），
@@ -2111,7 +2079,6 @@ html[data-elder="on"] .quick .quick-more em{
   font-size:11px!important;line-height:1;
 }
 
-
 /* ── 适老化：完成震动（6 个选项）不再被裁 ────────────────
    适老化把 .seg button 放大到 14px 字、13px 内边距、44px 高，
    6 个按钮一行放不下，第二行会被 .set-detail 的 max-height 裁掉半截。
@@ -2127,7 +2094,6 @@ html[data-elder="on"] .fx-seg button{
 }
 /* 震动强度那一行也给足空间，别被挤 */
 html[data-elder="on"] .vibe-slider{margin-top:10px}
-
 
 /* ── 碎片：真·破裂（网格碎片 + 自转 + 重力 + 中心冲击） ── */
 .shard{
@@ -2149,7 +2115,6 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
   .shard{animation:none;display:none}
 }
 
-
 /* ── 主题色：选中的色块会放大 1.1 倍，最左边那个会被容器裁掉一圈 ──
    给 .swatches 留 4px 内边距（用负边距抵消，视觉位置不变），
    选中环就落在容器里，不会出现「缺一个口」的圆。 */
@@ -2159,7 +2124,6 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
   overflow:visible;
 }
 .sw{flex:none}
-
 
 /* ── 习惯完成特效（顶层绘制，不受卡片 overflow 影响） ── */
 .hfx-layer{
@@ -2206,10 +2170,66 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
   .hfx-layer{display:none}
 }
 
-
 /* 里程碑：整层涟漪与 +1 都是金色 */
 .hfx-layer.hfx-gold-layer .hfx-ripple{border-color:#E9C87A!important}
 .hfx-layer.hfx-gold-layer .hfx-plus{color:#B58B22!important;text-shadow:0 1px 8px rgba(201,162,78,.5)}
+
+/* ══════════════════════════════════════════════════════════
+   新手导览 · 预制演示播放器
+   截图 + 缓慢推镜，不依赖实时元素位置，天然不会错位
+   ══════════════════════════════════════════════════════════ */
+html.demo-lock,html.demo-lock body{overflow:hidden}
+.demo-mask{position:fixed;inset:0;z-index:140;display:none;background:#0E1512;flex-direction:column}
+.demo-mask.on{display:flex}
+.demo-stage{position:relative;flex:1;overflow:hidden;background:#0E1512}
+.demo-frame{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;will-change:transform}
+.demo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.demo-ring{
+  position:absolute;border-radius:16px;pointer-events:none;
+  border:2px solid rgba(95,174,134,.95);
+  box-shadow:0 0 0 9999px rgba(6,12,10,.55),0 0 26px rgba(95,174,134,.55);
+  animation:demoRingPulse 2.2s ease-in-out infinite;
+}
+@keyframes demoRingPulse{
+  0%,100%{border-color:rgba(95,174,134,.95);border-width:2px}
+  50%{border-color:rgba(140,220,180,1);border-width:3px}
+}
+.demo-shade{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(8,14,11,.5) 0%,rgba(8,14,11,0) 16%,rgba(8,14,11,0) 60%,rgba(8,14,11,.8) 100%)
+}
+.demo-progress{position:absolute;left:0;right:0;top:0;height:2px;background:rgba(255,255,255,.12)}
+.demo-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#5FAE86,#9FE0BE)}
+.demo-tip{
+  position:relative;z-index:2;padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+  background:rgba(20,28,24,.94);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid rgba(255,255,255,.08);color:#EAF3EE;
+}
+.demo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.demo-step{font-size:11.5px;font-weight:800;color:#8FD3AF;letter-spacing:.04em}
+.demo-skip{border:0;background:rgba(255,255,255,.10);color:#DCE9E2;font-family:inherit;font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;cursor:pointer}
+.demo-title{font-size:17.5px;font-weight:900;letter-spacing:.01em;margin-bottom:6px}
+.demo-body{font-size:13.5px;line-height:1.62;color:#C8D7CF;white-space:pre-line}
+.demo-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:12px}
+.demo-dots{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.demo-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.24)}
+.demo-dots i.on{background:#7FD3A6;width:16px;border-radius:3px}
+.demo-btns{display:flex;gap:8px;flex:none}
+.demo-btns button{
+  font-family:inherit;font-size:13.5px;font-weight:800;height:40px;padding:0 18px;
+  border-radius:12px;border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);color:#E7F1EC;cursor:pointer;
+}
+.demo-btns .demo-next{background:#2F7B58;border-color:#2F7B58;color:#FFFBF2}
+.demo-btns button:active{transform:scale(.97)}
+html[data-elder="on"] .demo-title{font-size:19px}
+html[data-elder="on"] .demo-body{font-size:15px}
+html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
+@media (prefers-reduced-motion: reduce){
+  .demo-frame{transition:none!important}
+  .demo-ring{animation:none}
+}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2692,13 +2712,26 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
     <div class="member-note">会员购买功能暂未开通，当前仅展示方案。后续接入支付与账号体系后，会在这里开放购买和管理。</div>
   </div></div>
 
-  <div class="guide-mask" id="guideMask">
-    <div class="guide-hole" id="guideHole"></div>
-    <div class="guide-tip" id="guideTip">
-      <div class="guide-top"><span class="guide-step" id="guideStepNo">1 / 4</span><button class="guide-skip" id="guideSkip">跳过</button></div>
-      <div class="guide-title" id="guideTitle"></div>
-      <div class="guide-body" id="guideBody"></div>
-      <div class="guide-actions"><div class="guide-dots" id="guideDots"></div><button class="guide-prev" id="guidePrev">上一步</button><button class="guide-next" id="guideNext">下一步</button></div>
+  <div class="demo-mask" id="demoMask">
+    <div class="demo-stage" id="demoStage">
+      <div class="demo-frame" id="demoFrame">
+        <img class="demo-img" id="demoImg" alt="">
+        <span class="demo-ring" id="demoRing"></span>
+      </div>
+      <div class="demo-shade"></div>
+      <div class="demo-progress"><i id="demoBar"></i></div>
+    </div>
+    <div class="demo-tip">
+      <div class="demo-top"><span class="demo-step" id="demoStepNo">1 / 9</span><button class="demo-skip" id="demoSkip">跳过</button></div>
+      <div class="demo-title" id="demoTitle"></div>
+      <div class="demo-body" id="demoBody"></div>
+      <div class="demo-actions">
+        <div class="demo-dots" id="demoDots"></div>
+        <div class="demo-btns">
+          <button class="demo-prev" id="demoPrev">上一步</button>
+          <button class="demo-next" id="demoNext">下一步</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4560,176 +4593,125 @@ function finishWelcome(){
   scheduleGuide(false);
 }
 const GUIDE_KEY='qingji_guide_v1';
-const GUIDE_STEPS=[
-  {tab:'today',sel:'#quickInput',title:'① 一句话，就记下',
-   body:'在底部输入「明天 9 点交作业」，按回车就记下了——时间会自己认出来。\n不用先选日期，也不用填表；记完想改，点卡片上的「编辑」。'},
-  {tab:'today',sel:'#micBtn',title:'② 不想打字，就说',
-   body:'点「说话」对着手机讲一句，它会转成文字再记下，长句子还会帮你缩成短标题。\n识别不准就再点一次，或者直接用输入框打字。'},
-  {tab:'today',sel:'#xiaobuBtn',title:'③ 小步：会记，也会替你动手',
-   body:'点「小步」可以问「我今天还有几件事」，也能让它改：「把吃药挪到明早」。\n一次说两件事时，它会先问「都记下 / 只记第一件」，不会偷偷猜。'},
-  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'④ 卡片上就能做完一件事',
-   body:'点左边圆圈就完成，会有完成特效；右边能推迟、删除。\n卡片下面还有「备注」和「编辑」，编辑里能加子任务、定重复。完成后的卡片会锁住，避免误删。'},
-  {tab:'alerts',sel:'#habitSec',title:'⑤ 小步习惯：每天走一小步',
-   body:'加一件想坚持的小事（喝水、吃坚果），每天点一下圆圈就是打卡。\n打卡会出现在「今日」里，用蓝色卡片区分；连续 3 / 7 / 21 天有徽章和金色庆祝。'},
-  {tab:'today',sel:'#termSec',title:'⑥ 终焉时刻：留给很久以后',
-   body:'写一句话丢到一万年后，它永远待在待办最上面，不参与今天的判断。\n建多条也行，最新的排最上；做完会变成实心金圈，一直留在那儿。'},
-  {tab:'calendar',sel:'#calGrid',title:'⑦ 日历：点哪天，就看哪天',
-   body:'点日历上的某一天，今日 / 提醒 / 顶部环都会切到那天（顶部会写「不是今天」）。\n看完点一下旁边的「回到今天」就回来了。'},
-  {tab:'me',sel:'#fxSeg',title:'⑧ 完成效果随便挑',
-   body:'彩纸（默认）/ 碎片 / 星光 / 花瓣，四种完成动画，点一下会当场演示。\n嫌花哨可以在同一页把「性能优先」打开，动画会自动减量。'},
-  {tab:'me',sel:'#elderSeg',title:'⑨ 字小？还有适老化',
-   body:'这里能开适老化（字更大、按钮更好按）、深色模式，也能换主题色和视觉风格。\n这几项都在「我的 → 系统设置」里。'}
+/* 新手导览：预制演示（截图 + 缓慢推镜）
+   不再实时取元素位置，所以不会出现高亮框错位 */
+const DEMO_STEPS=[
+  {img:'guide/01-today.jpg',focus:{x:0.0154,y:0.2263,w:0.9692,h:0.13},title:"① 一句话，就记下",body:"在底部输入「明天 9 点交作业」，按回车就记下了——时间会自己认出来。\n不用先选日期，也不用填表；记完想改，点卡片上的「编辑」。"},
+  {img:'guide/02-voice.jpg',focus:{x:0,y:0.2398,w:1,h:0.5197},title:"② 不想打字，就说",body:"点「说话」对着手机讲一句，它会转成文字再记下，长句子还会帮你缩成短标题。\n识别不准就再点一次，或者直接用输入框打字。"},
+  {img:'guide/03-xiaobu.jpg',focus:{x:0.0128,y:0.396,w:0.9744,h:0.2084},title:"③ 小步：会记，也会替你动手",body:"点「小步」可以问「我今天还有几件事」，也能让它改：「把吃药挪到明早」。\n一次说两件事时，它会先问「都记下 / 只记第一件」，不会偷偷猜。"},
+  {img:'guide/04-card.jpg',focus:{x:0.0154,y:0.295,w:0.9692,h:0.13},title:"④ 卡片上就能做完一件事",body:"点左边圆圈就完成，会有完成特效；右边能推迟、删除。\n卡片下面有「备注」和「编辑」，编辑里能加子任务、定重复；完成后的卡片会锁住，避免误删。"},
+  {img:'guide/05-habit.jpg',focus:{x:0.0256,y:0.1991,w:0.9487,h:0.2854},title:"⑤ 小步习惯：每天走一小步",body:"加一件想坚持的小事（喝水、吃坚果），每天点一下圆圈就是打卡。\n打卡会出现在「今日」里，用蓝色卡片区分；连续 3 / 7 / 21 天有徽章和金色庆祝。"},
+  {img:'guide/06-terminus.jpg',focus:{x:0.0256,y:0.1991,w:0.9487,h:0.2848},title:"⑥ 终焉时刻：留给很久以后",body:"写一句话丢到一万年后，它永远待在待办最上面，不参与今天的判断。\n建多条也行，最新的排最上；做完会变成实心金圈，一直留在那儿。"},
+  {img:'guide/07-calendar.jpg',focus:{x:0.02,y:0.14,w:0.96,h:0.58},title:"⑦ 日历：点哪天，就看哪天",body:"点日历上的某一天，今日 / 提醒 / 顶部环都会切到那天（顶部会写「不是今天」）。\n看完点一下旁边的「回到今天」就回来了。"},
+  {img:'guide/08-fx.jpg',focus:{x:0,y:0.3829,w:1,h:0.1682},title:"⑧ 完成效果随便挑",body:"彩纸（默认）/ 碎片 / 星光 / 花瓣，四种完成动画，点一下会当场演示。\n嫌花哨可以在同一页把「性能优先」打开，动画会自动减量。"},
+  {img:'guide/09-elder.jpg',focus:{x:0,y:0.387,w:1,h:0.154},title:"⑨ 字小？还有适老化",body:"这里能开适老化（字更大、按钮更好按）、深色模式，也能换主题色和视觉风格。\n这几项都在「我的 → 系统设置」里。"}
 ];
-
-let guideStep=0,guideActive=false,guideCheckTimer=null,guideScrollTries=0;
+let guideActive=false,demoStep=0,guideCheckTimer=null;
 function guideSeen(){try{return localStorage.getItem(GUIDE_KEY)==='2'}catch(e){return false}}
-function guideTarget(s){
-  let el=document.querySelector(s.sel);
-  if(s.expand){
-    const sec=el&&el.closest('.sec');
-    if(sec&&(!el.children.length||el.getBoundingClientRect().height<20))el=sec;
-  }
-  if(!el)el=document.querySelector(s.fallback||'.scroll');
-  return el;
-}
 function guideStepsSync(){
-  const d=$('guideCardDesc');
-  if(d)d.textContent='再看一遍这 '+GUIDE_STEPS.length+' 步上手指引';
+  const c=document.getElementById('guideCount');
+  if(c)c.textContent=DEMO_STEPS.length;
+  const d=document.getElementById('guideCardDesc');
+  if(d)d.textContent='再看一遍这 '+DEMO_STEPS.length+' 步上手指引';
 }
-function guideFillTip(){
-  const s=GUIDE_STEPS[guideStep];
-  $('guideStepNo').textContent=(guideStep+1)+' / '+GUIDE_STEPS.length;
-  $('guideTitle').textContent=s.title;
-  $('guideBody').textContent=s.body;
-  $('guideNext').textContent=guideStep===GUIDE_STEPS.length-1?'开始使用':'下一步';
-  $('guidePrev').style.visibility=guideStep===0?'hidden':'visible';
-  $('guideDots').innerHTML=GUIDE_STEPS.map((_,i)=>'<i class="'+(i===guideStep?'on':'')+'"></i>').join('');
-}
-const guideOpened=[];
-function guideEnsureVisible(el){
-  if(!el||!el.closest)return false;
-  const card=el.closest('[data-set]');
-  if(card&&!card.classList.contains('open')){
-    card.click();
-    guideOpened.push(card);
-    return true;
+function syncGuideCount(){guideStepsSync()}
+function demoPaint(){
+  const s=DEMO_STEPS[demoStep],frame=document.getElementById('demoFrame'),stage=document.getElementById('demoStage');
+  const ring=document.getElementById('demoRing');
+  if(!s||!frame||!stage)return;
+  const sw=stage.clientWidth||390,sh=stage.clientHeight||844;
+  const IW=390,IH=844;
+  const cover=Math.max(sw/IW,sh/IH);
+  const f=s.focus||{x:0,y:0,w:1,h:1};
+  const zFit=Math.min((sw*0.86)/(f.w*IW),(sh*0.66)/(f.h*IH));
+  const z=Math.max(cover,zFit);
+  const cx=(f.x+f.w/2)*IW,cy=(f.y+f.h/2)*IH;
+  const tx=sw/2-cx*z,ty=sh/2-cy*z;
+  if(ring){
+    ring.style.left=(f.x*IW)+'px';ring.style.top=(f.y*IH)+'px';
+    ring.style.width=(f.w*IW)+'px';ring.style.height=(f.h*IH)+'px';
   }
-  return false;
-}
-function guideLayout(){
-  guideFillTip();
-  const s=GUIDE_STEPS[guideStep],el=guideTarget(s),mask=$('guideMask');
-  const hole=$('guideHole'),tip=$('guideTip');
-  if(!mask||!hole||!tip)return;
-  if(!el)return;
-  // 目标藏在折叠卡里：先展开，等动画走完再重新定位
-  if(guideEnsureVisible(el)){setTimeout(guideLayout,340);return;}
-
-  // 目标不在视野里：先滚过去，滚完再重新定位（最多重试 2 次，避免死循环）
-  {
-    const mm0=mask.getBoundingClientRect();
-    const r0=el.getBoundingClientRect();
-    const outOfView = r0.bottom<mm0.top+40 || r0.top>mm0.bottom-40 || r0.top<mm0.top+8 || r0.bottom>mm0.bottom-8;
-    if(outOfView && (guideScrollTries|0)<2){
-      guideScrollTries=(guideScrollTries|0)+1;
-      try{ el.scrollIntoView({block:'center'}) }catch(e){}
-      setTimeout(guideLayout,260);
-      return;
-    }
+  const z0=Math.max(cover,z*0.84);
+  const tx0=sw/2-cx*z0,ty0=sh/2-cy*z0;
+  frame.style.transition='none';
+  frame.style.transform='translate('+tx0+'px,'+ty0+'px) scale('+z0+')';
+  void frame.offsetWidth;
+  requestAnimationFrame(function(){
+    frame.style.transition='transform 4.4s cubic-bezier(.22,.68,.24,1)';
+    frame.style.transform='translate('+tx+'px,'+ty+'px) scale('+z+')';
+  });
+  const bar=document.getElementById('demoBar');
+  if(bar){
+    bar.style.transition='none';bar.style.width='0%';
+    void bar.offsetWidth;
+    bar.style.transition='width 6s linear';bar.style.width='100%';
   }
-
-  const base=mask.getBoundingClientRect();
-  const W=base.width||390, H=base.height||844;
-  const r=el.getBoundingClientRect(),pad=8;
-
-  // 高亮框：先把宽高夹进可视区，再夹左上角，保证整框落在遮罩里
-  const w=Math.max(28,Math.min(W-12,r.width+pad*2));
-  const h=Math.max(28,Math.min(H-12,r.height+pad*2));
-  const x=Math.max(6,Math.min(W-6-w,r.left-base.left-pad));
-  const y=Math.max(6,Math.min(H-6-h,r.top-base.top-pad));
-  hole.style.left=x+'px';hole.style.top=y+'px';
-  hole.style.width=w+'px';hole.style.height=h+'px';
-
-  // 先归零量出卡片真实高度（不受上一步 top 影响）
-  tip.style.bottom='auto';
-  tip.style.top='0px';
-  const tipH=tip.offsetHeight||160;
-  const gap=12,margin=10;
-  const maxTop=Math.max(margin,H-tipH-margin);
-  const belowTop=y+h+gap,aboveTop=y-tipH-gap;
-
-  let top;
-  if(belowTop<=maxTop)top=belowTop;                    // ① 目标下方放得下
-  else if(aboveTop>=margin)top=aboveTop;               // ② 放上方
-  else top=Math.max(margin,Math.min(maxTop,(H-tipH)/2)); // ③ 都放不下 → 居中
-  top=Math.max(margin,Math.min(maxTop,top));           // 最终钳制，绝不越界
-
-  // 居中时可能压在目标上，若还有余量就往不重叠的一侧再挪一次
-  const overlaps=top<y+h&&top+tipH>y;
-  if(overlaps){
-    const alt=(belowTop<=maxTop)?belowTop:(aboveTop>=margin?aboveTop:top);
-    if(alt!==top)top=Math.max(margin,Math.min(maxTop,alt));
-  }
-  tip.style.top=top+'px';
 }
-let __guideResizeT=null;
-function guideRelayoutSoon(){
-  if(!guideActive)return;
-  clearTimeout(__guideResizeT);
-  __guideResizeT=setTimeout(function(){try{guideLayout()}catch(e){}},120);
+function demoFill(){
+  const s=DEMO_STEPS[demoStep];if(!s)return;
+  const img=document.getElementById('demoImg');
+  if(img&&img.getAttribute('src')!==s.img)img.setAttribute('src',s.img);
+  const no=document.getElementById('demoStepNo');if(no)no.textContent=(demoStep+1)+' / '+DEMO_STEPS.length;
+  const ti=document.getElementById('demoTitle');if(ti)ti.textContent=s.title;
+  const bo=document.getElementById('demoBody');if(bo)bo.textContent=s.body;
+  const nx=document.getElementById('demoNext');if(nx)nx.textContent=demoStep===DEMO_STEPS.length-1?'开始使用':'下一步';
+  const pv=document.getElementById('demoPrev');if(pv)pv.style.visibility=demoStep===0?'hidden':'visible';
+  const dt=document.getElementById('demoDots');
+  if(dt)dt.innerHTML=DEMO_STEPS.map(function(_,i){return '<i class="'+(i===demoStep?'on':'')+'"></i>'}).join('');
+  demoPaint();
 }
-window.addEventListener('resize',guideRelayoutSoon);
-window.addEventListener('orientationchange',guideRelayoutSoon);
-if(window.visualViewport)window.visualViewport.addEventListener('resize',guideRelayoutSoon);
-function guideGoto(i){
-  guideScrollTries=0;
-  guideStep=i;guideFillTip();
-  const s=GUIDE_STEPS[i],want=s.tab||'today';
-  if(typeof activeTab!=='undefined'&&activeTab!==want){
-    const btn=document.querySelector('[data-tab="'+want+'"]');
-    if(btn)btn.click();
-    setTimeout(guideLayout,380);
-  }else guideLayout();
+function demoGoto(i){
+  demoStep=Math.max(0,Math.min(DEMO_STEPS.length-1,i));
+  demoFill();
 }
 function startGuide(force){
   if(guideActive)return;
   if(!force&&guideSeen())return;
-  if(!force&&(!$('bootSplash').classList.contains('off')||!adResolved))return;
-  guideActive=true;
-  $('guideMask').classList.add('on');
-  guideGoto(0);
+  const mask=document.getElementById('demoMask');if(!mask)return;
+  guideActive=true;demoStep=0;
+  mask.classList.add('on');
+  document.documentElement.classList.add('demo-lock');
+  DEMO_STEPS.forEach(function(s){var im=new Image();im.src=s.img});
+  demoFill();
 }
-function endGuide(){
+function endGuide(markSeen){
   guideActive=false;
-  $('guideMask').classList.remove('on');
-  // 导览期间替用户展开的折叠卡，收回去
-  try{
-    guideOpened.splice(0).forEach(function(c){
-      if(c&&c.classList.contains('open'))c.click();
-    });
-  }catch(e){}
-  try{localStorage.setItem(GUIDE_KEY,'2')}catch(e){}
-}
-function guideNext(){if(guideStep<GUIDE_STEPS.length-1)guideGoto(guideStep+1);else endGuide()}
-function guidePrev(){if(guideStep>0)guideGoto(guideStep-1)}
-function syncGuideCount(){
-  try{
-    const n=GUIDE_STEPS.length;
-    const a=document.getElementById('guideCount'); if(a)a.textContent=n;
-    const b=document.getElementById('guideCardDesc'); if(b)b.textContent='再看一遍这 '+n+' 步上手指引';
-  }catch(e){}
+  const mask=document.getElementById('demoMask');if(mask)mask.classList.remove('on');
+  document.documentElement.classList.remove('demo-lock');
+  if(markSeen!==false){try{localStorage.setItem(GUIDE_KEY,'2')}catch(e){}}
 }
 function scheduleGuide(force){
-  syncGuideCount();
+  guideStepsSync();
   clearTimeout(guideCheckTimer);let n=0;
-  const check=()=>{
+  const check=function(){
     if(guideActive)return;
-    const ready=$('bootSplash').classList.contains('off')&&adResolved&&!$('welcome').classList.contains('on');
+    var boot=document.getElementById('bootSplash');
+    var wel=document.getElementById('welcome');
+    const ready=(!boot||boot.classList.contains('off'))&&(typeof adResolved==='undefined'||adResolved)&&(!wel||!wel.classList.contains('on'));
     if(ready){startGuide(force);return}
     if(++n<40)guideCheckTimer=setTimeout(check,250);
   };
   check();
 }
+(function bindDemo(){
+  const next=document.getElementById('demoNext'),prev=document.getElementById('demoPrev'),skip=document.getElementById('demoSkip');
+  if(next)next.onclick=function(){ if(demoStep>=DEMO_STEPS.length-1){endGuide();return} demoGoto(demoStep+1); };
+  if(prev)prev.onclick=function(){demoGoto(demoStep-1)};
+  if(skip)skip.onclick=function(){endGuide()};
+  const entry=document.getElementById('guideEntry');if(entry)entry.onclick=function(){startGuide(true)};
+  const card=document.getElementById('guideCard');if(card)card.onclick=function(){startGuide(true)};
+  const mask=document.getElementById('demoMask');
+  if(mask){
+    let sx=0;
+    mask.addEventListener('touchstart',function(e){sx=e.touches[0].clientX},{passive:true});
+    mask.addEventListener('touchend',function(e){
+      const dx=e.changedTouches[0].clientX-sx;
+      if(Math.abs(dx)<40)return;
+      if(dx<0){ if(demoStep<DEMO_STEPS.length-1)demoGoto(demoStep+1); else endGuide(); }
+      else demoGoto(demoStep-1);
+    },{passive:true});
+  }
+})();
 function buildWave(){
   const w=$('voiceWave');let h='';for(let i=0;i<28;i++)h+='<i></i>';w.innerHTML=h;
 }
@@ -5761,9 +5743,6 @@ $('authMask').onclick=closeAuth;
 $('authSubmit').onclick=submitAuth;
 $('authSwitch').onclick=()=>openAuth(authMode==='register'?'login':'register');
 $('authUser').onkeydown=$('authPass').onkeydown=e=>{if(e.key==='Enter')submitAuth()};
-$('guideNext').onclick=guideNext;
-$('guidePrev').onclick=guidePrev;
-$('guideSkip').onclick=endGuide;
 $('guideCard').onclick=()=>startGuide(true);
 $('guideEntry').onclick=()=>startGuide(true);
 function syncGuideEntry(){const el=$('guideEntry');if(!el)return;el.style.display=guideSeen()?'none':''}
@@ -5814,6 +5793,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
