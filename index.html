@@ -1009,6 +1009,10 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2009,6 +2013,52 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   vertical-align:1px;
 }
 .back-today:active{transform:scale(.96)}
+
+
+/* ── 星光 / 涟漪 增强：更亮、更粗、带辉光与中心闪光 ─── */
+.sparkle{
+  filter:drop-shadow(0 0 9px currentColor) drop-shadow(0 0 18px currentColor) saturate(1.2)!important;
+}
+@keyframes sparkleFly{
+  0%{transform:scale(.15) rotate(0);opacity:0}
+  16%{opacity:1}
+  58%{opacity:.95}
+  100%{transform:translate3d(var(--fx),var(--fy),0) scale(var(--sc)) rotate(var(--rot));opacity:0}
+}
+.ripple-ring{
+  border:3px solid currentColor!important;
+  filter:drop-shadow(0 0 10px currentColor);
+  animation-timing-function:cubic-bezier(.16,.84,.24,1)!important;
+}
+@keyframes rippleOut{
+  0%{transform:scale(.22);opacity:.95}
+  72%{opacity:.32}
+  100%{transform:scale(1);opacity:0}
+}
+.fx-flash{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,255,255,.95),rgba(255,255,255,.4) 45%,rgba(255,255,255,0) 72%);
+  animation:fxFlash .55s cubic-bezier(.16,.84,.24,1) forwards;
+  mix-blend-mode:screen;
+}
+@keyframes fxFlash{
+  0%{transform:scale(.28);opacity:.98}
+  100%{transform:scale(1.75);opacity:0}
+}
+@media (prefers-reduced-motion: reduce){
+  .fx-flash{display:none}
+}
+
+
+/* 星光/涟漪：不用 mix-blend（会整块矩形泛白），靠亮色 + 双层辉光出效果 */
+.sparkle{
+  mix-blend-mode:normal!important;
+  background:currentColor!important;
+  clip-path:polygon(50% 0,61% 34%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 34%);
+  filter:drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor)!important;
+}
+.ripple-ring{mix-blend-mode:normal!important}
+.fx-flash{mix-blend-mode:normal!important}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -3714,6 +3764,19 @@ function rgbToHsl(r,g,b){
   }
   return [h,s*100,l*100];
 }
+/* 星光/涟漪专用：偏亮、带白，避免在深色页面上变成暗块 */
+function fxBrightPalette(count){
+  const base=fxPalette(count);
+  // 浅色页面上白星看不见 → 直接用品牌色；深色页面才用亮色
+  try{ if(!isDarkMode()) return base; }catch(e){}
+  const lights=['#FFFFFF','#FFF6D6','#DFF6E9','#B9EBD3','#FFFDF5','#A8E4C6'];
+  const out=[];
+  for(let i=0;i<count;i++){
+    // 一半纯亮色，一半品牌亮色，混着更通透
+    out.push(i%2===0?lights[i%lights.length]:(base[i%base.length]||'#FFFFFF'));
+  }
+  return out;
+}
 function fxPalette(count){
   const brand=getComputedStyle(document.documentElement).getPropertyValue('--brand')||'#2F6E52';
   const rgb=parseCssColor(brand),hsl=rgbToHsl(rgb[0],rgb[1],rgb[2]),h=hsl[0],s=hsl[1],l=hsl[2];
@@ -3765,6 +3828,17 @@ function shatterCard(el){
   }
   layer.appendChild(frag);document.body.appendChild(layer);
   setTimeout(()=>layer.remove(),1900);
+}
+/* 一次中心闪光：给偏弱的特效加「爆发感」 */
+function addFxFlash(layer,cx,cy,size,color){
+  const f=document.createElement('div');
+  f.className='fx-flash';
+  const s=Math.round(size||160);
+  f.style.width=s+'px';f.style.height=s+'px';
+  f.style.left=(cx-s/2)+'px';f.style.top=(cy-s/2)+'px';
+  if(color)f.style.background='radial-gradient(circle,'+color+','+color.replace(/[\d.]+\)$/,'.35)')+' 45%,rgba(255,255,255,0) 72%)';
+  layer.appendChild(f);
+  setTimeout(()=>{try{f.remove()}catch(e){}},900);
 }
 function makeFxLayer(){
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);return layer;
@@ -3875,40 +3949,44 @@ function confettiBurst(el){
 }
 function sparkleBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
-  const colors=fxPalette(4);
+  const colors=fxBrightPalette(6);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  const CNT24=fxCount(24);for(let i=0;i<CNT24;i++){
+  const CNT24=fxCount(34);for(let i=0;i<CNT24;i++){
     const s=document.createElement('div');s.className='sparkle';
-    const sz=8+Math.random()*5;
+    const sz=13+Math.random()*9;                 // 原来 8~13px → 现在 13~22px
     s.style.width=sz+'px';s.style.height=sz+'px';
     s.style.left=(cx-sz/2)+'px';s.style.top=(cy-sz/2)+'px';
     s.style.color=colors[i%colors.length];
-    const ang=Math.PI*2*i/24+(Math.random()-.5)*.35,dist=70+Math.random()*120;
+    const ang=Math.PI*2*i/CNT24+(Math.random()-.5)*.35,dist=95+Math.random()*175;   // 飞得更远
     s.style.setProperty('--fx',(Math.cos(ang)*dist)+'px');
     s.style.setProperty('--fy',(Math.sin(ang)*dist)+'px');
-    s.style.setProperty('--sc',(.75+Math.random()*.45).toFixed(2));
+    s.style.setProperty('--sc',(1+Math.random()*.6).toFixed(2));
     s.style.setProperty('--rot',((Math.random()-.5)*360)+'deg');
     s.style.setProperty('--dur',(.7+Math.random()*.5).toFixed(2)+'s');
     s.style.setProperty('--delay',(Math.random()*.08).toFixed(2)+'s');
     frag.appendChild(s);
   }
+  addFxFlash(layer,cx,cy,Math.max(r.width,r.height)*1.25,'rgba(255,255,255,.95)');
   layer.appendChild(frag);setTimeout(()=>layer.remove(),1600);
 }
 function rippleBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
-  const colors=fxPalette(4);
+  const colors=fxBrightPalette(6);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  const CNT4=fxCount(4);for(let i=0;i<CNT4;i++){
+  const CNT4=fxCount(6);for(let i=0;i<CNT4;i++){
     const ring=document.createElement('div');ring.className='ripple-ring';
-    const size=Math.min(260,Math.min(r.width,r.height)*(.55+i*.22));
+    const size=Math.min(340,Math.min(r.width,r.height)*(.75+i*.3));   // 环更大
     ring.style.width=size+'px';ring.style.height=size+'px';
     ring.style.left=(cx-size/2)+'px';ring.style.top=(cy-size/2)+'px';
+    ring.style.color=colors[i%colors.length];
     ring.style.borderColor=colors[i%colors.length];
-    ring.style.setProperty('--dur',(.8+i*.18).toFixed(2)+'s');
-    ring.style.setProperty('--delay',(i*.12).toFixed(2)+'s');
+    ring.style.borderWidth=(3+ (i%2))+'px';
+    ring.style.setProperty('--dur',(.95+i*.2).toFixed(2)+'s');
+    ring.style.setProperty('--delay',(i*.1).toFixed(2)+'s');
     frag.appendChild(ring);
   }
-  layer.appendChild(frag);setTimeout(()=>layer.remove(),1800);
+  addFxFlash(layer,cx,cy,Math.min(220,Math.max(r.width,r.height)*1.1),colors[0]);
+  layer.appendChild(frag);setTimeout(()=>layer.remove(),2200);
 }
 function petalBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
@@ -5549,6 +5627,10 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
 
 
 
