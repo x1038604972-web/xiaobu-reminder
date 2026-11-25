@@ -991,6 +991,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1851,6 +1854,34 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 /* 加号在页签条里，就不再是圆形按钮 */
 .tabbar .add-btn{width:auto;height:auto;border-radius:11px;position:static}
 .tabbar .tab{flex:1 1 0;min-width:0}
+
+
+/* ══════════════════════════════════════════════════════════
+   圆圈统一 24px；完成态彻底实心（去边框，不留任何缺口）
+   ══════════════════════════════════════════════════════════ */
+.card.habit-card .check,
+.card.habit-card .check.habit-check-mini{
+  width:24px!important;height:24px!important;min-width:24px!important;
+  border-radius:50%!important;
+}
+.card.habit-card .check svg{width:13px;height:13px}
+.card.done .check,
+.card.habit-card.done .check{
+  border:0!important;
+  box-shadow:none!important;
+  background:var(--safe)!important;
+  background-clip:border-box!important;
+}
+.card.habit-card.done .check{background:var(--hb-acc)!important}
+.card.done .check svg,.card.habit-card.done .check svg{
+  width:14px;height:14px;opacity:1!important;transform:none!important;
+}
+.card.done .check svg path{stroke:#FFFBF2!important;stroke-dasharray:none!important;stroke-dashoffset:0!important}
+.card.done .check::after,.card.habit-card.done .check::after{content:none!important}
+
+/* 已完成卡片：备注只读，没有编辑入口 */
+.note-line.readonly{cursor:default;opacity:.9}
+.note-line.readonly:active{background:transparent}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2744,12 +2775,15 @@ function cardHTML(t,opts){
         })()
       : '')+
     (t.note
-      ? '<div class="note-line" data-act="note" role="button" tabindex="0">'+esc(t.note)+'<span class="note-pen">改</span></div>'
+      ? (t.done
+          ? '<div class="note-line readonly">'+esc(t.note)+'</div>'
+          : '<div class="note-line" data-act="note" role="button" tabindex="0">'+esc(t.note)+'<span class="note-pen">改</span></div>')
       : '')+
-    '<div class="card-tools">'+
-      (t.note?'':'<button class="note-add" data-act="note" type="button">＋ 备注</button>')+
-      '<button class="card-edit" data-act="edit" type="button">编辑</button>'+
-    '</div></div>'+
+    (t.done ? '' :
+      '<div class="card-tools">'+
+        (t.note?'':'<button class="note-add" data-act="note" type="button">＋ 备注</button>')+
+        '<button class="card-edit" data-act="edit" type="button">编辑</button>'+
+      '</div>')+'</div>'+
     '<div class="act">'+((t.done||terminus)?'':'<button class="postpone-btn" data-act="postpone-one" aria-label="推迟">推迟</button>')+
     (t.done?'':'<button class="icon-btn del" data-act="del" aria-label="删除"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>')+'</div></div></div>';
 }
@@ -2972,7 +3006,13 @@ function fillSheet(t){
 }
 
 /* ── 卡片备注：就地编辑（不用进「编辑」抽屉） ───────────── */
+function doneGuard(id, what){
+  const t=tasks.find(x=>x.id===id);
+  if(t&&t.done){toast('已完成的先「恢复」到待办，才能'+(what||'编辑'));return false}
+  return true;
+}
 function startEditNote(id){
+  if(!doneGuard(id,'改备注'))return;
   const task=tasks.find(function(x){return x.id===id});if(!task)return;
   const card=document.querySelector('.card[data-id="'+id+'"]');if(!card)return;
   if(card.querySelector('.note-editor'))return;
@@ -3016,6 +3056,7 @@ function startEditNote(id){
 }
 
 function openEdit(id){
+  if(!doneGuard(id,'编辑'))return;
   const t=tasks.find(x=>x.id===id);if(!t)return;
   fillSheet(t);editingId=id;setSheetMode(true);openSheet();
 }
@@ -5263,6 +5304,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
