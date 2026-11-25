@@ -997,6 +997,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1889,6 +1890,16 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
 
 /* 日历里选中非今天时，顶部日期标注一下 */
 #dateTxt.away{color:var(--brand);font-weight:800}
+
+
+/* 卡片操作行：彻底对齐（.card-edit 原本带 margin-top:9px，会把编辑按钮压低） */
+.card-tools{align-items:center}
+.card-tools>*{margin:0!important;align-self:center}
+.card-tools .card-edit,.card-tools .note-add{
+  height:26px;box-sizing:border-box;line-height:1;
+}
+html[data-elder='on'] .card-tools .card-edit,
+html[data-elder='on'] .card-tools .note-add{height:32px}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -5352,6 +5363,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
