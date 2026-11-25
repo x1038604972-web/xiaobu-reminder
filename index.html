@@ -1000,6 +1000,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1916,6 +1917,65 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
 
 /* 备注被截断时不显示行内「改」（否则会掉到块外） */
 .note-line.clipped .note-pen{display:none!important}
+
+
+/* ══════════════════════════════════════════════════════════
+   小步习惯专属完成效果
+   —— 任务卡是撒粒子，习惯卡是「把这一格填上」：
+      圆圈蓄满 → 一圈涟漪荡开 → 旁边飘一个 +1
+   ══════════════════════════════════════════════════════════ */
+.card.habit-card{position:relative}
+.card.habit-card.hfx{animation:habitCardPop .44s var(--spring)}
+@keyframes habitCardPop{
+  0%{transform:scale(1)}
+  38%{transform:scale(1.016)}
+  100%{transform:scale(1)}
+}
+.card.habit-card.hfx .check{animation:habitTick .52s var(--spring)}
+@keyframes habitTick{
+  0%{transform:scale(.5)}
+  55%{transform:scale(1.18)}
+  78%{transform:scale(.96)}
+  100%{transform:scale(1)}
+}
+.card.habit-card.hfx .habit-streak{animation:habitStreakBump .5s var(--spring)}
+@keyframes habitStreakBump{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.14);background:rgba(46,107,158,.28)}
+  100%{transform:scale(1)}
+}
+.hfx-ripple{
+  position:absolute;border-radius:50%;pointer-events:none;
+  border:2px solid var(--hb-acc);
+  animation:habitRipple .72s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes habitRipple{
+  0%{transform:scale(.85);opacity:.85}
+  100%{transform:scale(3.1);opacity:0}
+}
+.hfx-plus{
+  position:absolute;pointer-events:none;
+  font-size:11px;font-weight:900;color:var(--hb-acc);
+  letter-spacing:.02em;
+  animation:habitPlus .9s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes habitPlus{
+  0%{transform:translateY(3px) scale(.9);opacity:0}
+  22%{opacity:1}
+  100%{transform:translateY(-24px) scale(1);opacity:0}
+}
+/* 里程碑：涟漪与 +1 变金 */
+.card.habit-card.hfx-gold .hfx-ripple{border-color:#E9C87A;border-width:2.5px}
+.card.habit-card.hfx-gold .hfx-plus{color:#B58B22}
+.card.habit-card.hfx-gold{box-shadow:0 0 0 2px rgba(233,200,122,.35),0 6px 18px rgba(46,107,158,.14)}
+
+@media (prefers-reduced-motion: reduce){
+  .card.habit-card.hfx,
+  .card.habit-card.hfx .check,
+  .card.habit-card.hfx .habit-streak,
+  .hfx-ripple,.hfx-plus{animation:none!important}
+  .hfx-ripple,.hfx-plus{display:none}
+}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -5062,6 +5122,44 @@ function startRenameHabit(id){
     else if(ev.key==='Escape'){finish(false)}
   });
 }
+
+/* ── 习惯卡专属完成效果：一格被填满的感觉 ───────────────
+   与任务卡的粒子特效区分：不撒碎片，只在圆圈上做「蓄满 + 涟漪 + +1」，
+   轻量、可被「性能优先」和「减少动态效果」分别降级。 */
+function playHabitFx(hid,streak){
+  if(fxBlocked())return;
+  const card=document.querySelector('.card.habit-card[data-habit="'+hid+'"]');
+  if(!card)return;
+  const milestone=[3,7,21,30,50,100].indexOf(streak)>=0;
+  card.classList.remove('hfx','hfx-gold');
+  void card.offsetWidth;
+  card.classList.add('hfx');
+  if(milestone)card.classList.add('hfx-gold');
+
+  if(!fxLight()){
+    const chk=card.querySelector('.check');
+    if(chk){
+      const cr=chk.getBoundingClientRect(), br=card.getBoundingClientRect();
+      const size=Math.round(cr.width)||24;
+      const rx=(cr.left-br.left)+(size-Math.round(size*1))/2;
+      const ry=(cr.top-br.top);
+      const ring=document.createElement('span');
+      ring.className='hfx-ripple';
+      ring.style.left=rx+'px';ring.style.top=ry+'px';
+      ring.style.width=size+'px';ring.style.height=size+'px';
+      card.appendChild(ring);
+      const plus=document.createElement('span');
+      plus.className='hfx-plus';
+      plus.textContent='+1';
+      plus.style.left=(cr.left-br.left+size+1)+'px';
+      plus.style.top=ry+'px';
+      card.appendChild(plus);
+      setTimeout(function(){ring.remove();plus.remove()},1000);
+    }
+  }
+  setTimeout(function(){card.classList.remove('hfx','hfx-gold')},1000);
+}
+
 function toggleHabitDay(id,key){
   const h=habits.find(function(x){return x.id===id});if(!h)return;
   const todayK=habitKey();
@@ -5078,6 +5176,7 @@ function toggleHabitDay(id,key){
   if(h.days[key])delete h.days[key];else h.days[key]=1;
   saveHabits();refreshHabitUI();
   const after=habitStreak(h);
+  if(h.days[key]){try{playHabitFx(id,after)}catch(e){}}   // 只在新打上时播，取消不播
   const MS=[3,7,21,30,50,100];
   if(h.days[key]&&MS.indexOf(after)>=0&&after!==before){
     const row=document.querySelector('.habit[data-id="'+id+'"]');
@@ -5390,6 +5489,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
