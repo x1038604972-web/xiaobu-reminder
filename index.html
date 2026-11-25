@@ -933,6 +933,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2742,13 +2743,14 @@ function fxPalette(count){
   return arr;
 }
 function shatterCard(el){
-  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  if(fxBlocked())return;
   const r=el.getBoundingClientRect();
   const cs=window.getComputedStyle(el);
   const base=cs.backgroundColor||'#FFFCF6';
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);
-  const cols=Math.max(8,Math.min(16,Math.round(r.width/22)));
-  const rows=Math.max(4,Math.min(9,Math.round(r.height/20)));
+  const lightX=fxLight();
+  const cols=Math.max(lightX?5:8,Math.min(lightX?9:16,Math.round(r.width/(lightX?38:22))));
+  const rows=Math.max(lightX?3:4,Math.min(lightX?5:9,Math.round(r.height/(lightX?34:20))));
   const cw=r.width/cols,ch=r.height/rows;
   const palette=[base].concat(fxPalette(6));
   const frag=document.createDocumentFragment();
@@ -2780,8 +2782,19 @@ function shatterCard(el){
 function makeFxLayer(){
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);return layer;
 }
-function fxReduced(){
-  return (window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)||perfOn();
+function fxBlocked(){
+  // 只有用户明确打开系统「减少动态效果」时，才完全不播特效
+  return !!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function fxLight(){
+  // 性能优先 / 低功耗设备：特效照播，但减量（内存小不再等于没有特效）
+  try{return perfOn()}catch(e){return false}
+}
+function fxCount(n){
+  return fxLight()?Math.max(5,Math.round(n*0.45)):n;
+}
+function fxReduced(){ // 兼容旧调用
+  return fxBlocked();
 }
 function getAudioCtx(){
   const AC=window.AudioContext||window.webkitAudioContext;
@@ -2846,7 +2859,7 @@ function playFxSound(type){
 function playDoneFx(el){
   if(!el)return;
   playFxSound(doneFx);
-  if(fxReduced())return;
+  if(fxBlocked())return;
   if(doneFx==='confetti')confettiBurst(el);
   else if(doneFx==='sparkle')sparkleBurst(el);
   else if(doneFx==='ripple')rippleBurst(el);
@@ -2857,7 +2870,7 @@ function confettiBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(6);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  for(let i=0;i<24;i++){
+  const CNT24=fxCount(24);for(let i=0;i<CNT24;i++){
     const s=document.createElement('div');s.className='confetti';
     s.style.width=(6+Math.random()*5)+'px';s.style.height=(9+Math.random()*8)+'px';
     s.style.left=(cx+(Math.random()-.5)*r.width*.75)+'px';
@@ -2877,7 +2890,7 @@ function sparkleBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  for(let i=0;i<24;i++){
+  const CNT24=fxCount(24);for(let i=0;i<CNT24;i++){
     const s=document.createElement('div');s.className='sparkle';
     const sz=8+Math.random()*12;
     s.style.width=sz+'px';s.style.height=sz+'px';
@@ -2898,7 +2911,7 @@ function rippleBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  for(let i=0;i<4;i++){
+  const CNT4=fxCount(4);for(let i=0;i<CNT4;i++){
     const ring=document.createElement('div');ring.className='ripple-ring';
     const size=Math.min(r.width,r.height)*(.85+i*.35);
     ring.style.width=size+'px';ring.style.height=size+'px';
@@ -2914,7 +2927,7 @@ function petalBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(4);
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  for(let i=0;i<18;i++){
+  const CNT18=fxCount(18);for(let i=0;i<CNT18;i++){
     const p=document.createElement('div');p.className='petal';
     p.style.left=(cx+(Math.random()-.5)*r.width*.8)+'px';
     p.style.top=(cy+(Math.random()-.5)*30)+'px';
@@ -4099,6 +4112,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
