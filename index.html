@@ -972,6 +972,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1704,6 +1705,63 @@ html[data-mode="dark"] .hd.miss{
 }
 html[data-elder="on"] .habit-week{font-size:12px}
 
+
+/* ══════════════════════════════════════════════════════════
+   子任务：面板内编辑 + 卡片上勾选（划线，无特效）
+   ══════════════════════════════════════════════════════════ */
+.sub-editor{margin-top:4px}
+.sub-edit-list{display:flex;flex-direction:column;gap:6px}
+.sub-empty{font-size:11.5px;color:var(--ink3);padding:4px 0 6px}
+.sub-edit-row{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;
+  background:var(--line2);font-size:13px;color:var(--ink2);
+}
+.sub-edit-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub-edit-del{
+  flex:none;width:22px;height:22px;border-radius:50%;border:0;background:transparent;
+  color:var(--ink3);font-size:15px;line-height:1;cursor:pointer;
+}
+.sub-edit-del:active{background:var(--line);color:var(--alert)}
+.sub-add{display:flex;gap:8px;margin-top:8px}
+.sub-add input{
+  flex:1;min-width:0;height:38px;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink);font-family:inherit;font-size:13px;padding:0 11px;
+}
+.sub-add button{
+  height:38px;padding:0 14px;border-radius:10px;border:0;background:var(--brand);
+  color:#FFFBF2;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;
+}
+
+/* 卡片上的子任务 */
+.subs{
+  margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);
+}
+.subs-head{
+  display:flex;align-items:center;gap:8px;width:100%;padding:2px 0 6px;
+  border:0;background:transparent;font-family:inherit;cursor:pointer;
+  font-size:11.5px;font-weight:800;color:var(--ink3);
+}
+.subs-head .subs-fold{margin-left:auto;font-style:normal;color:var(--brand);font-weight:800}
+.subs-body{display:none;flex-direction:column;gap:2px}
+.subs.open .subs-body{display:flex}
+.sub-row{
+  display:flex;align-items:flex-start;gap:9px;width:100%;padding:6px 2px;
+  border:0;background:transparent;font-family:inherit;text-align:left;cursor:pointer;
+  font-size:13px;line-height:1.5;color:var(--ink2);border-radius:7px;
+}
+.sub-row:active{background:var(--line2)}
+.sub-box{
+  flex:none;width:17px;height:17px;margin-top:1px;border-radius:5px;
+  border:1.5px solid var(--line2);display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-style:normal;color:transparent;
+  transition:background .15s,border-color .15s,color .15s;
+}
+.sub-row.on .sub-box{background:var(--brand);border-color:var(--brand);color:#FFFBF2}
+.sub-row.on .sub-txt{text-decoration:line-through;color:var(--ink3)}
+.sub-txt{flex:1;min-width:0}
+html[data-elder="on"] .sub-row{font-size:15px}
+html[data-elder="on"] .sub-box{width:20px;height:20px}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -2050,6 +2108,14 @@ html[data-elder="on"] .habit-week{font-size:12px}
     </div>
     <button class="note-toggle" id="noteToggle">＋ 添加备注（选填，之后也能在卡片上补）</button>
     <div class="note-box" id="noteBox"><textarea id="noteInput" placeholder="补充细节（选填）" aria-label="补充细节"></textarea></div>
+    <div class="field-label">子任务</div>
+    <div class="sub-editor" id="subEditor">
+      <div class="sub-edit-list" id="subEditList"></div>
+      <div class="sub-add">
+        <input id="subInput" maxlength="30" placeholder="加一条子任务，比如 吃阿莫西林" aria-label="子任务内容">
+        <button id="subAddBtn" type="button">加</button>
+      </div>
+    </div>
     <div class="sheet-summary" id="sheetSummary"></div>
     <button class="save" id="saveBtn">记下来 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     <button class="sheet-del" id="sheetDel" style="display:none">删除这条</button>
@@ -2333,6 +2399,12 @@ function sanitizeTasks(arr){
       ts:ts,
       lv:lv,
       special:raw.special==='terminus'?'terminus':'',
+      subs:(Array.isArray(raw.subs)?raw.subs:[]).filter(function(s){
+        return s&&typeof s==='object'&&typeof s.text==='string'&&s.text.trim();
+      }).map(function(s,i){
+        return {id:(typeof s.id==='string'&&s.id)||('s'+idx+i),text:s.text.trim().slice(0,30),done:!!s.done};
+      }).slice(0,12),
+      subsOpen:raw.subsOpen!==false,
       done:!!raw.done,
       note:typeof raw.note==='string'?raw.note:'',
       repeat:repeat,
@@ -2564,6 +2636,22 @@ function cardHTML(t,opts){
         '<span class="terminus-days">第 '+Math.max(1,Math.floor((Date.now()-(t.created||Date.now()))/86400000)+1)+' 天</span>'
       : '<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd)+
     '<span class="tag '+(LV[t.lv]||LV[1]).c+'">'+(LV[t.lv]||LV[1]).n+'</span></div>'+
+    ((t.subs&&t.subs.length)
+      ? (function(){
+          const doneN=t.subs.filter(function(s){return s.done}).length;
+          const open=t.subsOpen!==false;
+          let rows='';
+          t.subs.forEach(function(s){
+            rows+='<button class="sub-row'+(s.done?' on':'')+'" data-sub-act="toggle" data-sub-id="'+s.id+'" type="button">'+
+              '<i class="sub-box">'+ (s.done?'✓':'') +'</i><span class="sub-txt">'+esc(s.text)+'</span></button>';
+          });
+          return '<div class="subs'+(open?' open':'')+'">'+
+            '<button class="subs-head" data-sub-act="fold" type="button">'+
+              '<span>子任务 '+(doneN)+'/'+t.subs.length+'</span><i class="subs-fold">'+(open?'收起':'展开')+'</i>'+
+            '</button>'+
+            '<div class="subs-body">'+rows+'</div></div>';
+        })()
+      : '')+
     (t.note
       ? '<div class="note-line" data-act="note" role="button" tabindex="0">'+esc(t.note)+'<span class="note-pen">改</span></div>'
       : '<button class="note-add" data-act="note" type="button">＋ 备注</button>')+
@@ -2729,9 +2817,41 @@ function updateSheetSummary(){
     : fullTime(pendingTime))+' · '+lv+' · '+rep;
   el.textContent=text;
 }
+
+/* ── 子任务：面板里编辑，卡片上勾选 ─────────────────── */
+let editingSubs=[];
+function subId(){return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,4)}
+function renderSubEditor(){
+  const box=$('subEditList');if(!box)return;
+  if(!editingSubs.length){
+    box.innerHTML='<div class="sub-empty">还没有子任务，可以在下面加一条</div>';
+    return;
+  }
+  box.innerHTML=editingSubs.map(function(s,i){
+    return '<div class="sub-edit-row" data-sid="'+s.id+'">'+
+      '<span class="sub-edit-txt">'+esc(s.text)+'</span>'+
+      '<button class="sub-edit-del" data-sub-del="'+s.id+'" type="button" aria-label="删除子任务">×</button>'+
+    '</div>';
+  }).join('');
+}
+function addSubFromInput(){
+  const inp=$('subInput');if(!inp)return;
+  const v=(inp.value||'').trim().slice(0,30);
+  if(!v)return;
+  if(editingSubs.length>=12){toast('子任务最多 12 条');return}
+  if(editingSubs.some(function(s){return s.text===v})){toast('已经有一条一样的了');inp.value='';return}
+  editingSubs.push({id:subId(),text:v,done:false});
+  inp.value='';renderSubEditor();
+}
+function removeSub(id){
+  editingSubs=editingSubs.filter(function(s){return s.id!==id});
+  renderSubEditor();
+}
+
 function resetSheet(){
   editingId=null;setSheetMode(false);
   $('titleInput').value='';$('noteInput').value='';$('noteBox').classList.remove('on');$('noteToggle').textContent='＋ 添加备注';
+  editingSubs=[];if($('subInput'))$('subInput').value='';renderSubEditor();
   pendingLv=1;pendingRepeat='none';pendingWeekMask=0;
   document.querySelectorAll('#lvChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.lv==='1'));
   document.querySelectorAll('#repeatChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.repeat==='none'));
@@ -2743,6 +2863,9 @@ function fillSheet(t){
   resetSheet();
   $('titleInput').value=t.title;
   $('noteInput').value=t.note||'';
+  editingSubs=(t.subs||[]).map(function(s){return {id:s.id||subId(),text:s.text||'',done:!!s.done}});
+  if($('subInput'))$('subInput').value='';
+  renderSubEditor();
   if(t.note){$('noteBox').classList.add('on');$('noteToggle').textContent='－ 收起备注'}
   pendingTime=t.ts;pendingLv=t.lv||1;pendingRepeat=t.repeat||'none';pendingWeekMask=t.weekMask||0;sheetTimePicked=true;
   document.querySelectorAll('#lvChips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.lv===pendingLv));
@@ -2811,11 +2934,12 @@ function addTask(){
   const ts=isTerminus?terminusTs():((sheetTimePicked||!parsed)?pendingTime:parsed);
   if(editingId){
     const t=tasks.find(x=>x.id===editingId);
-    if(t){t.title=title;t.ts=ts;t.lv=pendingLv;t.note=$('noteInput').value.trim();t.repeat=pendingRepeat;t.weekMask=pendingRepeat==='custom'?pendingWeekMask:0;t.notified=false;t.escalateCount=0}
+    if(t){t.title=title;t.ts=ts;t.lv=pendingLv;t.note=$('noteInput').value.trim();
+      t.subs=editingSubs.map(function(s){return {id:s.id,text:s.text,done:!!s.done}});t.repeat=pendingRepeat;t.weekMask=pendingRepeat==='custom'?pendingWeekMask:0;t.notified=false;t.escalateCount=0}
     save();render();closeSheet();resetSheet();toast('已修改 · '+fullTime(ts));return;
   }
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
-  tasks.unshift({id:id,title,ts,lv:isTerminus?1:pendingLv,special:isTerminus?'terminus':(pendingSpecial||''),done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+  tasks.unshift({subs:editingSubs.map(function(s){return {id:s.id,text:s.text,done:!!s.done}}),id:id,title,ts,lv:isTerminus?1:pendingLv,special:isTerminus?'terminus':(pendingSpecial||''),done:false,note:$('noteInput').value.trim(),repeat:pendingRepeat,weekMask:pendingRepeat==='custom'?pendingWeekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
   const __tstamp=toastMsgFor(ts,pendingSpecial);save();render();highlightTask(id);closeSheet();resetSheet();toast(toastMsgFor(ts,isTerminus?'terminus':pendingSpecial));
 }
 function nextTs(t){
@@ -3171,6 +3295,24 @@ function gotoCalDay(k){
   if(tab)tab.click(); else renderCalendar();
 }
 document.addEventListener('click',function(e){
+  const sa=e.target.closest('[data-sub-act]');
+  if(sa){
+    const card=sa.closest('.card');const tid=card&&card.dataset.id;
+    const task=tasks.find(function(x){return x.id===tid});
+    if(task){
+      if(sa.dataset.subAct==='fold'){
+        task.subsOpen=(task.subsOpen===false);
+        save();render();
+      }else if(sa.dataset.subAct==='toggle'){
+        const s=(task.subs||[]).find(function(x){return x.id===sa.dataset.subId});
+        if(s){
+          s.done=!s.done;
+          save();render();       // 只重绘，不播任何特效
+        }
+      }
+    }
+    return;
+  }
   const hb=e.target.closest('[data-habit-act]');
   if(hb){
     const card=hb.closest('[data-habit]');
@@ -4442,6 +4584,12 @@ $('parsePreviewSheet').onclick=e=>{
   updateSheetSummary();
 };
 $('saveBtn').onclick=addTask;
+$('subAddBtn').onclick=addSubFromInput;
+if($('subInput'))$('subInput').onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();addSubFromInput()}};
+if($('subEditList'))$('subEditList').addEventListener('click',function(e){
+  const b=e.target.closest('[data-sub-del]');
+  if(b){removeSub(b.dataset.subDel)}
+});
 $('sheetMask').onclick=closeSheet;
 $('sheetDel').onclick=()=>{
   if(!editingId)return;
@@ -4989,6 +5137,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
