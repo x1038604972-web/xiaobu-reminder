@@ -1017,6 +1017,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3103,8 +3105,12 @@ function render(){
   const habitTodoCards=isTodayView?habits.filter(h=>!h.days[hk2]).map(h=>habitCardHTML(h,false)).join(''):'';
   const taskCards=normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ').replace('data-id="','style="--i:'+Math.min(i,12)+'" data-id="')}).join('');
   const todoHTML=habitTodoCards+taskCards;
-  $('todoList').innerHTML=(habitTodoCards||taskCards)?todoHTML:'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
-  const habitDoneCards=habits.filter(h=>h.days[hk2]).map(h=>habitCardHTML(h,true)).join('');
+  const emptyCopy=isTodayView
+    ? '今天没有要走的步了<br>想到什么，就说出来'
+    : '这一天还没有安排<br>要不要加一件';
+  $('todoList').innerHTML=(habitTodoCards||taskCards)?todoHTML:'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>'+emptyCopy+'</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
+  // 习惯只有「今天」的概念，看历史/未来某天时不要把它塞进完成区
+  const habitDoneCards=isTodayView?habits.filter(h=>h.days[hk2]).map(h=>habitCardHTML(h,true)).join(''):'';
   $('doneList').innerHTML=(habitDoneCards||done.length)?(habitDoneCards+done.map(cardHTML).join('')):'';
   $('doneSec').style.display=(done.length||(isTodayView&&habitDoneCards))?'block':'none';
   try{
@@ -5662,6 +5668,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
