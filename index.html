@@ -320,8 +320,7 @@ html[data-mode="dark"] .phone{box-shadow:0 24px 70px rgba(0,0,0,.5),0 0 0 10px #
 .confetti{position:absolute;width:8px;height:13px;border-radius:2px;opacity:0;animation:confettiFly var(--dur) var(--grav) var(--delay) forwards;will-change:transform,opacity}
 @keyframes sparkleFly{0%{transform:scale(.15) rotate(0);opacity:0}18%{opacity:1}100%{transform:translate3d(var(--fx),var(--fy),0) scale(var(--sc)) rotate(var(--rot));opacity:0}}
 .sparkle{position:absolute;background:currentColor;clip-path:polygon(50% 0,61% 34%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 34%);opacity:0;filter:drop-shadow(0 0 6px currentColor);animation:sparkleFly var(--dur) var(--ease) var(--delay) forwards;will-change:transform,opacity}
-@keyframes rippleOut{0%{transform:scale(.18);opacity:.78}100%{transform:scale(1);opacity:0}}
-.ripple-ring{position:absolute;border:2px solid var(--brand);border-radius:50%;opacity:0;animation:rippleOut var(--dur) ease-out var(--delay) forwards;will-change:transform,opacity}
+100%{transform:scale(1);opacity:0}}
 @keyframes petalFloat{0%{transform:translate3d(0,0,0) rotate(0);opacity:0}12%{opacity:.95}100%{transform:translate3d(var(--fx),var(--fy),0) rotate(var(--rot));opacity:0}}
 .petal{position:absolute;width:11px;height:15px;border-radius:70% 0 70% 0;opacity:0;animation:petalFloat var(--dur) var(--grav) var(--delay) forwards;will-change:transform,opacity}
 .fx-seg{flex-wrap:wrap}
@@ -862,6 +861,10 @@ html[data-mode="dark"] .toast button{color:#245740}
 html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;object-fit:cover;
   box-shadow:0 6px 16px rgba(35,32,28,.18);flex:0 0 auto}
 50%{transform:translateY(-6px)}}
+
+
+
+
 
 
 
@@ -2032,13 +2035,7 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   58%{opacity:.95}
   100%{transform:translate3d(var(--fx),var(--fy),0) scale(var(--sc)) rotate(var(--rot));opacity:0}
 }
-.ripple-ring{
-  border:3px solid currentColor!important;
-  filter:drop-shadow(0 0 10px currentColor);
-  animation-timing-function:cubic-bezier(.16,.84,.24,1)!important;
-}
-@keyframes rippleOut{
-  0%{transform:scale(.22);opacity:.95}
+
   72%{opacity:.32}
   100%{transform:scale(1);opacity:0}
 }
@@ -2063,7 +2060,6 @@ html[data-elder='on'] .note-pen{font-size:11.5px;padding:2px 6px}
   clip-path:polygon(50% 0,61% 34%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 34%);
   filter:drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor)!important;
 }
-.ripple-ring{mix-blend-mode:normal!important}
 .fx-flash{mix-blend-mode:normal!important}
 
 
@@ -2120,6 +2116,27 @@ html[data-elder="on"] .fx-seg button{
 }
 /* 震动强度那一行也给足空间，别被挤 */
 html[data-elder="on"] .vibe-slider{margin-top:10px}
+
+
+/* ── 碎片：真·破裂（网格碎片 + 自转 + 重力 + 中心冲击） ── */
+.shard{
+  position:absolute;pointer-events:none;opacity:0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10), 0 2px 6px rgba(0,0,0,.22);
+  will-change:transform,opacity;
+  animation:shardShatter var(--dur) cubic-bezier(.16,.7,.22,1) var(--delay) forwards;
+}
+@keyframes shardShatter{
+  0%{transform:translate3d(0,0,0) rotate(0deg) scale(1);opacity:0}
+  7%{opacity:.99}
+  34%{transform:translate3d(var(--bx),var(--by),0) rotate(var(--spin)) scale(var(--sc))}
+  100%{
+    transform:translate3d(var(--fx),var(--fy),0) rotate(calc(var(--spin) * 2.4)) scale(calc(var(--sc) * .45));
+    opacity:0;
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  .shard{animation:none;display:none}
+}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -2325,9 +2342,9 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
             <div class="set-row" style="display:block">
               <div><div class="lbl">完成粒子效果</div><div class="sub">完成任务时的动画</div></div>
               <div class="seg fx-seg" id="fxSeg">
-                <button data-fx="shard" class="on">碎片</button><button data-fx="confetti">彩纸</button><button data-fx="sparkle">星光</button><button data-fx="ripple">涟漪</button><button data-fx="petal">花瓣</button>
+                <button data-fx="confetti" class="on">彩纸</button><button data-fx="shard">碎片</button><button data-fx="sparkle">星光</button><button data-fx="petal">花瓣</button>
               </div>
-              <div class="sw-name" id="fxName">碎片飞散</div>
+              <div class="sw-name" id="fxName">彩纸庆祝</div>
             </div>
             <div class="set-row">
               <div><div class="lbl">完成音效</div><div class="sub">轻柔解压提示音</div></div>
@@ -2636,13 +2653,12 @@ const SB_KEY='qingji_supabase_v1';
 const AUTH_VISIBLE=true;
 const FX_KEY='qingji_done_fx_v1';
 const DONE_FX={
-  shard:{name:'碎片飞散'},
   confetti:{name:'彩纸庆祝'},
+  shard:{name:'碎片飞散'},
   sparkle:{name:'星光绽放'},
-  ripple:{name:'涟漪扩散'},
   petal:{name:'花瓣飘落'}
 };
-let doneFx='shard';
+let doneFx='confetti';
 const VIBE_KEY='qingji_done_vibe_v1';
 const VIBE_STRENGTH_KEY='qingji_vibe_strength_v1';
 const DONE_VIBES={
@@ -3823,6 +3839,14 @@ function rgbToHsl(r,g,b){
   }
   return [h,s*100,l*100];
 }
+/* 把颜色往白里混一点：深色主题下碎片才不会糊在背景里 */
+function fxLighten(color,amt){
+  const m=String(color).match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+  if(!m)return color;
+  const a=Math.max(0,Math.min(1,amt||.3));
+  const mix=v=>Math.round(+v+(255-+v)*a);
+  return 'rgb('+mix(m[1])+','+mix(m[2])+','+mix(m[3])+')';
+}
 /* 星光/涟漪专用：偏亮、带白，避免在深色页面上变成暗块 */
 function fxBrightPalette(count){
   const base=fxPalette(count);
@@ -3853,42 +3877,57 @@ function shatterCard(el){
   if(fxBlocked())return;
   const r=el.getBoundingClientRect();
   const cs=window.getComputedStyle(el);
-  const base=cs.backgroundColor||'#FFFCF6';
+  // 卡片底色可能是透明或渐变（液态玻璃），取不到实色就用主题的 --surface
+  const rootCs=window.getComputedStyle(document.documentElement);
+  const surface=(rootCs.getPropertyValue('--surface')||'').trim()||'#FFFCF6';
+  let base=(cs.backgroundColor||'').trim();
+  if(!base||/^rgba\(0,\s*0,\s*0,\s*0\)$/.test(base)||base==='transparent')base=surface;
+  try{ if(isDarkMode()) base=fxLighten(base,.34); }catch(e){}   // 深色页面提亮，避免碎片糊在背景里
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);
   const lightX=fxLight();
-  // 按「一片大约 11px」切网格：片数够多、单片尺寸可控，不会出现 40px 的大圆球
-  const target=lightX?17:12;
-  const cols=Math.max(lightX?6:9,Math.min(lightX?10:18,Math.round(r.width/target)));
-  const rows=Math.max(lightX?4:5,Math.min(lightX?6:10,Math.round(r.height/target*1.3)));
+  // 网格切分：每片接近方形、尺寸随卡片大小走，看起来是「这张卡碎了」而不是撒点
+  const target=lightX?34:20;
+  const cols=Math.max(lightX?5:7,Math.min(lightX?9:15,Math.round(r.width/target)));
+  const rows=Math.max(lightX?3:4,Math.min(lightX?6:9,Math.round(r.height/target*1.15)));
   const cw=r.width/cols,ch=r.height/rows;
-  const palette=[base].concat(fxPalette(6));
+  const accents=fxPalette(5);
+  const cx0=r.left+r.width/2,cy0=r.top+r.height/2;
   const frag=document.createDocumentFragment();
   for(let gy=0;gy<rows;gy++){
     for(let gx=0;gx<cols;gx++){
       const s=document.createElement('div');s.className='shard';
-      const sz=Math.max(3,Math.min(lightX?10:13,Math.min(cw,ch)*.62+Math.random()*1.6));
-      s.style.width=sz+'px';s.style.height=sz+'px';
-      s.style.left=(r.left+gx*cw+cw/2-sz/2+(Math.random()-.5)*4)+'px';
-      s.style.top=(r.top+gy*ch+ch/2-sz/2+(Math.random()-.5)*4)+'px';
-      s.style.background=palette[(Math.random()*palette.length)|0];
-      const dx=gx-(cols-1)/2,dy=gy-(rows-1)/2;
-      const ang=Math.atan2(dy,dx)+(Math.random()-.5)*.7;
-      const force=90+Math.min(1,Math.hypot(dx,dy)/Math.hypot(cols,rows))*180+Math.random()*70;
-      const bx=Math.cos(ang)*force,by=Math.sin(ang)*force-40-Math.random()*90;
-      const fx=bx*.6+(Math.random()-.5)*60;
-      const fy=by+430+Math.random()*520;
-      s.style.setProperty('--bx',bx+'px');s.style.setProperty('--by',by+'px');
-      s.style.setProperty('--fx',fx+'px');s.style.setProperty('--fy',fy+'px');
-      s.style.setProperty('--sc',(.15+Math.random()*.45).toFixed(2));
-      s.style.setProperty('--dur',(.85+Math.random()*.75).toFixed(2)+'s');
-      s.style.setProperty('--delay',(Math.random()*.13).toFixed(2)+'s');
+      // 每片略小于格子，留出裂缝；20% 的碎片用品牌色，其余是卡片本身的颜色
+      const w=Math.max(4,cw*(.72+Math.random()*.26)),h=Math.max(4,ch*(.72+Math.random()*.26));
+      const px=r.left+gx*cw+cw/2, py=r.top+gy*ch+ch/2;
+      s.style.width=w.toFixed(1)+'px';s.style.height=h.toFixed(1)+'px';
+      s.style.left=(px-w/2).toFixed(1)+'px';s.style.top=(py-h/2).toFixed(1)+'px';
+      s.style.background=Math.random()<.35?accents[(Math.random()*accents.length)|0]:base;
+      s.style.borderRadius=(Math.random()<.5?2:4)+'px';
+      // 受力：以卡片中心为圆心，越靠外围飞得越远；整体带一点向上再下坠
+      const dx=(px-cx0)/Math.max(1,r.width/2), dy=(py-cy0)/Math.max(1,r.height/2);
+      const ang=Math.atan2(dy,dx)+(Math.random()-.5)*.55;
+      const force=(lightX?70:95)+Math.hypot(dx,dy)*(lightX?70:135)+Math.random()*55;
+      const bx=Math.cos(ang)*force, by=Math.sin(ang)*force-(40+Math.random()*80);
+      // 二段：继续外扩 + 重力下坠
+      const fx=bx*1.35+(Math.random()-.5)*90;
+      const fy=by+340+Math.random()*520;
+      const spin=((Math.random()<.5?-1:1)*(140+Math.random()*420)).toFixed(0)+'deg';
+      s.style.setProperty('--bx',bx.toFixed(1)+'px');
+      s.style.setProperty('--by',by.toFixed(1)+'px');
+      s.style.setProperty('--fx',fx.toFixed(1)+'px');
+      s.style.setProperty('--fy',fy.toFixed(1)+'px');
+      s.style.setProperty('--spin',spin);
+      s.style.setProperty('--sc',(.78+Math.random()*.34).toFixed(2));
+      s.style.setProperty('--dur',(.9+Math.random()*.6).toFixed(2)+'s');
+      s.style.setProperty('--delay',((Math.hypot(dx,dy))*0.05+Math.random()*.05).toFixed(2)+'s');
       frag.appendChild(s);
     }
   }
-  layer.appendChild(frag);document.body.appendChild(layer);
-  setTimeout(()=>layer.remove(),1900);
+  addFxFlash(layer,cx0,cy0,Math.min(300,Math.max(r.width,r.height)*.95),'rgba(255,255,255,.92)');
+  layer.appendChild(frag);
+  setTimeout(()=>layer.remove(),2200);
 }
-/* 一次中心闪光：给偏弱的特效加「爆发感」 */
+
 function addFxFlash(layer,cx,cy,size,color){
   const f=document.createElement('div');
   f.className='fx-flash';
@@ -3982,7 +4021,6 @@ function playDoneFx(el){
   if(fxBlocked())return;
   if(doneFx==='confetti')confettiBurst(el);
   else if(doneFx==='sparkle')sparkleBurst(el);
-  else if(doneFx==='ripple')rippleBurst(el);
   else if(doneFx==='petal')petalBurst(el);
   else shatterCard(el);
 }
@@ -4028,25 +4066,6 @@ function sparkleBurst(el){
   addFxFlash(layer,cx,cy,Math.max(r.width,r.height)*1.25,'rgba(255,255,255,.95)');
   layer.appendChild(frag);setTimeout(()=>layer.remove(),1600);
 }
-function rippleBurst(el){
-  const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
-  const colors=fxBrightPalette(6);
-  const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  const CNT4=fxCount(6);for(let i=0;i<CNT4;i++){
-    const ring=document.createElement('div');ring.className='ripple-ring';
-    const size=Math.min(340,Math.min(r.width,r.height)*(.75+i*.3));   // 环更大
-    ring.style.width=size+'px';ring.style.height=size+'px';
-    ring.style.left=(cx-size/2)+'px';ring.style.top=(cy-size/2)+'px';
-    ring.style.color=colors[i%colors.length];
-    ring.style.borderColor=colors[i%colors.length];
-    ring.style.borderWidth=(3+ (i%2))+'px';
-    ring.style.setProperty('--dur',(.95+i*.2).toFixed(2)+'s');
-    ring.style.setProperty('--delay',(i*.1).toFixed(2)+'s');
-    frag.appendChild(ring);
-  }
-  addFxFlash(layer,cx,cy,Math.min(220,Math.max(r.width,r.height)*1.1),colors[0]);
-  layer.appendChild(frag);setTimeout(()=>layer.remove(),2200);
-}
 function petalBurst(el){
   const r=el.getBoundingClientRect(),layer=makeFxLayer(),frag=document.createDocumentFragment();
   const colors=fxPalette(4);
@@ -4068,7 +4087,7 @@ function petalBurst(el){
 }
 function applyFxChoice(){
   document.querySelectorAll('#fxSeg button').forEach(b=>b.classList.toggle('on',b.dataset.fx===doneFx));
-  const nm=$('fxName');if(nm)nm.textContent=(DONE_FX[doneFx]||DONE_FX.shard).name;
+  const nm=$('fxName');if(nm)nm.textContent=(DONE_FX[doneFx]||DONE_FX.confetti).name;
 }
 function loadDoneFx(){
   try{const v=JSON.parse(localStorage.getItem(FX_KEY));if(v&&DONE_FX[v.fx])doneFx=v.fx}catch(e){}
@@ -5686,6 +5705,10 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
 
 
 
