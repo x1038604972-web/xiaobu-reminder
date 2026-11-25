@@ -1031,6 +1031,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2462,7 +2465,7 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
         </div>
         <div class="set-card clickable" id="guideCard">
           <div class="set-title">新手导览<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
-          <div class="set-desc" id="guideCardDesc">再看一遍这 7 步上手指引</div>
+          <div class="set-desc" id="guideCardDesc">再看一遍上手导览</div>
         </div>
         <div class="set-card" data-set>
           <div class="set-title">关于你的数据<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
@@ -4558,24 +4561,27 @@ function finishWelcome(){
 }
 const GUIDE_KEY='qingji_guide_v1';
 const GUIDE_STEPS=[
-  {tab:'today',sel:'#quickInput',title:'① 说出来，就记下',
-   body:'底部输入「明天 9 点交作业」按回车就记下，时间会自动识别；也可以点麦克风说一句。\n不用先选日期，也不用填表单。'},
-  {tab:'today',sel:'#quickAdd',title:'② 三档强度，一眼看懂',
-   body:'点中间的「＋」能定时间、提醒强度、重复星期几。\n强度下面直接写清差别：轻提醒弹 1 次，重要会 10 分钟后再弹，紧急会每 5 分钟追最多 4 次。'},
-  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'③ 最近那件，会自己跳到眼前',
-   body:'列表顶部那张是「下一条」，放大 + 红框 + 倒计时，先做它就行。\n点左边圆圈完成；左滑可推迟或删除，删错了 5 秒内点「撤销」能找回。'},
-  {tab:'today',sel:'#xiaobuBtn',title:'④ 小步：会聊，也会替你动手',
-   body:'点右下「小步」能跟它说话：「明天9点提醒我交作业」「我今天还有几件事」「把吃药挪到明早」。\n它不是只会回话，会真的改列表。在它右上角的齿轮里填一个大模型 Key，绕的说法也能听懂；不填也能用。'},
-  {tab:'me',sel:'#notifyCard',title:'⑤ 到点会追到你',
-   body:'「我的 → 系统通知」开启后，就算你在刷别的 App、手机在锁屏，提醒也会从顶部弹出来，还能直接在通知上点「完成」或「推迟 10 分钟」。'},
-  {tab:'alerts',sel:'#habitSec',title:'⑥ 小步习惯：一步一步走',
-   body:'提醒页里多了「小步习惯」。加一个想坚持的小事，点圆圈或今天那格就是打卡；\n连续几天格子会连成一条，3 / 7 / 21 / 30 天各有徽章。别贪多，先走好一件。'},
-  {tab:'me',sel:'#elderSeg',title:'⑦ 字小？有适老化',
-   body:'这里能开适老化（字更大、按钮更高、对比更强）、深色模式，还有「性能优先」——手机发烫或卡顿时打开它。'},
-  {tab:'today',sel:'.tabbar',title:'⑧ 四个页签',
-   body:'今日看待办，日历看排期，提醒看快到点的，我的里是全部设置。\n以后想再看一遍，到「我的 → 新手导览」随时能重开。'}
+  {tab:'today',sel:'#quickInput',title:'① 一句话，就记下',
+   body:'在底部输入「明天 9 点交作业」，按回车就记下了——时间会自己认出来。\n不用先选日期，也不用填表；记完想改，点卡片上的「编辑」。'},
+  {tab:'today',sel:'#micBtn',title:'② 不想打字，就说',
+   body:'点「说话」对着手机讲一句，它会转成文字再记下，长句子还会帮你缩成短标题。\n识别不准就再点一次，或者直接用输入框打字。'},
+  {tab:'today',sel:'#xiaobuBtn',title:'③ 小步：会记，也会替你动手',
+   body:'点「小步」可以问「我今天还有几件事」，也能让它改：「把吃药挪到明早」。\n一次说两件事时，它会先问「都记下 / 只记第一件」，不会偷偷猜。'},
+  {tab:'today',sel:'#todoList .card',fallback:'#todoList',expand:true,title:'④ 卡片上就能做完一件事',
+   body:'点左边圆圈就完成，会有完成特效；右边能推迟、删除。\n卡片下面还有「备注」和「编辑」，编辑里能加子任务、定重复。完成后的卡片会锁住，避免误删。'},
+  {tab:'alerts',sel:'#habitSec',title:'⑤ 小步习惯：每天走一小步',
+   body:'加一件想坚持的小事（喝水、吃坚果），每天点一下圆圈就是打卡。\n打卡会出现在「今日」里，用蓝色卡片区分；连续 3 / 7 / 21 天有徽章和金色庆祝。'},
+  {tab:'today',sel:'#termSec',title:'⑥ 终焉时刻：留给很久以后',
+   body:'写一句话丢到一万年后，它永远待在待办最上面，不参与今天的判断。\n建多条也行，最新的排最上；做完会变成实心金圈，一直留在那儿。'},
+  {tab:'calendar',sel:'#calGrid',title:'⑦ 日历：点哪天，就看哪天',
+   body:'点日历上的某一天，今日 / 提醒 / 顶部环都会切到那天（顶部会写「不是今天」）。\n看完点一下旁边的「回到今天」就回来了。'},
+  {tab:'me',sel:'#fxSeg',title:'⑧ 完成效果随便挑',
+   body:'彩纸（默认）/ 碎片 / 星光 / 花瓣，四种完成动画，点一下会当场演示。\n嫌花哨可以在同一页把「性能优先」打开，动画会自动减量。'},
+  {tab:'me',sel:'#elderSeg',title:'⑨ 字小？还有适老化',
+   body:'这里能开适老化（字更大、按钮更好按）、深色模式，也能换主题色和视觉风格。\n这几项都在「我的 → 系统设置」里。'}
 ];
-let guideStep=0,guideActive=false,guideCheckTimer=null;
+
+let guideStep=0,guideActive=false,guideCheckTimer=null,guideScrollTries=0;
 function guideSeen(){try{return localStorage.getItem(GUIDE_KEY)==='2'}catch(e){return false}}
 function guideTarget(s){
   let el=document.querySelector(s.sel);
@@ -4585,6 +4591,10 @@ function guideTarget(s){
   }
   if(!el)el=document.querySelector(s.fallback||'.scroll');
   return el;
+}
+function guideStepsSync(){
+  const d=$('guideCardDesc');
+  if(d)d.textContent='再看一遍这 '+GUIDE_STEPS.length+' 步上手指引';
 }
 function guideFillTip(){
   const s=GUIDE_STEPS[guideStep];
@@ -4615,25 +4625,28 @@ function guideLayout(){
   // 目标藏在折叠卡里：先展开，等动画走完再重新定位
   if(guideEnsureVisible(el)){setTimeout(guideLayout,340);return;}
 
-  // 目标在滚动区里：太靠边就先滚到中间，避免框住的内容在视野外
-  if(el.closest('.scroll')){
-    try{
-      const r0=el.getBoundingClientRect();
-      const mm=mask.getBoundingClientRect();
-      if(r0.top<mm.top+120||r0.bottom>mm.bottom-200)el.scrollIntoView({block:'center'});
-      else el.scrollIntoView({block:'nearest'});
-    }catch(e){}
+  // 目标不在视野里：先滚过去，滚完再重新定位（最多重试 2 次，避免死循环）
+  {
+    const mm0=mask.getBoundingClientRect();
+    const r0=el.getBoundingClientRect();
+    const outOfView = r0.bottom<mm0.top+40 || r0.top>mm0.bottom-40 || r0.top<mm0.top+8 || r0.bottom>mm0.bottom-8;
+    if(outOfView && (guideScrollTries|0)<2){
+      guideScrollTries=(guideScrollTries|0)+1;
+      try{ el.scrollIntoView({block:'center'}) }catch(e){}
+      setTimeout(guideLayout,260);
+      return;
+    }
   }
 
   const base=mask.getBoundingClientRect();
   const W=base.width||390, H=base.height||844;
   const r=el.getBoundingClientRect(),pad=8;
 
-  // 高亮框：目标可能部分在可视区外，做一次夹取
-  const x=Math.max(6,Math.min(W-18,r.left-base.left-pad));
-  const y=Math.max(6,Math.min(H-18,r.top-base.top-pad));
+  // 高亮框：先把宽高夹进可视区，再夹左上角，保证整框落在遮罩里
   const w=Math.max(28,Math.min(W-12,r.width+pad*2));
   const h=Math.max(28,Math.min(H-12,r.height+pad*2));
+  const x=Math.max(6,Math.min(W-6-w,r.left-base.left-pad));
+  const y=Math.max(6,Math.min(H-6-h,r.top-base.top-pad));
   hole.style.left=x+'px';hole.style.top=y+'px';
   hole.style.width=w+'px';hole.style.height=h+'px';
 
@@ -4669,6 +4682,7 @@ window.addEventListener('resize',guideRelayoutSoon);
 window.addEventListener('orientationchange',guideRelayoutSoon);
 if(window.visualViewport)window.visualViewport.addEventListener('resize',guideRelayoutSoon);
 function guideGoto(i){
+  guideScrollTries=0;
   guideStep=i;guideFillTip();
   const s=GUIDE_STEPS[i],want=s.tab||'today';
   if(typeof activeTab!=='undefined'&&activeTab!==want){
@@ -5800,6 +5814,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
