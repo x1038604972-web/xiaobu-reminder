@@ -983,6 +983,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1678,6 +1679,29 @@ html[data-mode="dark"] .card.habit-card{
   border-color:var(--hb-acc)!important;background:transparent;
   box-shadow:none;
 }
+
+/* ── 完成后的圆圈：实心填满，不要顶部那道内高光 ──────────
+   原来 .check 带 --check-shadow（浅色下是 inset 0 1px 0 rgba(255,255,255,.9)），
+   完成填充色和它叠在一起，顶部会留一道浅色弧，看着像没填满。 */
+.card.done .check,
+.card.habit-card.done .check{
+  box-shadow:none!important;
+  background:var(--safe)!important;
+  border-color:var(--safe)!important;
+}
+.card.habit-card.done .check{
+  background:var(--hb-acc)!important;
+  border-color:var(--hb-acc)!important;
+}
+.card.done .check svg{color:#FFFBF2}
+.card.done .check svg path{
+  stroke:#FFFBF2;
+  stroke-dasharray:none;
+  stroke-dashoffset:0;
+  opacity:1;
+}
+.card.done .check::after{content:none}
+
 .card.habit-card .check svg{opacity:0;transition:opacity .16s}
 .card.habit-card .check.on{background:var(--hb-acc)!important;border-color:var(--hb-acc)!important}
 .card.habit-card .check.on svg{opacity:1}
@@ -5207,6 +5231,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
