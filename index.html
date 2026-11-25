@@ -948,6 +948,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2869,15 +2871,17 @@ function shatterCard(el){
   const base=cs.backgroundColor||'#FFFCF6';
   const layer=document.createElement('div');layer.className='shard-layer';document.body.appendChild(layer);
   const lightX=fxLight();
-  const cols=Math.max(lightX?5:8,Math.min(lightX?9:16,Math.round(r.width/(lightX?38:22))));
-  const rows=Math.max(lightX?3:4,Math.min(lightX?5:9,Math.round(r.height/(lightX?34:20))));
+  // 按「一片大约 11px」切网格：片数够多、单片尺寸可控，不会出现 40px 的大圆球
+  const target=lightX?17:12;
+  const cols=Math.max(lightX?6:9,Math.min(lightX?10:18,Math.round(r.width/target)));
+  const rows=Math.max(lightX?4:5,Math.min(lightX?6:10,Math.round(r.height/target*1.3)));
   const cw=r.width/cols,ch=r.height/rows;
   const palette=[base].concat(fxPalette(6));
   const frag=document.createDocumentFragment();
   for(let gy=0;gy<rows;gy++){
     for(let gx=0;gx<cols;gx++){
       const s=document.createElement('div');s.className='shard';
-      const sz=Math.max(4,Math.min(cw,ch)*(.55+Math.random()*.7));
+      const sz=Math.max(3,Math.min(lightX?10:13,Math.min(cw,ch)*.62+Math.random()*1.6));
       s.style.width=sz+'px';s.style.height=sz+'px';
       s.style.left=(r.left+gx*cw+cw/2-sz/2+(Math.random()-.5)*4)+'px';
       s.style.top=(r.top+gy*ch+ch/2-sz/2+(Math.random()-.5)*4)+'px';
@@ -2992,7 +2996,7 @@ function confettiBurst(el){
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   const CNT24=fxCount(24);for(let i=0;i<CNT24;i++){
     const s=document.createElement('div');s.className='confetti';
-    s.style.width=(6+Math.random()*5)+'px';s.style.height=(9+Math.random()*8)+'px';
+    s.style.width=(5+Math.random()*4)+'px';s.style.height=(7+Math.random()*5)+'px';
     s.style.left=(cx+(Math.random()-.5)*r.width*.75)+'px';
     s.style.top=(cy+(Math.random()-.5)*r.height*.6)+'px';
     s.style.background=colors[i%colors.length];
@@ -3012,14 +3016,14 @@ function sparkleBurst(el){
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   const CNT24=fxCount(24);for(let i=0;i<CNT24;i++){
     const s=document.createElement('div');s.className='sparkle';
-    const sz=8+Math.random()*12;
+    const sz=8+Math.random()*5;
     s.style.width=sz+'px';s.style.height=sz+'px';
     s.style.left=(cx-sz/2)+'px';s.style.top=(cy-sz/2)+'px';
     s.style.color=colors[i%colors.length];
     const ang=Math.PI*2*i/24+(Math.random()-.5)*.35,dist=70+Math.random()*120;
     s.style.setProperty('--fx',(Math.cos(ang)*dist)+'px');
     s.style.setProperty('--fy',(Math.sin(ang)*dist)+'px');
-    s.style.setProperty('--sc',(.5+Math.random()*.9).toFixed(2));
+    s.style.setProperty('--sc',(.75+Math.random()*.45).toFixed(2));
     s.style.setProperty('--rot',((Math.random()-.5)*360)+'deg');
     s.style.setProperty('--dur',(.7+Math.random()*.5).toFixed(2)+'s');
     s.style.setProperty('--delay',(Math.random()*.08).toFixed(2)+'s');
@@ -3033,7 +3037,7 @@ function rippleBurst(el){
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   const CNT4=fxCount(4);for(let i=0;i<CNT4;i++){
     const ring=document.createElement('div');ring.className='ripple-ring';
-    const size=Math.min(r.width,r.height)*(.85+i*.35);
+    const size=Math.min(260,Math.min(r.width,r.height)*(.55+i*.22));
     ring.style.width=size+'px';ring.style.height=size+'px';
     ring.style.left=(cx-size/2)+'px';ring.style.top=(cy-size/2)+'px';
     ring.style.borderColor=colors[i%colors.length];
@@ -3049,6 +3053,7 @@ function petalBurst(el){
   const cx=r.left+r.width/2,cy=r.top+r.height/2;
   const CNT18=fxCount(18);for(let i=0;i<CNT18;i++){
     const p=document.createElement('div');p.className='petal';
+    p.style.width=(8+Math.random()*4)+'px';p.style.height=(10+Math.random()*5)+'px';
     p.style.left=(cx+(Math.random()-.5)*r.width*.8)+'px';
     p.style.top=(cy+(Math.random()-.5)*30)+'px';
     p.style.background=colors[i%colors.length];
@@ -4538,6 +4543,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
