@@ -931,6 +931,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1368,6 +1369,15 @@ html[data-mode="dark"] .top .date,html[data-mode="dark"] .top .summary{text-shad
 
 /* 滚动区底部裁掉 26px：内容不会露到 tabbar 下方（底部本就留白 190px，无内容损失） */
 .scroll{clip-path:inset(0 0 26px 0)}
+
+/* ── 导览卡片：短屏幕上不裁切，内部滚动 ─────────────── */
+.guide-tip{max-height:calc(100% - 20px);overflow-y:auto;overscroll-behavior:contain}
+@media (max-height:620px){
+  .guide-tip{padding:12px}
+  .guide-title{font-size:15px;margin-top:5px}
+  .guide-body{font-size:12px;line-height:1.55}
+  .guide-actions{margin-top:10px}
+}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -3367,27 +3377,65 @@ function guideEnsureVisible(el){
 function guideLayout(){
   guideFillTip();
   const s=GUIDE_STEPS[guideStep],el=guideTarget(s),mask=$('guideMask');
+  const hole=$('guideHole'),tip=$('guideTip');
+  if(!mask||!hole||!tip)return;
   if(!el)return;
   // 目标藏在折叠卡里：先展开，等动画走完再重新定位
   if(guideEnsureVisible(el)){setTimeout(guideLayout,340);return;}
+
+  // 目标在滚动区里：太靠边就先滚到中间，避免框住的内容在视野外
   if(el.closest('.scroll')){
     try{
       const r0=el.getBoundingClientRect();
-      const mm=guideMask.getBoundingClientRect();
-      // 靠近上下边缘就滚到中间，保证框和提示都能放下
-      if(r0.top<mm.top+140||r0.bottom>mm.bottom-220)el.scrollIntoView({block:'center'});
+      const mm=mask.getBoundingClientRect();
+      if(r0.top<mm.top+120||r0.bottom>mm.bottom-200)el.scrollIntoView({block:'center'});
       else el.scrollIntoView({block:'nearest'});
     }catch(e){}
   }
-  const base=mask.getBoundingClientRect(),r=el.getBoundingClientRect(),pad=8;
-  const x=Math.max(6,r.left-base.left-pad),y=Math.max(6,r.top-base.top-pad);
-  const w=Math.min(base.width-12,r.width+pad*2),h=Math.min(base.height-12,r.height+pad*2);
-  const hole=$('guideHole');
-  hole.style.left=x+'px';hole.style.top=y+'px';hole.style.width=w+'px';hole.style.height=h+'px';
-  const tip=$('guideTip');tip.style.bottom='auto';
-  const tipH=tip.offsetHeight||150,below=y+h+12;
-  tip.style.top=((below+tipH<=base.height-10)?below:Math.max(10,y-tipH-12))+'px';
+
+  const base=mask.getBoundingClientRect();
+  const W=base.width||390, H=base.height||844;
+  const r=el.getBoundingClientRect(),pad=8;
+
+  // 高亮框：目标可能部分在可视区外，做一次夹取
+  const x=Math.max(6,Math.min(W-18,r.left-base.left-pad));
+  const y=Math.max(6,Math.min(H-18,r.top-base.top-pad));
+  const w=Math.max(28,Math.min(W-12,r.width+pad*2));
+  const h=Math.max(28,Math.min(H-12,r.height+pad*2));
+  hole.style.left=x+'px';hole.style.top=y+'px';
+  hole.style.width=w+'px';hole.style.height=h+'px';
+
+  // 先归零量出卡片真实高度（不受上一步 top 影响）
+  tip.style.bottom='auto';
+  tip.style.top='0px';
+  const tipH=tip.offsetHeight||160;
+  const gap=12,margin=10;
+  const maxTop=Math.max(margin,H-tipH-margin);
+  const belowTop=y+h+gap,aboveTop=y-tipH-gap;
+
+  let top;
+  if(belowTop<=maxTop)top=belowTop;                    // ① 目标下方放得下
+  else if(aboveTop>=margin)top=aboveTop;               // ② 放上方
+  else top=Math.max(margin,Math.min(maxTop,(H-tipH)/2)); // ③ 都放不下 → 居中
+  top=Math.max(margin,Math.min(maxTop,top));           // 最终钳制，绝不越界
+
+  // 居中时可能压在目标上，若还有余量就往不重叠的一侧再挪一次
+  const overlaps=top<y+h&&top+tipH>y;
+  if(overlaps){
+    const alt=(belowTop<=maxTop)?belowTop:(aboveTop>=margin?aboveTop:top);
+    if(alt!==top)top=Math.max(margin,Math.min(maxTop,alt));
+  }
+  tip.style.top=top+'px';
 }
+let __guideResizeT=null;
+function guideRelayoutSoon(){
+  if(!guideActive)return;
+  clearTimeout(__guideResizeT);
+  __guideResizeT=setTimeout(function(){try{guideLayout()}catch(e){}},120);
+}
+window.addEventListener('resize',guideRelayoutSoon);
+window.addEventListener('orientationchange',guideRelayoutSoon);
+if(window.visualViewport)window.visualViewport.addEventListener('resize',guideRelayoutSoon);
 function guideGoto(i){
   guideStep=i;guideFillTip();
   const s=GUIDE_STEPS[i],want=s.tab||'today';
@@ -4048,6 +4096,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
