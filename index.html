@@ -934,6 +934,17 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1784,7 +1795,7 @@ html[data-mode="dark"] .top .date,html[data-mode="dark"] .top .summary{text-shad
     <div class="wave" id="voiceWave"></div>
     <div class="voice-text placeholder" id="voiceText">点击麦克风开始说话</div>
     <div class="voice-parsed" id="voiceParsed" style="display:none"></div>
-    <div class="voice-hint" id="voiceHint">说出要做的事和时间，例如「明天下午三点交作业」<br>识别后可确认再记下</div>
+    <div class="voice-hint" id="voiceHint">说完整一句也没关系，例如「呃明天下午三点得去学校交个课程设计的文档给张老师，你提醒我一下」<br>我会挑出真正要做的那件事，说完点「记下」</div>
     <button class="voice-type" id="voiceType">识别不好用？改用打字</button>
     <div class="voice-actions"><button class="voice-cancel" id="voiceCancel">取消</button><button class="voice-go" id="voiceGo" disabled>记下</button></div>
   </div>
@@ -2097,8 +2108,8 @@ function parseWhen(text){
   mm=s.match(/(\d{1,2}):(\d{2})/);
   if(mm){if(!fixedHour)h=parseInt(mm[1]);m=parseInt(mm[2]);hasTime=true}
   else{
-    const cn={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12};
-    mm=s.match(/(上午|中午|下午|晚上|早上)(\d{1,2}|十一|十二|十|[一二三四五六七八九])点(半)?/);
+    const cn={'一':1,'二':2,'两':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10,'十一':11,'十二':12};
+    mm=s.match(/(上午|中午|下午|晚上|早上)(\d{1,2}|十一|十二|十|[一二两三四五六七八九])点(半)?/);
     if(mm){
       if(!fixedHour){
         let hh=cn[mm[2]]!=null?cn[mm[2]]:parseInt(mm[2]);
@@ -2108,7 +2119,7 @@ function parseWhen(text){
       }
       if(mm[3])m=30;
     }else if(!fixedHour){
-      mm=s.match(/(\d{1,2}|十一|十二|十|[一二三四五六七八九])点(半)?/);
+      mm=s.match(/(\d{1,2}|十一|十二|十|[一二两三四五六七八九])点(半)?/);
       if(mm){
         let hh=cn[mm[1]]!=null?cn[mm[1]]:parseInt(mm[1]);
         if(hh>=1&&hh<=6)hh+=12;
@@ -3503,6 +3514,117 @@ function scheduleGuide(force){
 function buildWave(){
   const w=$('voiceWave');let h='';for(let i=0;i<28;i++)h+='<i></i>';w.innerHTML=h;
 }
+/* ══════════════════════════════════════════════════════════
+   语音理解：人说话是一长串，带语气词、铺垫、自我纠正、多件事。
+   这里把它压成「真正要记的那件事」：
+     1) 去语气词 / 客套话 / 口头禅
+     2) 按标点和「然后、还有、顺便、对了」这类词切句
+     3) 给每句打分（有动作 + 有时间 + 长度合适），挑最高分那句
+     4) 清洗成标题（去掉时间、情态词、尾巴的「一下/吧」）
+     5) 其余句子如果也确实是独立的事，拆成附加任务
+   ══════════════════════════════════════════════════════════ */
+const DISTILL_CN='零一二两三四五六七八九十';
+const DISTILL_FILLER=/(呃|额+|嗯+|啊|呀|哈|吧|呢|嘛|哦|噢|诶|唉|哎|那个|这个|然后呢|就是呢|就是说|也就是说|你知道吧|你懂吧|对吧|是吧|反正|其实|基本上|基本|大概|可能|应该|差不多|左右|你看|我说|我是说|或者说|什么来着|啥来着|什么的|之类的|之类|这种|这类|怎么说呢|咋说呢|这样子|这样的)/g;
+const DISTILL_TALK=/(提醒我|提醒一下|提醒下|提示我|叫我一下|叫一下我|别忘了|别忘|记得提醒|帮我记一下|帮我记|帮记一下|记一下|记下来|记下|你到时候|到时候你|到时候|麻烦你|麻烦一下|帮个忙|谢谢|好吧|行吧|可以吧|听明白了吗)/g;
+const DISTILL_VERB=/(交|买|打|写|发|看|去|来|取|回|开|找|问|订|定|做|弄|整理|提交|复习|洗|吃|喝|练|还|修|寄|预约|挂号|联系|确认|准备|检查|更新|上传|下载|打印|填|签|面试|投|报|缴|付|拿|送|接|搬|通|叠|收|晒|倒|带|约|办|催|查|算|对账|结账|上课|听|背|练车|体检|开会|见|陪|喂|遛|喂药|吃药|起床|睡觉|洗澡|搬家|换|配|买药|量|测|补|改|校对|画|拍|剪|翻译|背单词|读|学习|练琴|跑步|健身|打卡)/;
+
+function distillTimeFix(text,ts){
+  if(!ts)return ts;
+  const d=new Date(ts),h=d.getHours();
+  const pm=/(晚上|傍晚|夜里|夜间|晚间|今晚|明晚|后晚)/.test(text);
+  const noon=/(下午|午后|中午)/.test(text);
+  const am=/(上午|早上|早晨|清早|凌晨)/.test(text);
+  if(pm&&h<12){d.setHours(h+12);return d.getTime()}
+  if(noon&&h<12&&h!==12){d.setHours(h+12);return d.getTime()}
+  if(am&&h>=12){d.setHours(h-12);return d.getTime()}
+  return ts;
+}
+function distillCleanTitle(text){
+  let s=String(text||'');
+  s=s.replace(DISTILL_FILLER,' ').replace(DISTILL_TALK,' ');
+  // 时间词
+  s=s.replace(/(今天|明天|后天|大后天|今晚|明早|明晚|明儿|这周末|周末|月底|月初|年底|年初|上午|中午|下午|晚上|早上|早晨|凌晨|刚刚|刚才|一会儿|待会儿)/g,'');
+  s=s.replace(/(下|这|本)?(个)?(周|星期|礼拜)[一二三四五六日天]/g,'');
+  s=s.replace(new RegExp('(['+DISTILL_CN+'\\d]{1,3})(点|时)(半|一刻|三刻|分)?'),'');
+  s=s.replace(new RegExp('(['+DISTILL_CN+'\\d]+)\\s*个?\\s*(天|小时|分钟|钟头|周|星期|月)(后|以后|之后|之内|以内)?'),'');
+  s=s.replace(/\d{1,2}\s*月\s*\d{1,2}\s*[号日]/g,'');
+  s=s.replace(/\d{1,2}\s*[:：]\s*\d{2}/g,'');
+  s=s.replace(/(左右|前后|之前|以后|之后|以前|之内|以内|差不多|大概|可能|必须|一定|千万)/g,'');
+  // 开头的客套与主语、情态词
+  s=s.replace(/^(帮我|帮忙|请|麻烦你|麻烦|劳驾)/,'');
+  s=s.replace(/^(我|我们|俺|咱|咱们|你)?(得|要|需要|想要|打算|准备|计划|想|应该|可能|必须|又要)?/,'');
+  // 结尾的口头尾巴
+  s=s.replace(/(一下|一趟|一遍|一次|一回|点儿|点|吧|啊|呢|嘛|了|的|哦|呀|啦)\s*$/,'');
+  // 把字句还原：「把快递取了」→「取快递」
+  s=s.replace(/^把(.{1,12}?)(取|拿|买|送|交|还|洗|修|寄|带|做|弄|扔|放|换|装|订|打印|提交|上传|下载|缴|付|打|发|去)(出来|下来|走|掉|了|一下|一趟)?$/,'$2$1');
+  s=s.replace(/[，,。.！!？?、；;：:"'“”‘’\s]+/g,' ');
+  s=s.replace(/\s+/g,' ').trim();
+  if(s.length>16)s=s.slice(0,16);
+  return s;
+}
+
+function distillSpeech(raw){
+  const src=String(raw||'').trim();
+  const out={raw:src,title:'',ts:parseWhen(src),lv:1,extras:[],cleaned:'',kind:'single'};
+  if(!src)return out;
+  out.lv=(/(重要|一定要|必须|千万|别忘了|别忘|紧急|急事|优先)/.test(src))?3
+        :((/(记得|提醒我|注意|留意|别拖)/.test(src))?2:1);
+
+  // 切句：标点先统一成逗号，连接词也当分隔
+  const cut=src.replace(/[。！!？?；;]/g,'，')
+              .replace(/(然后|还有|另外|接着|之后|同时|顺便|对了|以及|再有)/g,'，');
+  const parts=cut.split(/[，,、]+/).map(function(x){return x.trim()}).filter(Boolean);
+
+  const scored=[];
+  parts.forEach(function(p,idx){
+    const t=p.replace(DISTILL_FILLER,'').replace(DISTILL_TALK,' ').trim();
+    const tt=t.replace(/[，,。\s]+/g,'');
+    const hasTime=!!parseWhen(p);
+    const hasVerb=DISTILL_VERB.test(tt);
+    let score=0;
+    if(hasVerb)score+=2;
+    if(hasTime)score+=2;
+    if(tt.length>=3&&tt.length<=24)score+=1;
+    if(tt.length>30)score-=1;
+    if(/^(就是|然后|所以|但是|因为|如果|而且|不过|还有)/.test(tt))score-=1;
+    if(tt.length<2)score-=4;
+    scored.push({t:tt,idx:idx,score:score,hasVerb:hasVerb,hasTime:hasTime});
+  });
+
+  const alive=scored.filter(function(x){return x.score>-2 && x.t.length>0});
+  if(!alive.length){
+    out.title=distillCleanTitle(src)||src.slice(0,16);
+    out.cleaned=distillCleanTitle(src);
+    return out;
+  }
+
+  alive.sort(function(a,b){return (b.score-a.score)||(a.idx-b.idx)});
+  const main=alive[0];
+  out.title=distillCleanTitle(main.t)||distillCleanTitle(src)||src.slice(0,16);
+  // 时段消歧只看主句：整句里其它分句的「中午 / 晚上」会污染主句时间
+  const mainTs=parseWhen(main.t);
+  out.ts=mainTs?distillTimeFix(main.t,mainTs):distillTimeFix(src,out.ts||null);
+
+  // 其余句子：确实是独立的事才拆出来（有动作、够长、不重复）
+  out.notes=[];
+  alive.slice(1).forEach(function(x){
+    // 「记得带身份证」「别忘了带伞」这类是叮嘱，归到备注里更合理
+    if(/^(记得|别忘|记得带|带上|带好|注意|顺便带|路上|当然|如果|要是)/.test(x.t)){
+      out.notes.push(x.t);
+      return;
+    }
+    if(x.score<3||!x.hasVerb)return;
+    const tt=distillCleanTitle(x.t);
+    if(!tt||tt.length<2||tt===out.title)return;
+    if(out.extras.some(function(e){return e.title===tt}))return;
+    out.extras.push({title:tt,ts:distillTimeFix(x.t,parseWhen(x.t))||out.ts,lv:1});
+  });
+  out.extras=out.extras.slice(0,2);
+  if(out.extras.length)out.kind='multi';
+  out.cleaned=distillCleanTitle(src);
+  return out;
+}
+
 function voiceRender(){
   const text=(voiceFinal+' '+voiceInterim).trim();
   const t=$('voiceText');
@@ -3511,9 +3633,17 @@ function voiceRender(){
   $('voiceGo').disabled=!voiceFinal.trim();
   const box=$('voiceParsed');
   if(voiceFinal.trim()){
-    const sp=parseSmart(voiceFinal),ts=sp.ts||presetTime(1);
-    box.style.display='block';
-    box.textContent='将记为：「'+sp.title+'」· '+fullTime(ts)+' · '+LV[sp.lv].n;
+    const d=distillSpeech(voiceFinal),ts=d.ts||presetTime(1);
+    let html='<b>将记为：</b>「'+esc(d.title)+'」· '+fullTime(ts)+' · '+LV[d.lv].n;
+    if(d.extras.length){
+      html+='<span class="vp-more">另外还会记下：'+d.extras.map(function(e){return '「'+esc(e.title)+'」'}).join('、')+'</span>';
+      html+='<span class="vp-hint">不想要的，记完后在列表里左滑删掉就行</span>';
+    }else if(d.notes&&d.notes.length){
+      html+='<span class="vp-hint">顺带记在备注里：'+esc(d.notes.join('、'))+'</span>';
+    }else if(d.raw.length>18){
+      html+='<span class="vp-hint">（原话比较长，我只挑了要做的这件事）</span>';
+    }
+    box.innerHTML=html;
   }else box.style.display='none';
 }
 /* ══════════════════════════════════════════════════════════
@@ -3691,11 +3821,27 @@ function startVoice(){
 function commitVoice(){
   const raw=voiceFinal.trim();if(!raw)return;
   if(!ensureTaskQuota())return;
-  const sp=parseSmart(raw),ts=sp.ts||presetTime(1);
+  const d=distillSpeech(raw);
+  const ts=d.ts||presetTime(1);
+  const extraNotes=(d.notes&&d.notes.length)?('；顺带：'+d.notes.join('、')):'';
+  const note=(raw.length>d.title.length+2?('原话：'+raw.slice(0,80)):'')+extraNotes;
   const id='t'+Date.now()+Math.random().toString(36).slice(2,5);
-  tasks.unshift({id:id,title:sp.title,ts:ts,lv:sp.lv,done:false,note:'',repeat:'none',completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+  tasks.unshift({id:id,title:d.title,ts:ts,lv:d.lv,done:false,note:note,repeat:'none',weekMask:0,
+    completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+  // 一长段话里提到的其它事，一并记下（同强度减一档，时间各自解析）
+  const extraIds=[];
+  d.extras.forEach(function(e,i){
+    const eid='t'+(Date.now()+i+1)+Math.random().toString(36).slice(2,5);
+    tasks.unshift({id:eid,title:e.title,ts:e.ts||ts,lv:Math.min(2,(d.lv||1)),done:false,note:'',repeat:'none',
+      weekMask:0,completedCount:0,escalateCount:0,notified:false,created:Date.now()});
+    extraIds.push(eid);
+  });
   stopVoice();closeVoice();save();render();highlightTask(id);lastQuickId=id;
-  toast('已记下「'+sp.title+'」· '+fullTime(ts)+' · '+LV[sp.lv].n,'edit');
+  if(extraIds.length){
+    toast('已记下 '+ (extraIds.length+1) +' 件：「'+d.title+'」等','undo');
+  }else{
+    toast('已记下「'+d.title+'」· '+fullTime(ts)+' · '+LV[d.lv].n,'edit');
+  }
 }
 
 document.querySelectorAll('.add-btn,.save,.mbtn,.demo-btn,.mini-btn,.data-btn').forEach(el=>{
@@ -3723,7 +3869,8 @@ function quickCommit(){
   const v=$('quickInput').value.trim();
   if(!v){openDetailFromQuick();return}
   const term=/终焉时刻|一万年后|一万年之后/.test(v);
-  const sp=parseSmart(v);
+  const d=distillSpeech(v);
+  const sp={title:d.title||v,ts:d.ts,lv:d.lv};
   const ts=term?terminusTs():(quickTimeOverride||sp.ts);
   if(!ts){openDetailFromQuick();return}          // 没解析出时间 → 让用户确认
   if(!ensureTaskQuota())return;
@@ -4112,6 +4259,17 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
