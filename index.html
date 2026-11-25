@@ -952,6 +952,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1528,6 +1531,75 @@ html[data-elder="on"] .note-add{font-size:13px;padding:7px 12px}
 html[data-elder="on"] .note-editor textarea{font-size:15px}
 html[data-elder="on"] .note-btns button{height:40px;font-size:14px}
 
+
+/* ══════════════════════════════════════════════════════════
+   日历可读性 + 「全部完成」小旗
+   ══════════════════════════════════════════════════════════ */
+.cal-w{
+  color:var(--ink2)!important;font-size:11.5px!important;font-weight:800!important;
+  letter-spacing:.08em;padding-bottom:2px;
+}
+.cal-w:nth-child(6),.cal-w:nth-child(7){color:var(--brand)!important}
+.cal-cell{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:46px;padding:6px 0 5px;border-radius:14px;cursor:pointer;
+  color:var(--ink);transition:background .16s var(--ease),color .16s,transform .12s var(--ease);
+}
+.cal-cell:active{transform:scale(.95)}
+.cal-num{
+  font-size:15px;font-weight:750;line-height:1.1;
+  font-variant-numeric:tabular-nums;letter-spacing:.01em;
+}
+.cal-cell.dim{color:var(--ink3)}
+.cal-cell.dim .cal-num{opacity:.42;font-weight:600}
+.cal-cell.today{
+  background:var(--brand)!important;color:#FFFBF2!important;
+  box-shadow:0 6px 16px rgba(47,110,82,.28);
+}
+.cal-cell.today .cal-num{font-weight:900}
+.cal-cell.sel:not(.today){box-shadow:inset 0 0 0 1.5px var(--brand)}
+.cal-cell.all-done:not(.today){background:rgba(47,110,82,.10)}
+html[data-mode="dark"] .cal-cell.all-done:not(.today){background:rgba(95,174,134,.14)}
+
+/* 小旗：当天全部完成才出现 */
+.cal-flag{
+  display:none;position:absolute;top:1px;right:4px;
+  font-size:10px;line-height:1;font-style:normal;
+}
+.cal-cell.all-done .cal-flag{display:block}
+.cal-cell.today .cal-flag{top:0;right:3px}
+.cal-flag.shown{display:inline-block;position:static;font-size:10px}
+
+.cal-dots{display:flex;gap:3px;margin-top:3px;height:5px;align-items:center}
+.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--line2);display:inline-block}
+.cal-dot.done{background:var(--brand)}
+.cal-dot.lv3{background:var(--alert,#B5453C)}
+.cal-cell.today .cal-dot{background:rgba(255,251,242,.5)}
+.cal-cell.today .cal-dot.done{background:#FFFBF2}
+.cal-cell.today .cal-dot.lv3{background:#FFD9C9}
+.cal-cell.dim .cal-dot{opacity:.45}
+
+.cal-legend{
+  display:flex;flex-wrap:wrap;gap:14px;justify-content:center;
+  margin-top:8px;font-size:11px;color:var(--ink3);
+}
+.cal-lg{display:inline-flex;align-items:center;gap:5px}
+.cal-lg .cal-dot{width:5px;height:5px}
+html[data-elder="on"] .cal-w{font-size:13px!important}
+html[data-elder="on"] .cal-num{font-size:18px}
+html[data-elder="on"] .cal-cell{min-height:52px}
+html[data-elder="on"] .cal-legend{font-size:13px}
+html[data-elder="on"] .cal-flag,html[data-elder="on"] .cal-flag.shown{font-size:12px}
+
+/* 日历网格：原来写死 repeat(7, 46px) + gap 5 + padding 12 = 376 > 容器 350，
+   最后一列被裁掉 16px。改成流式列宽，7 列永远铺满。 */
+.cal-grid{
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  gap:4px 4px!important;
+  padding:12px 8px!important;
+}
+.cal-grid .cal-w,.cal-grid .cal-cell{min-width:0}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -1616,6 +1688,7 @@ html[data-elder="on"] .note-btns button{height:40px;font-size:14px}
           <div class="cal-nav"><button id="calPrev" aria-label="上个月">‹</button><button id="calToday">今</button><button id="calNext" aria-label="下个月">›</button></div>
         </div>
         <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend" id="calLegend"></div>
         <div class="cal-day-tasks">
           <div class="cal-day-title"><span id="calDayTitle">这一天的安排</span><button class="cal-add" id="calAdd">＋ 加一件</button></div>
           <div id="calDayList"></div>
@@ -2900,10 +2973,25 @@ function renderCalendar(){
     const dt=new Date(y,m,d),k=dayKey(dt.getTime());
     const list=byDay[k]||[];
     const dots=list.slice(0,3).map(t=>'<span class="cal-dot '+(t.done?'done':(t.lv===3?'lv3':''))+'"></span>').join('');
-    const cls=['cal-cell',(m!==calMonth?'dim':''),(k===dayKey(Date.now())?'today':''),(k===calSelected?'sel':'')].join(' ');
-    html+='<div class="'+cls+'" data-key="'+k+'">'+d+'<div class="cal-dots">'+dots+'</div></div>';
+    const allDone=list.length>0&&list.every(t=>t.done);
+    const cls=['cal-cell',(m!==calMonth?'dim':''),(k===dayKey(Date.now())?'today':''),(k===calSelected?'sel':''),(allDone?'all-done':'')].join(' ');
+    html+='<div class="'+cls+'" data-key="'+k+'"'+(allDone?' title="这天的 '+list.length+' 件事都完成了"':'')+'>'+
+      '<i class="cal-flag" aria-label="当天全部完成">🚩</i>'+
+      '<span class="cal-num">'+d+'</span>'+
+      '<div class="cal-dots">'+dots+'</div></div>';
   }
   $('calGrid').innerHTML=html;
+  const lg=$('calLegend');
+  if(lg){
+    let allCount=0;
+    Object.keys(byDay).forEach(function(k){
+      const l=byDay[k];
+      if(l.length&&l.every(function(x){return x.done}))allCount++;
+    });
+    lg.innerHTML='<span class="cal-lg"><i class="cal-flag shown">🚩</i>当天全部完成'+(allCount?'（本月 '+allCount+' 天）':'')+'</span>'+
+      '<span class="cal-lg"><i class="cal-dot done"></i>有提醒</span>'+
+      '<span class="cal-lg"><i class="cal-dot lv3"></i>重要</span>';
+  }
   renderCalDay();
 }
 function renderCalDay(){
@@ -4631,6 +4719,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
