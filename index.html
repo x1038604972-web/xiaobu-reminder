@@ -932,6 +932,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1157,8 +1158,10 @@ html,body{overflow:hidden}
 .voice-panel:not(.on){visibility:hidden;pointer-events:none}
 .voice-panel.on{visibility:visible}
 
-/* 导览遮罩铺满整屏，避免底部漏出一条没被压暗的内容 */
-#guideMask{position:fixed!important;inset:0!important;height:100vh!important}
+/* 导览遮罩：必须跟着 .app 走（.phone 内部）。
+   之前用 position:fixed 是为了盖住底部，但那是按浏览器窗口定位的——
+   桌面预览里 .phone 只有 390x844 居中，遮罩和卡片会跑到手机框外面。 */
+#guideMask{position:absolute!important;inset:0!important;height:auto!important;width:auto!important}
 
 /* 底部抽屉（登录 / 配置 / 邮箱）收起时只移出 88%，会从底边漏出一条——
    收起状态直接不可见 */
@@ -4096,6 +4099,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
