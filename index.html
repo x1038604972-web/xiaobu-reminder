@@ -1025,6 +1025,12 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2150,6 +2156,57 @@ html[data-elder="on"] .vibe-slider{margin-top:10px}
   overflow:visible;
 }
 .sw{flex:none}
+
+
+/* ── 习惯完成特效（顶层绘制，不受卡片 overflow 影响） ── */
+.hfx-layer{
+  position:fixed;inset:0;pointer-events:none;z-index:95;
+  overflow:visible;
+}
+.hfx-layer .hfx-ripple{
+  position:absolute;border-radius:50%;pointer-events:none;
+  border:3px solid var(--hb-acc,#2E6B9E)!important;
+  box-shadow:0 0 12px rgba(46,107,158,.45), inset 0 0 10px rgba(46,107,158,.25);
+  animation:habitRippleBig .8s cubic-bezier(.16,.84,.24,1) forwards;
+}
+.hfx-layer .hfx-ripple2{
+  animation-duration:1.05s;
+  animation-delay:.1s;
+  opacity:.9;
+}
+@keyframes habitRippleBig{
+  0%{transform:scale(.9);opacity:.95}
+  55%{opacity:.55}
+  100%{transform:scale(4.2);opacity:0}
+}
+.hfx-layer .hfx-plus{
+  position:absolute;pointer-events:none;
+  font-size:14px;font-weight:900;letter-spacing:.02em;
+  color:var(--hb-acc,#2E6B9E);
+  text-shadow:0 1px 6px rgba(46,107,158,.35), 0 0 2px rgba(255,255,255,.9);
+  animation:habitPlusBig 1.05s cubic-bezier(.16,.84,.24,1) forwards;
+}
+@keyframes habitPlusBig{
+  0%{transform:translateY(6px) scale(.85);opacity:0}
+  18%{transform:translateY(0) scale(1.12);opacity:1}
+  55%{transform:translateY(-18px) scale(1)}
+  100%{transform:translateY(-40px) scale(.96);opacity:0}
+}
+.hfx-layer .hfx-gold-ring{
+  border-color:#E9C87A!important;
+  box-shadow:0 0 18px rgba(233,200,122,.6), inset 0 0 14px rgba(233,200,122,.3);
+  animation-duration:1.1s;
+}
+/* 圆圈蓄满的动画仍然在卡片里，卡片本身不裁这点缩放 */
+.card.habit-card.hfx .check{animation:habitTick .52s var(--spring)}
+@media (prefers-reduced-motion: reduce){
+  .hfx-layer{display:none}
+}
+
+
+/* 里程碑：整层涟漪与 +1 都是金色 */
+.hfx-layer.hfx-gold-layer .hfx-ripple{border-color:#E9C87A!important}
+.hfx-layer.hfx-gold-layer .hfx-plus{color:#B58B22!important;text-shadow:0 1px 8px rgba(201,162,78,.5)}
 
 /* ==== XIAOBU CSS END ==== */
 </style>
@@ -5367,26 +5424,51 @@ function playHabitFx(hid,streak){
   if(!fxLight()){
     const chk=card.querySelector('.check');
     if(chk){
-      const cr=chk.getBoundingClientRect(), br=card.getBoundingClientRect();
-      const size=Math.round(cr.width)||24;
-      const rx=(cr.left-br.left)+(size-Math.round(size*1))/2;
-      const ry=(cr.top-br.top);
+      // 卡片自己是 overflow:hidden，涟漪放大后会被裁 → 画在 body 顶层
+      const cr=chk.getBoundingClientRect();
+      const size=Math.max(24,Math.round(cr.width));
+      const cx=cr.left+cr.width/2, cy=cr.top+cr.height/2;
+      const layer=document.createElement('div');
+      layer.className='hfx-layer'+(milestone?' hfx-gold-layer':'');
+      document.body.appendChild(layer);
+
+      // 涟漪：从圆圈荡开，扩到 4 倍后淡出
       const ring=document.createElement('span');
       ring.className='hfx-ripple';
-      ring.style.left=rx+'px';ring.style.top=ry+'px';
+      ring.style.left=(cx-size/2)+'px';
+      ring.style.top=(cy-size/2)+'px';
       ring.style.width=size+'px';ring.style.height=size+'px';
-      card.appendChild(ring);
+      // 第二圈慢一点，显得更有回弹
+      const ring2=ring.cloneNode(false);
+      ring2.className='hfx-ripple hfx-ripple2';
+      ring2.style.left=ring.style.left;ring2.style.top=ring.style.top;
+      ring2.style.width=size+'px';ring2.style.height=size+'px';
+      layer.appendChild(ring);
+      layer.appendChild(ring2);
+
+      // 「+1」从这个圆往右上飘
       const plus=document.createElement('span');
       plus.className='hfx-plus';
       plus.textContent='+1';
-      plus.style.left=(cr.left-br.left+size+1)+'px';
-      plus.style.top=ry+'px';
-      card.appendChild(plus);
-      setTimeout(function(){ring.remove();plus.remove()},1000);
+      plus.style.left=(cx+size*0.55)+'px';
+      plus.style.top=(cy-size*0.95)+'px';
+      layer.appendChild(plus);
+
+      if(milestone){
+        // 里程碑再来一圈金色大涟漪
+        const gold=document.createElement('span');
+        gold.className='hfx-ripple hfx-gold-ring';
+        gold.style.left=(cx-size*1.5)+'px';
+        gold.style.top=(cy-size*1.5)+'px';
+        gold.style.width=(size*3)+'px';gold.style.height=(size*3)+'px';
+        layer.appendChild(gold);
+      }
+      setTimeout(function(){try{layer.remove()}catch(e){}},1500);
     }
   }
-  setTimeout(function(){card.classList.remove('hfx','hfx-gold')},1000);
+  setTimeout(function(){card.classList.remove('hfx','hfx-gold')},1200);
 }
+
 
 function toggleHabitDay(id,key){
   const h=habits.find(function(x){return x.id===id});if(!h)return;
@@ -5718,6 +5800,12 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
 
 
 
