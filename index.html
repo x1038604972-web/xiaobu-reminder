@@ -950,6 +950,8 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1488,6 +1490,44 @@ html[data-elder="on"] .habit-sug-btn{font-size:14px;padding:10px 16px}
   .habit-check,.hd,.habit-sug-btn{transition:none}
 }
 
+
+/* ── 卡片备注 ─────────────────────────────────────── */
+.note-line{
+  position:relative;padding-right:26px;cursor:text;margin-top:9px;
+  font-size:12.5px;line-height:1.62;color:var(--ink2);font-weight:500;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  border-radius:8px;transition:background .16s;
+}
+html[data-elder="on"] .note-line{font-size:14px}
+.note-line:active{background:var(--line2)}
+.note-pen{
+  position:absolute;right:0;top:0;font-size:10px;color:var(--ink3);
+  border:1px solid var(--line);border-radius:6px;padding:1px 5px;line-height:1.4;
+}
+.note-add{
+  margin-top:8px;padding:5px 10px;border-radius:9px;cursor:pointer;
+  border:1px dashed var(--line);background:transparent;color:var(--ink3);
+  font-family:inherit;font-size:11.5px;font-weight:700;line-height:1.2;
+  display:inline-flex;align-items:center;gap:4px;transition:background .16s,color .16s;
+}
+.note-add:active{background:var(--line2);color:var(--ink2)}
+.note-editor{margin-top:9px}
+.note-editor textarea{
+  width:100%;min-height:66px;resize:vertical;border-radius:11px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  font-family:inherit;font-size:13px;line-height:1.6;padding:9px 11px;
+}
+.note-editor textarea:focus{outline:2px solid var(--brand);outline-offset:1px}
+.note-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.note-btns button{
+  height:34px;padding:0 14px;border-radius:10px;border:0;cursor:pointer;
+  font-family:inherit;font-size:12.5px;font-weight:800;background:var(--line2);color:var(--ink2);
+}
+.note-btns [data-note="save"]{background:var(--brand);color:#FFFBF2}
+html[data-elder="on"] .note-add{font-size:13px;padding:7px 12px}
+html[data-elder="on"] .note-editor textarea{font-size:15px}
+html[data-elder="on"] .note-btns button{height:40px;font-size:14px}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -1824,7 +1864,7 @@ html[data-elder="on"] .habit-sug-btn{font-size:14px;padding:10px 16px}
       </div>
       <div class="week-note">自定义星期与「每天 / 每周」互斥；选其他重复方式后这里的勾选不再生效。</div>
     </div>
-    <button class="note-toggle" id="noteToggle">＋ 添加备注</button>
+    <button class="note-toggle" id="noteToggle">＋ 添加备注（选填，之后也能在卡片上补）</button>
     <div class="note-box" id="noteBox"><textarea id="noteInput" placeholder="补充细节（选填）" aria-label="补充细节"></textarea></div>
     <div class="sheet-summary" id="sheetSummary"></div>
     <button class="save" id="saveBtn">记下来 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
@@ -2321,7 +2361,9 @@ function cardHTML(t,opts){
         '<span class="terminus-days">第 '+Math.max(1,Math.floor((Date.now()-(t.created||Date.now()))/86400000)+1)+' 天</span>'
       : '<span class="tag'+(over?' over':'')+'" data-act="'+(over?'postpone-one':'noop')+'">'+(over?'已过 · ':'')+fullTime(t.ts)+'</span>'+rep+unhandled+cd)+
     '<span class="tag '+(LV[t.lv]||LV[1]).c+'">'+(LV[t.lv]||LV[1]).n+'</span></div>'+
-    (t.note?'<div class="detail">'+esc(t.note)+'</div>':'')+
+    (t.note
+      ? '<div class="note-line" data-act="note" role="button" tabindex="0">'+esc(t.note)+'<span class="note-pen">改</span></div>'
+      : '<button class="note-add" data-act="note" type="button">＋ 备注</button>')+
     '<span class="card-edit" data-act="edit">编辑</span></div>'+
     '<div class="act">'+((t.done||terminus)?'':'<button class="postpone-btn" data-act="postpone-one" aria-label="推迟">推迟</button>')+
     '<button class="icon-btn del" data-act="del" aria-label="删除"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div></div></div>';
@@ -2475,6 +2517,51 @@ function fillSheet(t){
   $('customInput').value=t.ts?dayKey(t.ts)+'T'+timeStr(t.ts):'';
   updateSheetSummary();
 }
+
+/* ── 卡片备注：就地编辑（不用进「编辑」抽屉） ───────────── */
+function startEditNote(id){
+  const task=tasks.find(function(x){return x.id===id});if(!task)return;
+  const card=document.querySelector('.card[data-id="'+id+'"]');if(!card)return;
+  if(card.querySelector('.note-editor'))return;
+  let anchor=card.querySelector('[data-act="note"]');
+  if(!anchor){
+    const body=card.querySelector('.body');if(!body)return;
+    anchor=document.createElement('button');
+    anchor.className='note-add';anchor.dataset.act='note';anchor.type='button';
+    anchor.textContent='＋ 备注';
+    body.appendChild(anchor);
+  }
+  const wrap=document.createElement('div');
+  wrap.className='note-editor';
+  wrap.innerHTML='<textarea maxlength="120" placeholder="补充细节：带身份证 / 三楼 302 / 找张老师">'+esc(task.note||'')+'</textarea>'+
+    '<div class="note-btns"><button type="button" data-note="cancel">取消</button><button type="button" data-note="save">保存</button></div>';
+  anchor.style.display='none';
+  anchor.insertAdjacentElement('afterend',wrap);
+  const ta=wrap.querySelector('textarea');
+  setTimeout(function(){try{ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}catch(e){}},50);
+  function closeOnly(){
+    wrap.remove();
+    const again=card.querySelector('[data-act="note"]');
+    if(again)again.style.display='';
+  }
+  function saveNote(){
+    const v=(ta.value||'').trim().slice(0,120);
+    task.note=v;
+    save();render();
+    toast(v?'备注已保存':'备注已清空');
+    if(v){
+      const now=document.querySelector('.card[data-id="'+id+'"]');
+      if(now)highlightTask(id);
+    }
+  }
+  wrap.querySelector('[data-note="cancel"]').onclick=closeOnly;
+  wrap.querySelector('[data-note="save"]').onclick=saveNote;
+  ta.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){e.preventDefault();closeOnly()}
+    else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();saveNote()}
+  });
+}
+
 function openEdit(id){
   const t=tasks.find(x=>x.id===id);if(!t)return;
   fillSheet(t);editingId=id;setSheetMode(true);openSheet();
@@ -4086,7 +4173,7 @@ $('weekPresets').onclick=e=>{
 };
 $('noteToggle').onclick=()=>{
   const on=$('noteBox').classList.toggle('on');
-  $('noteToggle').textContent=on?'－ 收起备注':'＋ 添加备注';
+  $('noteToggle').textContent=on?'－ 收起备注':'＋ 添加备注（选填，之后也能在卡片上补）';
   if(on)$('noteInput').focus();
 };
 let activeTab='today';
@@ -4354,6 +4441,7 @@ document.addEventListener('click',e=>{
   else if(a==='del')delTask(id);
   else if(a==='remind')openModal(id);
   else if(a==='edit')openEdit(id);
+  else if(a==='note')startEditNote(id);
   else if(a==='postpone-one'){
     openLate(id);
   }
@@ -4543,6 +4631,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
