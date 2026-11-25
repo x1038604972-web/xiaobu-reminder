@@ -1004,6 +1004,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -5667,6 +5668,7 @@ try{
 
 
 
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -5761,15 +5763,20 @@ try{
     loadMem();
     try {
       var v = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (v && Array.isArray(v.msgs)) S.msgs = v.msgs.slice(-MAXMSG);
+      // 聊天记录每天刷新：跨天就丢掉昨天的对话，只保留记忆（mem）
+      if (v && Array.isArray(v.msgs) && v.day === todayStamp()) S.msgs = v.msgs.slice(-MAXMSG);
     } catch (e) {}
     try {
       var a = JSON.parse(localStorage.getItem(AIKEY) || 'null');
       if (a && typeof a === 'object') S.ai = Object.assign(S.ai, a);
     } catch (e) {}
   }
+  function todayStamp() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
   function saveState() {
-    try { localStorage.setItem(KEY, JSON.stringify({ msgs: S.msgs.slice(-MAXMSG), at: Date.now() })); } catch (e) {}
+    try { localStorage.setItem(KEY, JSON.stringify({ msgs: S.msgs.slice(-MAXMSG), at: Date.now(), day: todayStamp() })); } catch (e) {}
   }
   function saveAI() { try { localStorage.setItem(AIKEY, JSON.stringify(S.ai)); } catch (e) {} }
 
@@ -6148,6 +6155,10 @@ try{
   function greet(force) {
     if (!force && S.msgs.length) { render(); return; }
     S.msgs = [{ r: 'b', hero: true, t: '', card: null }];
+    if (S.freshDay) {
+      S.freshDay = false;
+      S.msgs.push({ r: 'b', t: '新的一天，昨天的对话我先收起来了。\n今天想记点什么？', card: null });
+    }
     saveState(); render();
     setChips(['明天 9 点提醒我交作业', '我今天还有几件事', '把喝牛奶推迟到明早 8 点', '开启适老化模式']);
   }
@@ -6472,6 +6483,12 @@ try{
     var s = String(text || '');
     s = s.replace(/(别忘了|别忘记|别忘|要记得|记得)/g, '');
     s = s.replace(/^(请|麻烦你?|帮我|给我|帮个忙|我要|我想|要|得)/, '');
+    // 「设置两天后下午一点的买菜」→「买菜」：句首的设置类动词不该进标题
+    s = s.replace(/^(设置|设为|设定|安排成|改成|调成|把)/, '');
+    s = s.replace(/^(.{0,6}?)的(?=[^的]{2,10}$)/, function (mt, pre) {
+      // 「设置的买菜」这种：前半截是动词就丢掉
+      return /(设置|设为|设定|安排|改|调)/.test(pre) ? '' : mt;
+    });
     s = s.replace(/(提醒我|提醒|提示我|提示|记一下|记下|记住|添加|新建|加一条|加一个|安排一下|安排|定个|设个|帮我记|存一下|一下)/g, '');
     s = s.replace(/每(周|星期)[一二三四五六日天]+/g, '');   // 每周三四
     s = s.replace(/每(周|星期|天|日|个月)/g, '');
@@ -7926,9 +7943,13 @@ try{
   function boot() {
     if (inited) return;
     inited = true;
+    var _hadMsgs = false;
+    try { _hadMsgs = !!(JSON.parse(localStorage.getItem(KEY) || 'null') || {}).msgs; } catch (e) {}
     loadState();
     build();
     updateSub();
+    // 昨天有对话、今天被重置了 → 用一句新一天的开场替代旧记录
+    if (_hadMsgs && !S.msgs.length) S.freshDay = true;
     var btn = X$('xiaobuBtn');
     if (btn) {
       btn.onclick = function () { open(); };
