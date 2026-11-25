@@ -968,6 +968,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -1641,6 +1644,46 @@ html[data-elder="on"] .dj-label{font-size:13px}
 }
 .cal-cell.sel:not(.today) .cal-num{color:var(--brand)}
 
+
+/* ══════════════════════════════════════════════════════════
+   今日页里的「小步习惯」卡片：蓝底，区别于普通（米白）和终焉（金）
+   ══════════════════════════════════════════════════════════ */
+/* 用半透明蓝而不是固定浅蓝：浅色页面上是淡蓝，深色页面上是深蓝，不用判断模式 */
+:root{--hb-acc:#2E6B9E;--hb-acc-dk:#8FCBF0}
+
+.card.habit-card{
+  display:flex;align-items:flex-start;gap:13px;
+  background:rgba(46,107,158,.13)!important;
+  border:1px solid rgba(46,107,158,.34)!important;
+  box-shadow:0 6px 18px rgba(46,107,158,.12);
+}
+html[data-mode="dark"] .card.habit-card{
+  background:rgba(70,140,200,.20)!important;
+  border-color:rgba(120,185,232,.34)!important;
+}
+.card.habit-card .title{color:var(--ink)!important}
+.card.habit-card .check{
+  border-color:var(--hb-acc)!important;background:transparent;
+  box-shadow:none;
+}
+.card.habit-card .check svg{opacity:0;transition:opacity .16s}
+.card.habit-card .check.on{background:var(--hb-acc)!important;border-color:var(--hb-acc)!important}
+.card.habit-card .check.on svg{opacity:1}
+.card.habit-card.done{opacity:.72}
+.card.habit-card.done .title{text-decoration:line-through;text-decoration-color:rgba(46,107,158,.45)}
+
+.tag.habit-tag{
+  background:rgba(46,107,158,.16)!important;color:var(--hb-acc)!important;
+  border:1px solid rgba(46,107,158,.30);font-weight:800;letter-spacing:.02em;
+}
+html[data-mode="dark"] .tag.habit-tag{
+  background:rgba(107,178,232,.18)!important;color:var(--hb-acc-dk)!important;
+  border-color:rgba(120,185,232,.34);
+}
+.card.habit-card .habit-streak{background:rgba(46,107,158,.13);color:var(--hb-acc)}
+html[data-mode="dark"] .card.habit-card .habit-streak{background:rgba(107,178,232,.16);color:var(--hb-acc-dk)}
+.card.habit-card .meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:6px}
+
 /* ==== XIAOBU CSS END ==== */
 </style>
 </head>
@@ -2214,7 +2257,7 @@ let memberPlan='free';
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,'0');
 const today0=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime()};
-const dayKey=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const dayKey=ts=>{const d=new Date(ts==null?Date.now():ts);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
 function atTime(h,m){const d=new Date();d.setHours(h,m,0,0);return d.getTime()}
 function toastMsgFor(ts,special){return special==='terminus'?('已刻下 · 终焉时刻 公元 '+terminusYear(ts)+' 年'):('已记下 · '+fullTime(ts))}
 function terminusTs(){const d=new Date();d.setFullYear(d.getFullYear()+10000);return d.getTime()}
@@ -2464,6 +2507,8 @@ function renderTop(){
     if(overdueN)sumTxt+='，<b>'+overdueN+'</b> 件已过时间';
     const earlyN=pend.filter(t=>t.lv===3&&t.special!=='terminus'&&dayKey(t.ts)>tk0&&t.ts<=Date.now()+2*86400000).length;
     if(earlyN)sumTxt+='，<b>'+earlyN+'</b> 件重要已提前显示';
+    const habitLeft=habits.filter(h=>!h.days[dayKey(Date.now())]).length;
+    if(habitLeft)sumTxt+='，'+habitLeft+' 个习惯待打卡';
     if(laterN)sumTxt+=' · 别处 <b>'+laterN+'</b> 件';
     if(!urgent&&!overdueN&&!laterN)sumTxt+=' · '+dayHint();
   }
@@ -2566,9 +2611,16 @@ function render(){
   }
   $('batchBar').classList.toggle('on',batchMode);
   $('batchCount').textContent='已选 '+selected.size+' 条';
-  $('todoList').innerHTML=normal.length?normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ').replace('data-id="','style="--i:'+Math.min(i,12)+'" data-id="')}).join(''):'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
-  $('doneList').innerHTML=done.length?done.map(cardHTML).join(''):'';
-  $('doneSec').style.display=done.length?'block':'none';
+  const hk2=dayKey(Date.now());
+  const habitTodoCards=habits.filter(h=>!h.days[hk2]).map(h=>habitCardHTML(h,false)).join('');
+  const taskCards=normal.map((t,i)=>{let h=cardHTML(t,{next:i===0});return h.replace('class="','class="enter ').replace('data-id="','style="--i:'+Math.min(i,12)+'" data-id="')}).join('');
+  const todoHTML=habitTodoCards+taskCards;
+  $('todoList').innerHTML=(habitTodoCards||taskCards)?todoHTML:'<div class="empty"><svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="var(--ink3)" stroke-width="1.2"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 11l2.5 2.5L16 8"/></svg><p>今天没有要走的步了<br>想到什么，就说出来</p><p style="color:var(--brand);font-weight:700;margin-top:10px">↓ 点下方 ＋ 或输入栏记下第一件</p><button class="empty-cta" data-act="empty-add">记下第一件</button></div>';
+  const habitDoneCards=habits.filter(h=>h.days[hk2]).map(h=>habitCardHTML(h,true)).join('');
+  $('doneList').innerHTML=(habitDoneCards||done.length)?(habitDoneCards+done.map(cardHTML).join('')):'';
+  $('doneSec').style.display=(done.length||habitDoneCards)?'block':'none';
+  const hdCount=$('doneCount');
+  if(hdCount)hdCount.textContent=(done.length+(habitDoneCards?habits.filter(h=>h.days[hk2]).length:0))+' 件';
   const soon=pending.filter(t=>!isOver(t.ts)&&t.ts<Date.now()+3*86400000).sort((a,b)=>a.ts-b.ts);
   $('alertCount').textContent=soon.length?soon.length+' 条':'';
   $('alertList').innerHTML=soon.length?soon.map(cardHTML).join(''):'<div class="empty"><p>未来一天没有安排<br>可以安心做点别的</p></div>';
@@ -3099,6 +3151,12 @@ function gotoCalDay(k){
   if(tab)tab.click(); else renderCalendar();
 }
 document.addEventListener('click',function(e){
+  const hb=e.target.closest('[data-habit-act]');
+  if(hb){
+    const card=hb.closest('[data-habit]');
+    if(card){toggleHabitDay(card.dataset.habit,dayKey(Date.now()));renderHabits();render()}
+    return;
+  }
   const j=e.target.closest('[data-jump]');
   if(j){gotoCalDay(j.dataset.jump);return}
   const row=e.target.closest('#calDayList .hist-item');
@@ -4479,6 +4537,20 @@ function habitBest(h){
 }
 function habitDoneToday(){const k=habitKey();return habits.filter(function(h){return h.days[k]}).length}
 
+
+/* 今日页里的习惯卡片：蓝底 + 「小步习惯」标签 */
+function habitCardHTML(h,done){
+  const st=habitStreak(h);
+  const meta=(done?'<span class="tag habit-tag">小步习惯</span>':'<span class="tag habit-tag">小步习惯</span>')+
+    (st?'<span class="habit-streak">连续 '+st+' 天</span>':'<span class="habit-streak off">今天还没走</span>');
+  return '<div class="card habit-card'+(done?' done':'')+'" data-habit="'+h.id+'">'+
+    '<button class="check habit-check'+(done?' on':'')+'" data-habit-act="toggle" aria-label="'+(done?'取消打卡':'打卡')+'" type="button">'+
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFBF2" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>'+
+    '</button>'+
+    '<div class="body"><div class="title">'+esc(h.title)+'</div><div class="meta">'+meta+'</div></div>'+
+    '</div>';
+}
+
 function renderHabits(){
   const box=$('habitList');if(!box)return;
   const cnt=$('habitCount');
@@ -4876,6 +4948,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
