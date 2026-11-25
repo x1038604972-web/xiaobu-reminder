@@ -994,6 +994,7 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2003,7 +2004,7 @@ html[data-elder="on"] .tab-add svg{width:22px;height:22px}
       </div>
 
       <div class="sec">
-        <div class="sec-head"><span class="sec-title">即 将 到 来 · 未来三天</span><span class="sec-count" id="alertCount"></span></div>
+        <div class="sec-head"><span class="sec-title">今 天 要 提 醒 的</span><span class="sec-count" id="alertCount"></span></div>
         <div id="alertList"></div>
       </div>
 
@@ -2857,9 +2858,16 @@ function render(){
   $('doneSec').style.display=(done.length||habitDoneCards)?'block':'none';
   const hdCount=$('doneCount');
   if(hdCount)hdCount.textContent=(done.length+(habitDoneCards?habits.filter(h=>h.days[hk2]).length:0))+' 件';
-  const soon=pending.filter(t=>!isOver(t.ts)&&t.ts<Date.now()+3*86400000).sort((a,b)=>a.ts-b.ts);
+  // 提醒只放「今天」的：今天到点的、今天已经过点的，都在这
+  // （重要任务距截止不到 2 天仍提前出现；终焉走专属区，规则不变）
+  const soon=pending.filter(function(t){
+    if(t.special==='terminus')return false;
+    if(dayKey(t.ts)===tk)return true;
+    return t.lv===3&&t.ts<=Date.now()+2*86400000&&dayKey(t.ts)>tk;
+  }).sort((a,b)=>a.ts-b.ts);
   $('alertCount').textContent=soon.length?soon.length+' 条':'';
-  $('alertList').innerHTML=soon.length?soon.map(cardHTML).join(''):'<div class="empty"><p>未来一天没有安排<br>可以安心做点别的</p></div>';
+  $('alertList').innerHTML=soon.length?soon.map(cardHTML).join('')
+    :'<div class="empty"><p>今天没有要提醒的<br>可以安心做点别的</p></div>';
   try{renderHabits()}catch(e){}
   renderStats();
   playFlip(before);
@@ -5304,6 +5312,7 @@ try{
   }
 }catch(e){}
 </script>
+
 
 
 
