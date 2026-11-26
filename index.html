@@ -2193,6 +2193,13 @@ html[data-mode="dark"]:root .v2-progress .v2-prog-v b{color:#fff!important;-webk
 
 
 
+
+/* 绿条与今天方框无缝相接：贴着方框的那一端不收圆角 */
+#calGrid .cal-cell.d-done.run-butt{border-radius:0!important}
+#calGrid .cal-cell.d-today.join-l{border-left:0!important;border-top-left-radius:0!important;border-bottom-left-radius:0!important;margin-left:-1px!important}
+#calGrid .cal-cell.d-today.join-r{border-right:0!important;border-top-right-radius:0!important;border-bottom-right-radius:0!important;margin-right:-1px!important}
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4883,8 +4890,17 @@ function calMergeRuns(){
     for(let k=0;k<row.length;k++){
       const c=row[k];
       if(!c.classList.contains('d-today'))continue;
-      if(k>0&&row[k-1].classList.contains('d-done'))c.classList.add('join-l');
-      if(k<row.length-1&&row[k+1].classList.contains('d-done'))c.classList.add('join-r');
+      if(k>0&&row[k-1].classList.contains('d-done')){
+        c.classList.add('join-l');
+        // 左边这条绿条不要收圆角，否则和方框之间会露出一个缺口
+        row[k-1].classList.remove('run-e');
+        row[k-1].classList.add('run-butt');
+      }
+      if(k<row.length-1&&row[k+1].classList.contains('d-done')){
+        c.classList.add('join-r');
+        row[k+1].classList.remove('run-s');
+        row[k+1].classList.add('run-butt');
+      }
     }
   }
 }
@@ -7728,7 +7744,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb1').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb2').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8018,6 +8034,8 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
+
 
 
 
