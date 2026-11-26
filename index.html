@@ -2340,6 +2340,9 @@ html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7916,7 +7919,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb13').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb14').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8380,6 +8383,9 @@ try{
   };
 })();
 </script>
+
+
+
 
 
 
@@ -10221,12 +10227,22 @@ var _CHATQ_RE = /[？?]$|吗$|呢$|怎么办|你觉得|是不是|好不好/;
 var _ACTION_RE = /^(去|要|得|需要|想|准备|帮我)?(交|写|买|做|准备|开个|开|打|取|送|发|订|装|洗|打扫|复习|看|读|练|查|改|修|付|抢|约|报|背|算|填|排版|打印|收拾|整理)/;
 var _CHAT_WORDS = /(过得|不错|挺好的|还行|有点累|开心|不开心|无聊|烦|郁闷|哈哈|困|饿)/;
 
+var _QUERY_RE = /(有哪些|有什么|什么事|多少件|几件|查一下|查查|看一下|看看|待办|任务列表|安排|清单|还剩|剩下)/;
+var _QUERY_DAY_RE = /(今天|今日|今儿|明天|明日|后天|这周|本周|这几天|未来一周|接下来)/;
+
 function detectIntent(text) {
   var t = String(text || '').trim();
   if (!t) return { kind: 'chat' };
   var d = null;
   try { d = parseDraft(t); } catch (e) { d = null; }
   var hasTime = !!(d && d.ts);
+  // 先判查询：「明天有哪些待办」「帮我查一下待办」「今天还有什么事」
+  if (_QUERY_RE.test(t) && !_REMIND_RE.test(t)) {
+    return { kind: 'query', draft: d, hasTime: hasTime };
+  }
+  if (_QUERY_RE.test(t) && _QUERY_DAY_RE.test(t) && /(待办|任务|安排|什么|哪些|几件)/.test(t)) {
+    return { kind: 'query', draft: d, hasTime: hasTime };
+  }
   if (_REMIND_RE.test(t)) return { kind: 'create', draft: d, hasTime: hasTime };
   var title = d && d.title ? String(d.title) : '';
   if (hasTime && title && title.length <= 14 && _ACTION_RE.test(title) && !_CHAT_WORDS.test(t) && !_CHATQ_RE.test(t)) {
@@ -10237,6 +10253,7 @@ function detectIntent(text) {
 
 function fallbackReply(text, aiFailed) {
   var it = detectIntent(text);
+  if (it.kind === 'query') { answerQuery(text); return true; }
   if (it.kind === 'create' && it.draft && it.draft.ts) {
     aiRequestConfirm({
       op: 'create', title: it.draft.title, needConfirm: true,
@@ -10265,6 +10282,68 @@ function fallbackReply(text, aiFailed) {
   return true;
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   待办查询：答案只来自本地真实任务，模型不参与编造
+   ══════════════════════════════════════════════════════════════════ */
+function dayStampOf(ts) {
+  var d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function dayWordOf(ts) {
+  var now = Date.now();
+  var kk = dayStampOf(ts);
+  if (kk === dayStampOf(now)) return '今天';
+  if (kk === dayStampOf(now + 86400000)) return '明天';
+  if (kk === dayStampOf(now + 2 * 86400000)) return '后天';
+  if (kk === dayStampOf(now - 86400000)) return '昨天';
+  var d = new Date(ts);
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+function queryScope(text) {
+  var t = String(text || '');
+  var ts = 0;
+  try { ts = parseWhen(t) || 0; } catch (e) { ts = 0; }
+  if (/(这周|本周|这一周|接下来一周|未来一周|这几天)/.test(t)) {
+    var days = [];
+    for (var i = 0; i < 7; i++) days.push(dayStampOf(Date.now() + i * 86400000));
+    return { keys: days, label: '这 7 天' };
+  }
+  if (/后天/.test(t)) return { keys: [dayStampOf(Date.now() + 2 * 86400000)], label: '后天' };
+  if (/(明天|明日)/.test(t)) return { keys: [dayStampOf(Date.now() + 86400000)], label: '明天' };
+  if (/(今天|今日|今儿)/.test(t)) return { keys: [dayStampOf(Date.now())], label: '今天' };
+  if (ts) return { keys: [dayStampOf(ts)], label: dayWordOf(ts) };
+  return { keys: [dayStampOf(Date.now())], label: '今天' };
+}
+function tasksOnDays(keys) {
+  var set = {};
+  keys.forEach(function (k) { set[k] = 1; });
+  return allList().filter(function (t) {
+    try { return !!set[dayStampOf(t.ts)]; } catch (e) { return false; }
+  }).sort(function (a, b) { return a.ts - b.ts; });
+}
+function answerQuery(text) {
+  var scope = queryScope(text);
+  var list = tasksOnDays(scope.keys);
+  var wantDone = /(完成|做完|已完成)/.test(String(text || ''));
+  if (!wantDone) list = list.filter(function (t) { return !t.done; });
+  if (!list.length) {
+    say(scope.label + '没有安排。' + (scope.label === '今天' ? '要不要现在记一件？' : '要不要我帮你排一件？'),
+      null, ['明天 9 点提醒我交作业', '看看这周的安排']);
+    return true;
+  }
+  var over = list.filter(function (t) { return !t.done && t.ts < Date.now(); });
+  var lines = list.slice(0, 6).map(function (t) {
+    var flag = t.done ? '✓ ' : (t.ts < Date.now() ? '⚠ ' : '');
+    return flag + ft(t.ts) + ' · ' + t.title;
+  });
+  if (list.length > 6) lines.push('…还有 ' + (list.length - 6) + ' 件');
+  var head = scope.label + (wantDone ? '完成 ' : '有 ') + list.length + ' 件' +
+    (over.length ? '，其中 ' + over.length + ' 件过点了' : '') + '：';
+  say(head + '\n' + lines.join('\n'), null, ['把最早一件推迟 1 小时', '明天有哪些待办', '看看这周的安排']);
+  return true;
+}
+
 function localChat(text, aiFailed) {
     var reply = chitchatReply(text);
     var chips = ['明天 9 点提醒我交作业', '我今天还有几件事'];
@@ -10284,9 +10363,38 @@ function localChat(text, aiFailed) {
     return {
       now: ft(now.getTime()),
       weekday: '日一二三四五六'[now.getDay()],
-      tasks: nowList().slice(0, 20).map(function (t) {
-        return { id: t.id, title: t.title, time: ft(t.ts), level: t.lv, repeat: t.repeat || 'none' };
-      })
+      tasks: nowList().filter(function (t) { return t.ts <= todayEnd(); }).slice(0, 20).map(function (t) {
+      return { id: t.id, title: t.title, time: ft(t.ts), level: t.lv, repeat: t.repeat || 'none' };
+    }),
+    upcoming: (function () {
+      var out = [];
+      for (var i = 1; i <= 7; i++) {
+        var key = dayStampOf(Date.now() + i * 86400000);
+        var list = T().filter(function (t) {
+          try { return !t.done && dayStampOf(t.ts) === key; } catch (e) { return false; }
+        }).sort(function (a, b) { return a.ts - b.ts; });
+        if (list.length) {
+          out.push({
+            day: dayWordOf(Date.now() + i * 86400000),
+            items: list.slice(0, 8).map(function (t) {
+              return { id: t.id, title: t.title, time: ft(t.ts), level: t.lv, repeat: t.repeat || 'none' };
+            })
+          });
+        }
+      }
+      return out;
+    })(),
+    counts: (function () {
+      var all = T(), todayOpen = 0, doneToday = 0, futureOpen = 0;
+      var k = dayStampOf(Date.now()), end = todayEnd();
+      all.forEach(function (t) {
+        var kk = '';
+        try { kk = dayStampOf(t.ts); } catch (e) { kk = ''; }
+        if (kk === k) { if (t.done) doneToday++; else todayOpen++; }
+        else if (!t.done && t.ts > end) futureOpen++;
+      });
+      return { todayOpen: todayOpen, doneToday: doneToday, futureOpen: futureOpen };
+    })()
     };
   }
   function sysPrompt() {
@@ -10298,13 +10406,17 @@ function localChat(text, aiFailed) {
       '现在 ' + s.now + '（星期' + s.weekday + '）。\n' +
       '用户名字：' + (nm || '（还不知道）') + '\n' +
       '你记得的关于他：' + notes + '\n' +
-      '待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
+      '今天的待办：' + (s.tasks.length ? JSON.stringify(s.tasks) : '（空）') + '\n' +
+  '未来 7 天：' + (s.upcoming.length ? JSON.stringify(s.upcoming) : '（空）') + '\n' +
+  '计数：' + JSON.stringify(s.counts) + '\n' +
       '\n只输出一个 JSON 对象，不要解释、不要代码块：{"reply":"…","action":null,"memory":null}\n' +
       '\n【A · 要动手】用户要记事 / 改时间 / 查待办 / 打勾 / 删除：\n' +
       '{"type":"create","title":"喝牛奶","when":"明天9点","level":1}\n' +
       '{"type":"create","title":"打卡","when":"每天22点","level":1}\n' +
       '{"type":"done","task_id":"…"}   {"type":"delete","task_id":"…"}\n' +
-      '{"type":"postpone","task_id":"…","when":"明早8点"}   {"type":"list"}\n' +
+      '{"type":"postpone","task_id":"…","when":"明早8点"}\n' +
+  '查待办：{"type":"list","day":"明天"}（day 可为 今天/明天/后天/这周）\n' +
+  '⚠ 查待办只能引用上面「今天的待办 / 未来 7 天」里真实存在的任务，绝不能编造。\n' +
       '\n【B · 只是说话】聊心情、唠家常、问你在干嘛：action 置 null，reply 用 1~3 句口语——\n' +
       '· 先接住他的情绪或话题，再给一句具体的（共鸣 / 很小的建议 / 一句反问），别空泛安慰；\n' +
       '· 不要每句都推销功能，也不要硬把话拽回记事。他在聊，就聊；\n' +
@@ -10424,6 +10536,7 @@ function askLLMStream(text, hist, url, hdr, ctrl, timer) {
       //  · 用户这句话确实是「让我记 / 提醒」→ 走确认卡，绝不静默建
       //  · 其它 → 就当聊天说
       var _it = detectIntent(text);
+      if (_it.kind === 'query') { answerQuery(text); return; }
       if (_it.kind === 'create' || _it.kind === 'suggest') { fallbackReply(text, false); return; }
       say(txt.replace(/[`*#]/g, '').slice(0, 400));
       return;
@@ -10837,7 +10950,7 @@ function execRemote(a, modelReply, userText) {
       });
       return 'done';
     }
-    if (a.type === 'list') { doList(); return 'done'; }
+    if (a.type === 'list') { answerQuery(a.day || '今天'); return 'done'; }
     var t = a.task_id ? allList().filter(function (x) { return x.id === a.task_id; })[0] : null;
     if (!t) return '那条待办已经不在列表里了。';
     if (a.type === 'update') {
@@ -11168,7 +11281,8 @@ function execRemote(a, modelReply, userText) {
 window.XiaoBu._p1 = {
   tools: AITools, run: function (p) { return AITools.run(p); },
   pending: aiReadPending, runPending: aiRunPending, cancel: function () { aiClearPending(); return true; },
-  ctx: aiReadCtx, pushCtx: aiPushCtx, ask: askLLM, exec: execRemote
+  ctx: aiReadCtx, pushCtx: aiPushCtx, ask: askLLM, exec: execRemote,
+  sys: function () { return sysPrompt(); }, query: function (t) { return answerQuery(t); }, intent: function (t) { return detectIntent(t); }
 };
 
   if (document.readyState === 'loading') {
