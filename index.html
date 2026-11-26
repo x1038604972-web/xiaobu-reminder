@@ -2332,6 +2332,7 @@ html[data-mode="dark"]:root .v2-ic{background-image:url(ic-set-dark.png)!importa
 }
 html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat!important;box-shadow:none!important}
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7113,8 +7114,13 @@ function openVoice(){
   $('voicePanel').classList.add('on');
   voiceRender();
   if(!SpeechRec){
+    if(window.XBVoice&&XBVoice.canUse()){
+      voiceSay('点麦克风开始录音','微信里用系统录音，说完再点一次，我把它转成文字。');
+      $('voiceMic').style.opacity='1';
+      return;
+    }
     voiceSay('这个浏览器不支持语音识别',
-      '语音需要 Chrome / Edge（安卓版 Chrome 需能联网）。<br>可以直接用下面的输入框打字，一样能自动识别时间。');
+      '当前环境既没有浏览器语音，也没有可用的录音通道。<br>可以直接用下面的输入框打字，一样能自动识别时间。');
     $('voiceMic').style.opacity='.4';
     return;
   }
@@ -7798,6 +7804,20 @@ $('voiceType').onclick=()=>{
   if(text)try{renderParsePreview(text,'parsePreview',true)}catch(e){}
 };
 $('voiceMic').onclick=()=>{
+  if(!SpeechRec){
+    if(!(window.XBVoice&&XBVoice.canUse())){
+      voiceSay('当前环境不支持语音','可以直接用下面的输入框打字，一样能识别时间。');
+      return;
+    }
+    XBVoice.toggle(function(text){
+      voiceFinal=(voiceFinal+' '+text).trim();
+      voiceRender();
+      voiceSay('识别完成','听到：「'+text+'」<br>确认没问题就点「记下」');
+    },function(msg){
+      voiceSay('语音没识别成功',msg);
+    });
+    return;
+  }
   const now=Date.now();
   if(now-voiceLastClickAt<350){voiceLog('click-ignored',{gap:now-voiceLastClickAt});return}   // 防快速连点
   voiceLastClickAt=now;
@@ -7886,7 +7906,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb9').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb10').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8196,6 +8216,160 @@ try{
 
 
 
+
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   XBVoice：给微信内置浏览器（安卓 X5 / iOS WKWebView / PC CEF）用的语音兜底
+   —— 这些环境没有 SpeechRecognition，只能录音 + 服务端识别。
+   授权：录音需要用户手势；不配置识别服务时不会假装成功。
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  var UA = navigator.userAgent || '';
+  var isWX = /MicroMessenger/i.test(UA);
+  var isIOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && 'ontouchend' in document);
+  var isPC = /Windows NT|Macintosh/i.test(UA) && !/Mobile/i.test(UA);
+  var hasRec = !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+  var rec = null, chunks = [], stream = null, recording = false, cbOk = null, cbErr = null;
+  var fileInput = null;
+
+  function aiBase(){
+    try {
+      var raw = localStorage.getItem('qingji_xiaobu_ai_v1');
+      var cfg = raw ? JSON.parse(raw) : null;
+      return (cfg && cfg.base) || '';
+    } catch(e){ return ''; }
+  }
+  /* 识别接口：把 .../v1/chat 换成 .../v1/asr */
+  function asrUrl(){
+    var base = aiBase().replace(/\/+$/, '');
+    if (/\/v1\/chat/.test(base)) return base.replace(/\/v1\/chat.*$/, '/v1/asr');
+    if (/\/v1$/.test(base)) return base + '/asr';
+    return '';
+  }
+  function canUse(){
+    if (asrUrl()) {
+      if (hasRec) return true;
+      return true;                    /* 没有 MediaRecorder 也能用系统录音 + 上传 */
+    }
+    return false;                     /* 没配服务：不提供假按钮 */
+  }
+  function toB64(blob){
+    return new Promise(function(res, rej){
+      var fr = new FileReader();
+      fr.onload = function(){ var s = String(fr.result || ''); res(s.slice(s.indexOf(',') + 1)); };
+      fr.onerror = function(){ rej(new Error('读取录音失败')); };
+      fr.readAsDataURL(blob);
+    });
+  }
+  function transcribe(blob){
+    var url = asrUrl();
+    if (!url) return Promise.reject(new Error('还没有配置语音识别服务（在设置里填代理地址）。可以直接打字。'));
+    return toB64(blob).then(function(b64){
+      var ctrl = null, timer = null;
+      try { ctrl = new AbortController(); timer = setTimeout(function(){ ctrl.abort(); }, 45000); } catch(e){}
+      return fetch(url, {
+        method: 'POST',
+        signal: ctrl ? ctrl.signal : undefined,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: b64, mime: blob.type || 'audio/webm', lang: 'zh' })
+      }).then(function(r){
+        if (timer) { clearTimeout(timer); timer = null; }
+        return r.json().catch(function(){ return null; });
+      }).then(function(j){
+        if (!j || !j.ok || !j.text) {
+          var m = (j && j.error && j.error.message) || '识别服务没返回内容';
+          throw new Error(m);
+        }
+        return String(j.text).trim();
+      });
+    });
+  }
+
+  /* ── 系统录音（微信里最稳，iOS/安卓都能调起） ── */
+  function ensureInput(){
+    if (fileInput) return fileInput;
+    var inp = document.createElement('input');
+    inp.type = 'file';
+    inp.accept = 'audio/*';
+    inp.setAttribute('capture', 'microphone');
+    inp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0';
+    inp.onchange = function(){
+      var f = inp.files && inp.files[0];
+      inp.value = '';
+      if (!f) { if (cbErr) cbErr('没有拿到录音'); return; }
+      if (cbErr) cbErr('__pending__');
+      transcribe(f).then(function(t){ if (cbOk) cbOk(t); })
+        .catch(function(e){ if (cbErr) cbErr(e.message || '识别失败'); });
+    };
+    document.body.appendChild(inp);
+    fileInput = inp;
+    return inp;
+  }
+  function recordViaInput(){
+    var inp = ensureInput();
+    try { inp.click(); } catch(e){ if (cbErr) cbErr('这个浏览器不允许调起录音'); }
+  }
+
+  /* ── MediaRecorder 现场录 ── */
+  function startRecorder(){
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      .then(function(st){
+        stream = st; chunks = [];
+        var mime = '';
+        ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'].some(function(m){
+          try { if (MediaRecorder.isTypeSupported(m)) { mime = m; return true; } } catch(e){}
+          return false;
+        });
+        rec = new MediaRecorder(st, mime ? { mimeType: mime } : undefined);
+        rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+        rec.onstop = function(){
+          var blob = new Blob(chunks, { type: (rec && rec.mimeType) || 'audio/webm' });
+          stopTracks();
+          if (!blob.size) { if (cbErr) cbErr('没录到声音'); return; }
+          transcribe(blob).then(function(t){ if (cbOk) cbOk(t); })
+            .catch(function(e){ if (cbErr) cbErr(e.message || '识别失败'); });
+        };
+        rec.start();
+        recording = true;
+      })
+      .catch(function(){
+        /* 微信里常见：拿不到麦克风 → 退回系统录音 */
+        recordViaInput();
+      });
+  }
+  function stopTracks(){
+    try { if (stream) stream.getTracks().forEach(function(t){ t.stop(); }); } catch(e){}
+    stream = null; recording = false;
+  }
+  function stopRecorder(){
+    try { if (rec && rec.state !== 'inactive') rec.stop(); } catch(e){ stopTracks(); }
+  }
+
+  window.XBVoice = {
+    wechat: isWX, ios: isIOS, pc: isPC, canRecord: hasRec, canUse: canUse,
+    hint: function(){
+      if (!isWX) return '';
+      return hasRec ? '微信里用系统麦克风录音，说完再点一次结束'
+                    : '微信里会调起系统录音，录完自动转文字';
+    },
+    recording: function(){ return recording; },
+    /* 一次「开始 / 结束」切换 */
+    toggle: function(onText, onError){
+      cbOk = onText || function(){};
+      cbErr = onError || function(){};
+      if (recording) { stopRecorder(); return 'stopping'; }
+      if (hasRec) { startRecorder(); return 'recording'; }
+      recordViaInput();
+      return 'picker';
+    },
+    /* 直接录一段（测试用） */
+    _transcribeBlob: transcribe,
+    _asrUrl: asrUrl
+  };
+})();
+</script>
 
 
 <script>
@@ -8733,6 +8907,16 @@ try{
 
   /* ── 语音 ─────────────────────────────────────────────── */
   function mic() {
+    if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      if (window.XBVoice && window.XBVoice.canUse()) {
+        window.XBVoice.toggle(function (text) {
+          var qi = X$('xbText');
+          if (qi) { qi.value = (qi.value ? qi.value + ' ' : '') + text; qi.focus(); }
+          say('听到了：' + text);
+        }, function (msg) { say(String(msg || '语音没识别成功')); });
+        return;
+      }
+    }
     var R = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!R) { say('这个浏览器不支持语音输入，用键盘说也一样。'); return; }
     if (S.rec) { try { S.rec.stop(); } catch (e) {} S.rec = null; X$('xbMic').classList.remove('rec'); return; }
