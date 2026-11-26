@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#2F6E52">
+<meta name="theme-color" content="#173F35">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>小步 · 说出来，就有人替你记住</title>
@@ -2094,6 +2094,7 @@ html:root .v2-ic{
 }
 html:root .v2-ic.big{border-radius:11px!important}
 html:root .v2-mini .v2-ic{border-radius:7px!important}
+
 
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
@@ -7599,11 +7600,12 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb13').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb14').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
 
 
 
