@@ -2345,6 +2345,10 @@ html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat
 
 
 
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3847,7 +3851,7 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           <div class="set-detail">
             <div class="set-row" style="display:block">
               <div class="lbl">版本</div>
-              <div class="sub">缓存 <span id="appVer">20261126-xb17</span> · <button class="wcfg" id="forceUpdate" style="padding:0;min-height:0">检查更新</button></div>
+              <div class="sub">缓存 <span id="appVer">20261127-xb16</span> · <button class="wcfg" id="forceUpdate" style="padding:0;min-height:0">检查更新</button></div>
             </div>
             <div class="data-btns">
               <button class="data-btn" id="exportBtn">导出备份</button>
@@ -7921,7 +7925,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb15').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb16').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8385,6 +8389,10 @@ try{
   };
 })();
 </script>
+
+
+
+
 
 
 
@@ -10664,6 +10672,12 @@ function applyAIResult(obj, text) {
   }
   var reply = (obj && obj.reply) || '我不太确定，再说一次？';
   var act = obj && obj.action;
+  // 模型没给动作，但用户这句话确实是「让我记 / 查 / 让我提醒」→ 走意图闸门，而不是把模型的话直接照念
+  if (!act || !act.type || act.type === 'none') {
+    var _it2 = detectIntent(text);
+    if (_it2.kind === 'query') { answerQuery(text); return; }
+    if (_it2.kind === 'create' || _it2.kind === 'suggest') { fallbackReply(text, false); return; }
+  }
   if (act && act.type && act.type !== 'none') {
     var extra = execRemote(act, reply, text);
     if (!extra) say(reply || '已经处理好了。');
@@ -11126,29 +11140,24 @@ function execRemote(a, modelReply, userText) {
       var title = String(a.title || draft.title || '').trim();
       if (!title) return '要记的事还差个名字。';
       if (!ts) return '「' + title + '」的时间我没听清，说具体点？';
-      // 「养成习惯 / 每天都 / 老是忘」→ 落成每天重复
       var habit = /(每天|天天|每日|习惯|老是忘|坚持)/.test(String(userText || '') + whenStr);
-      if (habit && (!draft.repeat || draft.repeat === 'none')) draft.repeat = 'daily';
-      var id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
-      T().unshift({
-        id: id, title: title, ts: ts, lv: a.level || 1, done: false, note: '',
-        repeat: draft.repeat || 'none', weekMask: (draft.repeat === 'custom' ? draft.weekMask : 0),
-        completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
+      var rep = draft.repeat || 'none';
+      if (habit && rep === 'none') rep = 'daily';
+      // ★ 一律先确认：点「确认执行」才写入，且只写一次
+      var made = AITools.createTask({
+        title: title, ts: ts, lv: a.level || 1, repeat: rep,
+        weekMask: (rep === 'custom' ? (draft.weekMask || 0) : 0)
       });
-      doSave(); doRender(); highlight(id);
-      setUndo(function () {
-        var arr = T(), i = arr.findIndex(function (x) { return x.id === id; });
-        if (i >= 0) { arr.splice(i, 1); doSave(); doRender(); }
-      });
-      doToast('已记下 · ' + ft(ts), 'undo');
-      var head = (modelReply && String(modelReply).trim()) || ('记好了：' + title);
-      say(head + '\n' + ft(ts) + ' · ' + lvName(a.level || 1) + (draft.repeat === 'daily' ? ' · 每天' : ''), {
-        k: '✓', title: title, meta: ft(ts), id: id,
-        acts: [{ k: 'edit', t: '改时间' }, { k: 'undo', t: '撤销' }]
-      });
+      if (!made.ok) return made.error || '这条好像刚记过，先看看列表。';
+      aiRequestConfirm(made.plan);
+      return 'confirm';
+    }
+    if (a.type === 'list') {
+      // ★ 缺 day 时按用户原话解析（下周一/本月/未来三天/12月5日…）；解析不出就反问，不兜今天
+      var dayHint = a.day && String(a.day).trim();
+      answerQuery(dayHint || String(userText || '').trim() || '今天');
       return 'done';
     }
-    if (a.type === 'list') { answerQuery(a.day || '今天'); return 'done'; }
     var t = a.task_id ? allList().filter(function (x) { return x.id === a.task_id; })[0] : null;
     if (!t) return '那条待办已经不在列表里了。';
     if (a.type === 'update') {
