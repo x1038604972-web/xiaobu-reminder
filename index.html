@@ -2200,6 +2200,23 @@ html[data-mode="dark"]:root .v2-progress .v2-prog-v b{color:#fff!important;-webk
 #calGrid .cal-cell.d-today.join-r{border-right:0!important;border-top-right-radius:0!important;border-bottom-right-radius:0!important;margin-right:-1px!important}
 
 
+
+/* ═══ 完成卡收短一点：内容更贴近，插画 cover 后不会露出边缘的接缝 ═══ */
+html:root .v2-progress{
+  padding:14px 18px 12px!important;
+  min-height:0!important;
+  aspect-ratio:auto!important;
+}
+html:root .v2-progress .v2-prog-v{font-size:30px!important;line-height:1.05!important}
+html:root .v2-progress .v2-bar{margin:10px 0 8px!important;height:7px!important}
+html:root .v2-progress .v2-quote{font-size:12px!important;line-height:1.4!important}
+html:root .v2-progress .v2-prog-k{font-size:11.5px!important}
+html:root .v2-progress .v2-prog-of{font-size:11.5px!important}
+@media(max-width:355px){
+  html:root .v2-progress{padding:12px 14px 10px!important}
+  html:root .v2-progress .v2-prog-v{font-size:27px!important}
+}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7744,7 +7761,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb2').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb3').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8034,6 +8051,7 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
 
 
 
