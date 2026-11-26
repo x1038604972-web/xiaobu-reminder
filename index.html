@@ -2217,6 +2217,7 @@ html:root .v2-progress .v2-prog-of{font-size:11.5px!important}
   html:root .v2-progress .v2-prog-v{font-size:27px!important}
 }
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3492,7 +3493,7 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           <div class="v2-prog-head">
             <div>
               <div class="v2-prog-k">今日完成</div>
-              <div class="v2-prog-v"><b id="v2Rate">0</b><span>%</span><em class="v2-prog-of" id="v2ProgMeta">0 / 0</em></div>
+              <div class="v2-prog-v"><b id="v2Rate">0</b><span>%</span></div>
             </div>
           </div>
           <div class="v2-bar"><i id="v2BarFill"></i></div>
@@ -4772,7 +4773,7 @@ function renderHomeV2(){
   const kEl=document.querySelector('.v2-prog-k');
   if(kEl)kEl.textContent=b.isToday?'今日完成':(dayWord+'完成');
   $('v2Rate').textContent=b.rate;
-  $('v2ProgMeta').textContent=b.done+' / '+b.total;
+  const _pm=$('v2ProgMeta'); if(_pm)_pm.textContent=b.done+' / '+b.total;
   $('v2BarFill').style.width=b.rate+'%';
   $('v2Quote').textContent=V2_QUOTES[new Date().getDate()%V2_QUOTES.length];
   $('v2Done').textContent=b.done;
@@ -7761,7 +7762,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb3').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb4').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8051,6 +8052,7 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
 
 
 
