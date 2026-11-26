@@ -1986,6 +1986,43 @@ html[data-mode="dark"] .cal-cell.d-skip::before{background:rgba(255,255,255,.03)
 
 
 
+
+/* ═══ 首页完成卡：5 张手绘插画轮换做背景（cover）+ 上方轻渐变遮罩 ═══ */
+html:root .v2-progress{
+  background-image:
+    linear-gradient(180deg,rgba(255,255,255,.72) 0%,rgba(255,255,255,.42) 38%,rgba(255,255,255,.06) 66%,rgba(255,255,255,0) 100%),
+    var(--hero-art,url(hero-1.png))!important;
+  background-size:auto,cover!important;
+  background-position:center top,center!important;
+  background-repeat:no-repeat,no-repeat!important;
+  border-color:rgba(255,255,255,.6)!important;
+  box-shadow:0 12px 28px rgba(37,42,39,.10),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+html:root .v2-progress .v2-prog-k{color:#2A5740!important;-webkit-text-stroke:0;text-shadow:0 1px 2px rgba(255,255,255,.95),0 0 10px rgba(255,255,255,.8)}
+html:root .v2-progress .v2-prog-v b{color:#17391F!important;-webkit-text-stroke:2.5px #fff;paint-order:stroke fill;text-shadow:0 1px 6px rgba(255,255,255,.6)}
+html:root .v2-progress .v2-prog-v span{color:#2A5740!important;-webkit-text-stroke:2px #fff;paint-order:stroke fill}
+html:root .v2-progress .v2-prog-of{color:#2A5740!important;-webkit-text-stroke:1.6px #fff;paint-order:stroke fill}
+html:root .v2-progress .v2-quote{color:#22412F!important;-webkit-text-stroke:1.4px #fff;paint-order:stroke fill;text-shadow:0 1px 4px rgba(255,255,255,.75)}
+html[data-mode="dark"]:root .v2-progress{
+  background-image:
+    linear-gradient(180deg,rgba(12,18,15,.62) 0%,rgba(12,18,15,.40) 42%,rgba(12,18,15,.14) 72%,rgba(12,18,15,.02) 100%),
+    var(--hero-art,url(hero-1.png))!important;
+}
+html[data-mode="dark"]:root .v2-progress .v2-prog-k{color:#E8F2EA!important;-webkit-text-stroke:0;text-shadow:0 1px 3px rgba(0,0,0,.55)}
+html[data-mode="dark"]:root .v2-progress .v2-prog-v b{color:#fff!important;-webkit-text-stroke:2.5px rgba(0,0,0,.45)}
+html[data-mode="dark"]:root .v2-progress .v2-prog-v span,
+html[data-mode="dark"]:root .v2-progress .v2-prog-of,
+html[data-mode="dark"]:root .v2-progress .v2-quote{color:#F2F7F3!important;-webkit-text-stroke:1.6px rgba(0,0,0,.45)}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"]:root .v2-progress{
+    background-image:
+      linear-gradient(180deg,rgba(12,18,15,.62) 0%,rgba(12,18,15,.40) 42%,rgba(12,18,15,.14) 72%,rgba(12,18,15,.02) 100%),
+      var(--hero-art,url(hero-1.png))!important;
+  }
+}
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4513,7 +4550,14 @@ function v2CatIcon(hex,glyph){
   const key=({ '!':'clock','•':'circle','○':'leaf','✦':'spark','∞':'inf' })[glyph]||'circle';
   return '<span class="v2-ic '+key+' big"></span>';
 }
+function applyHeroArt(){
+  try{
+    const n=(new Date().getDate()%5)+1;
+    document.documentElement.style.setProperty('--hero-art','url(hero-'+n+'.png)');
+  }catch(e){}
+}
 function renderHomeV2(){
+  applyHeroArt();
   const hi=$('v2Hi');if(!hi)return;
   const b=v2TodayBuckets();
   const nick=v2Nick();
@@ -7486,11 +7530,14 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb8').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
