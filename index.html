@@ -1342,6 +1342,96 @@ html[data-elder="on"] .toast{bottom:calc(212px + env(safe-area-inset-bottom))!im
 
 
 
+
+/* ═══════════ UI v2 · 第三阶段：其余页面的统一质感 ═══════════ */
+
+/* 我的：品牌块 + 会员卡 + 账号卡 */
+.brand-block{padding:6px 2px 14px;gap:12px}
+.brand-mark{width:46px;height:46px;border-radius:14px;box-shadow:var(--shadow-soft)}
+.brand-words .wordmark{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.brand-words .slogan{font-size:11.5px;color:var(--ink3)}
+.member-card{
+  background:linear-gradient(135deg,#EAF5EE 0%,#F4F8F5 55%,#FBF7EC 100%);
+  border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-soft);
+  padding:16px 18px;
+}
+html[data-mode="dark"] .member-card{background:linear-gradient(135deg,#17231C,#1A1E1C 60%,#241F16)}
+.member-title{font-size:14.5px;font-weight:750}
+.member-badge{background:var(--brand-soft);color:var(--brand-ink);border:0;font-weight:700}
+.member-desc{color:var(--ink2);font-size:12.5px}
+.member-link{color:var(--brand-ink);font-weight:700;font-size:12.5px}
+
+.set-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+  box-shadow:var(--shadow-soft);padding:15px 16px;
+}
+.set-title{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px}
+.set-desc{color:var(--ink3);font-size:12px;line-height:1.6}
+.acc-avatar{
+  width:44px;height:44px;border-radius:14px;background:var(--brand-soft);color:var(--brand-ink);
+  font-weight:800;font-size:16px;display:grid;place-items:center;
+}
+.acc-name{font-size:14.5px;font-weight:700}
+.acc-sub{font-size:11.5px;color:var(--ink3)}
+.acc-primary,.acc-ghost{min-height:38px;border-radius:12px;font-size:12.5px;font-weight:700}
+.acc-primary{background:var(--brand);color:#fff;border:0}
+.acc-ghost{background:var(--line2);color:var(--ink2);border:1px solid var(--line)}
+.wcfg{color:var(--ink3);font-size:11.5px}
+
+/* 设置项：分段控件/色块/滑块 */
+.seg{background:var(--line2);border-radius:12px;padding:3px}
+.seg button{border-radius:10px;font-weight:650;color:var(--ink2)}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(37,42,39,.08)}
+.swatches{gap:10px}
+.sw{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.7)}
+.sw.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--brand)}
+
+/* 习惯卡：白卡 + 柔和底 */
+.habit{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-item);
+  box-shadow:var(--shadow-soft);padding:13px 14px;
+}
+.habit-line{font-weight:700}
+.habit-grid{gap:5px}
+.habit-day{border-radius:9px;background:var(--line2);color:var(--ink3);font-weight:700}
+.habit-day.on{background:var(--brand);color:#fff}
+.habit-day.today{box-shadow:0 0 0 1.5px var(--brand)}
+.habit-tag{background:var(--blue-soft);color:#2F6D9E;border:0;font-weight:700}
+.habit-add{background:var(--brand-soft);color:var(--brand-ink);border:1px dashed var(--brand);border-radius:12px;font-weight:700}
+
+/* 终焉卡：琥珀色系，克制但一眼认出 */
+.card.terminus{background:linear-gradient(180deg,#FFFDF7,var(--surface) 60%);border-color:#F0E4C6}
+html[data-mode="dark"] .card.terminus{background:linear-gradient(180deg,#221F18,var(--surface) 60%);border-color:#3A3324}
+.card.terminus .terminus-tag{background:var(--amber-soft);color:#9A7314;border:0;font-weight:700}
+.card.terminus .terminus-when{color:#9A7314}
+.card.terminus .check{border-color:#E5C877}
+
+/* 已过时间：淡红提示，不刺眼 */
+#overdueSec .sec-title{color:#B95656}
+.mini-btn{background:var(--surface);border:1px solid var(--line);border-radius:999px;font-weight:650;color:var(--ink2)}
+
+/* 弹层：更干净的圆角与留白 */
+.sheet,.modal,.sum-card{
+  background:var(--surface);border-radius:24px 24px 0 0;
+  box-shadow:0 -10px 40px rgba(37,42,39,.16);
+}
+.modal{border-radius:22px}
+.sheet-title,.sum-title{font-size:15.5px;font-weight:750}
+.field input,.field textarea,.auth-field input,.cfg-field input{
+  background:var(--bg);border:1px solid var(--line);border-radius:12px;color:var(--ink);
+}
+.field input:focus,.field textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.save{background:var(--brand);color:#fff;border-radius:14px;font-weight:750}
+.auth-submit{background:var(--brand);color:#fff;border-radius:14px;font-weight:750}
+.data-btn{background:var(--surface);border:1px solid var(--line);border-radius:12px;font-weight:650;color:var(--ink2)}
+.data-btn.danger{color:#B95656;border-color:#F3D9D9}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;color:var(--ink2);font-weight:650}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+/* 安全区：底部弹层别被手势条压住 */
+.sheet{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+
+.member-title{color:var(--ink)!important}.member-top .member-title{color:var(--ink)!important}.member-link{color:var(--brand-ink)!important}.brand-words .wordmark{color:var(--ink)}
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -6836,6 +6926,8 @@ try{
   }
 }catch(e){}
 </script>
+
+
 
 
 
