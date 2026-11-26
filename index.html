@@ -2160,6 +2160,35 @@ html body #calGrid .cal-cell.today.all-done .cal-num{color:#FFFFFF!important;-we
 /* 今天做完也还是方框：数字保持深绿，不要反白 */
 html body #calGrid .cal-cell.d-today.d-today-done .cal-num{color:var(--brand-ink)!important;-webkit-text-stroke:0!important}
 
+
+/* ═══ 完成卡背景：只用插画本身（左淡右实已烘进图片 alpha），不再叠白幕 ═══ */
+html:root .v2-progress{
+  background-image:var(--hero-art,url(hero-1.png))!important;
+  background-size:cover!important;
+  background-position:center!important;
+  background-origin:border-box!important;
+  background-clip:border-box!important;
+  background-color:var(--surface)!important;
+  border:0!important;
+  box-shadow:0 10px 24px rgba(37,42,39,.12)!important;
+  overflow:hidden!important;
+}
+html[data-mode="dark"]:root .v2-progress{background-color:var(--surface)!important}
+html:root .v2-progress .v2-prog-k{color:#24503A!important;-webkit-text-stroke:0!important;text-shadow:0 1px 2px rgba(255,255,255,.9)}
+html:root .v2-progress .v2-prog-v b{color:#12331D!important;-webkit-text-stroke:2px #fff;paint-order:stroke fill}
+html:root .v2-progress .v2-prog-v span,
+html:root .v2-progress .v2-prog-of{color:#24503A!important;-webkit-text-stroke:1.5px #fff;paint-order:stroke fill}
+html:root .v2-progress .v2-quote{color:#1F3D2C!important;-webkit-text-stroke:1.2px #fff;paint-order:stroke fill}
+html[data-mode="dark"]:root .v2-progress .v2-prog-k,
+html[data-mode="dark"]:root .v2-progress .v2-quote,
+html[data-mode="dark"]:root .v2-progress .v2-prog-v span,
+html[data-mode="dark"]:root .v2-progress .v2-prog-of{color:#EAF5EE!important;-webkit-text-stroke:1.2px rgba(0,0,0,.45)}
+html[data-mode="dark"]:root .v2-progress .v2-prog-v b{color:#fff!important;-webkit-text-stroke:2px rgba(0,0,0,.4)}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"]:root .v2-progress .v2-prog-k,
+  html[data-mode="auto"]:root .v2-progress .v2-quote{color:#EAF5EE!important}
+}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7695,7 +7724,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb18').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb19').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -7985,6 +8014,7 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
 
 
 
