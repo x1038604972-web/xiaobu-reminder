@@ -2189,6 +2189,10 @@ html[data-mode="dark"]:root .v2-progress .v2-prog-v b{color:#fff!important;-webk
   html[data-mode="auto"]:root .v2-progress .v2-quote{color:#EAF5EE!important}
 }
 
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7724,7 +7728,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb19').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb1').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8020,6 +8024,10 @@ try{
 
 
 
+
+
+
+
 <script>
 /* ==== XIAOBU JS START ==== */
 /* ═══════════════════════════════════════════════════════════════
@@ -8273,7 +8281,8 @@ try{
       S.ai.key = (X$('xbAiKey').value || '').trim();
       S.ai.model = (X$('xbAiModel').value || '').trim();
       saveAI();
-      if (!S.ai.key) { setAiState('先填 API Key'); return; }
+      var _pb = String(S.ai.base || '');
+    if (!S.ai.key && !/\/v1\/chat(\?|$)/.test(_pb)) { setAiState('先填 API Key'); return; }
       if (!/^https?:/.test(S.ai.base)) { setAiState('接口地址要以 https:// 开头'); return; }
       setAiState('测试中…');
       testAI().then(function (r) {
@@ -8360,9 +8369,10 @@ try{
       max_tokens: isReasoner() ? 256 : 8
     };
     if (!isReasoner()) body.temperature = 0;   // 推理模型不支持 temperature
-    return fetch(base + '/chat/completions', {
+    var _proxy = /\/v1\/chat(\?|$)/.test(base);
+    return fetch(_proxy ? base : (base + '/chat/completions'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
+      headers: _proxy ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
       body: JSON.stringify(body)
     }).then(function (r) {
       if (r.status === 401 || r.status === 403) throw new Error('Key 无效或没权限（' + r.status + '）');
@@ -8409,7 +8419,7 @@ try{
 
   function updateSub() {
     var sub = X$('xbSub'); if (!sub) return;
-    sub.textContent = (S.ai.on && S.ai.key)
+    sub.textContent = (S.ai.on && (S.ai.key || /\/v1\/chat(\?|$)/.test(String(S.ai.base || ''))))
       ? 'AI 模式 · ' + (S.ai.model || 'deepseek-chat')
       : '本地模式 · 会记事，也会替你动手';
   }
@@ -8519,7 +8529,8 @@ try{
     X$('xbMask').classList.add('on');
     X$('xb').classList.add('on');
     S.open = true;
-    if (!S.msgs.length) greet(true); else render();
+    try { aiRestoreCtx(); } catch (e) {}
+  if (!S.msgs.length) greet(true); else render();
     updateSub();
     setTimeout(function () { try { X$('xbText').focus(); } catch (e) {} }, 320);
   }
@@ -9004,7 +9015,12 @@ try{
   /* 本地啃不动的说法 */
   var HARD = /(随便|任意|哪天|之前|之内|之间|有空的时候|有空|养成习惯|每次都|各一次|两次|三次|没做完的都|都挪|都推到|重新安排|重新排|看情况|差不多|上次那条|那条改)/;
 
-  function aiReady() { return !!(S.ai && S.ai.on && S.ai.key); }
+  function aiReady() {
+  if (!S.ai || !S.ai.on) return false;
+  var base = String(S.ai.base || '');
+  if (/\/v1\/chat(\?|$)/.test(base)) return true;   // 走服务端代理，不需要前端 Key
+  return !!S.ai.key;
+}
 
   /* 推理型模型：先想再说，token 消耗大、不支持 temperature、首字慢 */
   function isReasoner() {
@@ -9886,10 +9902,13 @@ try{
 
     var ctrl = null, timer = null;
     try { ctrl = new AbortController(); timer = setTimeout(function () { ctrl.abort(); }, aiTimeout()); } catch (e) {}
-    fetch(base + '/chat/completions', {
+    var viaProxy = /\/v1\/chat(\?|$)/.test(base);
+    var url = viaProxy ? base : (base + '/chat/completions');
+    var hdr = viaProxy ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key };
+    return fetch(url, {
       method: 'POST',
       signal: ctrl ? ctrl.signal : undefined,
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key },
+      headers: hdr,
       body: JSON.stringify(isReasoner()
         ? { model: S.ai.model, messages: [{ role: 'system', content: sysPrompt() }].concat(hist), max_tokens: 1200 }
         : { model: S.ai.model || 'deepseek-chat', temperature: 0.2, messages: [{ role: 'system', content: sysPrompt() }].concat(hist) })
@@ -9898,7 +9917,7 @@ try{
       return r.json();
     }).then(function (j) {
       if (timer) { clearTimeout(timer); timer = null; }
-      var txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      var txt = (j && j.ok && j.text) || (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content);
       if (!txt) throw new Error('empty');
       var obj = normJSON(txt);
       // 没按 JSON 回 → 追一次严格的；仍然不行才走兜底
@@ -9987,7 +10006,264 @@ try{
     return a;
   }
 
-  function execRemote(a, modelReply, userText) {
+  
+/* ══════════════════════════════════════════════════════════════════
+   Phase 1 · AITools：AI 唯一允许调用的业务层
+   规则：
+   1) 只读操作直接返回数据；写操作返回一份「计划」对象，不落库。
+   2) 删除 / 修改 / 批量 → 必须先进确认卡（qingji_ai_pending_v1），
+      用户点「确认」才执行；执行一次即销毁草稿（防重复）。
+   3) 所有写操作最终都走 doSave()/doRender()/resyncReminders()，
+      不直接改 localStorage。
+   ══════════════════════════════════════════════════════════════════ */
+var AI_PENDING_KEY = 'qingji_ai_pending_v1';
+var AI_CTX_KEY = 'qingji_xiaobu_ctx_v1';
+var AI_CTX_MAX = 12;
+var AI_TASK_FIELDS = ['title', 'ts', 'lv', 'repeat', 'weekMask', 'note'];
+
+function aiDown(s) { try { return resyncReminders() } catch (e) { return null } }
+function aiPersist() { try { doSave() } catch (e) {} try { doRender() } catch (e) {} aiDown(); }
+
+function aiTodayKey() { try { return dayKey(Date.now()) } catch (e) { return '' } }
+function aiAll() { try { return allList() || [] } catch (e) { return T() || [] } }
+function aiFind(id) {
+  var arr = aiAll();
+  for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i];
+  return null;
+}
+function aiClampTitle(t) {
+  t = String(t == null ? '' : t).replace(/\s+/g, ' ').trim();
+  return t.slice(0, 200);
+}
+function aiStamp() { return new Date().toLocaleString('zh-CN', { hour12: false }); }
+
+/* ── 确认卡 ───────────────────────────────────────────── */
+function aiWritePending(plan) {
+  try { localStorage.setItem(AI_PENDING_KEY, JSON.stringify({ v: 1, at: Date.now(), plan: plan })); } catch (e) {}
+}
+function aiReadPending() {
+  try {
+    var v = JSON.parse(localStorage.getItem(AI_PENDING_KEY) || 'null');
+    return v && v.plan ? v : null;
+  } catch (e) { return null; }
+}
+function aiClearPending() { try { localStorage.removeItem(AI_PENDING_KEY); } catch (e) {} }
+
+function aiRequestConfirm(plan) {
+  plan.id = plan.id || ('p' + Date.now());
+  aiWritePending(plan);
+  var lines = [];
+  lines.push(plan.op === 'delete' ? '要删掉这一条？' : (plan.op === 'update' ? '要改成这样？' : '要执行这个批量操作？'));
+  if (plan.title) lines.push('「' + plan.title + '」');
+  if (plan.before && plan.after) {
+    Object.keys(plan.after).forEach(function (k) {
+      lines.push('· ' + k + '：' + JSON.stringify(plan.before[k]) + ' → ' + JSON.stringify(plan.after[k]));
+    });
+  }
+  say(lines.join('\n'), {
+    k: '?', title: plan.title || '待确认', meta: '确认后才会执行', id: plan.taskId || '',
+    acts: [{ k: 'aiok', t: '确认执行' }, { k: 'aicancel', t: '取消' }]
+  });
+  return plan;
+}
+
+function aiRunPending(id) {
+  var p = aiReadPending();
+  if (!p) { say('这条确认已经处理过了，或者过期了。', null); return false; }
+  if (id && p.plan.id && id !== p.plan.id) { say('确认的好像不是这一条，重新说一下？', null); return false; }
+  aiClearPending();
+  return aiApply(p.plan);
+}
+
+function aiApply(plan) {
+  if (!plan || !plan.op) return false;
+  var t = plan.taskId ? aiFind(plan.taskId) : null;
+  if (plan.op === 'delete') {
+    if (!t) { say('这条已经不在了。', null); return false; }
+    return !!(doDeleteOn(t) || true);
+  }
+  if (plan.op === 'update') {
+    if (!t) { say('这条已经不在了。', null); return false; }
+    Object.keys(plan.after || {}).forEach(function (k) {
+      if (AI_TASK_FIELDS.indexOf(k) >= 0) t[k] = plan.after[k];
+    });
+    if (plan.after && plan.after.ts) t.notified = false;
+    aiPersist();
+    say('改好了：' + t.title + '\n' + (ft(t.ts) || ''), { k: '✓', title: t.title, meta: ft(t.ts), id: t.id });
+    return true;
+  }
+  if (plan.op === 'create') {
+    var d = plan.data || {};
+    var id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
+    T().unshift({
+      id: id, title: aiClampTitle(d.title), ts: d.ts, lv: d.lv || 1, done: false, note: d.note || '',
+      repeat: d.repeat || 'none', weekMask: d.repeat === 'custom' ? (d.weekMask || 0) : 0,
+      completedCount: 0, escalateCount: 0, notified: false, created: Date.now()
+    });
+    aiPersist();
+    try { highlight(id) } catch (e) {}
+    say('记好了：' + aiClampTitle(d.title) + '\n' + ft(d.ts), { k: '✓', title: aiClampTitle(d.title), meta: ft(d.ts), id: id });
+    setUndo(function () {
+      var arr = T(), i = arr.findIndex(function (x) { return x.id === id; });
+      if (i >= 0) { arr.splice(i, 1); aiPersist(); }
+    });
+    return true;
+  }
+  if (plan.op === 'batch') {
+    var ok = 0;
+    (plan.items || []).forEach(function (it) { if (aiApply(it)) ok++; });
+    say('批量完成 ' + ok + ' 项。', null);
+    return true;
+  }
+  return false;
+}
+
+/* ── 工具层本体 ───────────────────────────────────────── */
+var AITools = (function () {
+  var recentCreates = [];          // 幂等：60 秒内相同标题+时间不允许重复建
+  function dupGuard(title, ts) {
+    var now = Date.now();
+    recentCreates = recentCreates.filter(function (x) { return now - x.at < 60000; });
+    var hit = recentCreates.some(function (x) { return x.key === (title + '@' + ts); });
+    if (hit) return true;
+    recentCreates.push({ key: title + '@' + ts, at: now });
+    return false;
+  }
+  function toOut(t) {
+    return {
+      id: t.id, title: t.title, ts: t.ts, when: ft(t.ts), done: !!t.done, lv: t.lv || 1,
+      repeat: t.repeat || 'none', subs: (t.subs || []).length
+    };
+  }
+  return {
+    version: 1,
+    /* 只读 -------------------------------------------------- */
+    queryTasks: function (opt) {
+      opt = opt || {};
+      var k = opt.day || aiTodayKey();
+      var arr = aiAll().filter(function (t) {
+        if (opt.done === true && !t.done) return false;
+        if (opt.done === false && t.done) return false;
+        if (opt.day === 'all') return true;
+        try { return dayKey(t.ts) === k } catch (e) { return false }
+      });
+      return { day: k, count: arr.length, items: arr.map(toOut) };
+    },
+    getTask: function (id) { var t = aiFind(id); return t ? toOut(t) : null; },
+    queryHabits: function () {
+      var h = (typeof habits !== 'undefined' && habits) ? habits : [];
+      var k = aiTodayKey();
+      return h.map(function (x) { return { title: x.title, doneToday: !!(x.days && x.days[k]) } });
+    },
+    statsToday: function () {
+      var k = aiTodayKey(), arr = aiAll().filter(function (t) {
+        try { return dayKey(t.ts) === k } catch (e) { return false }
+      });
+      var done = arr.filter(function (t) { return t.done }).length;
+      return { day: k, total: arr.length, done: done, rate: arr.length ? Math.round(done / arr.length * 100) : 0 };
+    },
+    lastTaskId: function () {
+      var c = aiReadCtx();
+      if (c && c.lastTaskId && aiFind(c.lastTaskId)) return c.lastTaskId;
+      var arr = aiAll();
+      return arr.length ? arr[0].id : null;
+    },
+    /* 写：返回 plan，不落库 ---------------------------------- */
+    createTask: function (input) {
+      input = input || {};
+      var title = aiClampTitle(input.title);
+      var ts = Number(input.ts) || 0;
+      if (!title) return { ok: false, error: '缺标题' };
+      if (!ts) return { ok: false, error: '缺时间' };
+      if (dupGuard(title, ts)) return { ok: false, error: '刚建过一条一模一样的，先看看列表' };
+      return { ok: true, plan: { op: 'create', title: title, data: { title: title, ts: ts, lv: +input.lv || 1, repeat: input.repeat || 'none', note: input.note || '', weekMask: input.weekMask || 0 } } };
+    },
+    updateTask: function (id, patch) {
+      var t = aiFind(id);
+      if (!t) return { ok: false, error: '找不到这条任务' };
+      var after = {}, before = {};
+      Object.keys(patch || {}).forEach(function (k) {
+        if (AI_TASK_FIELDS.indexOf(k) < 0) return;
+        after[k] = patch[k]; before[k] = t[k];
+      });
+      if (!Object.keys(after).length) return { ok: false, error: '没有可改的字段' };
+      return { ok: true, plan: { op: 'update', taskId: id, title: t.title, before: before, after: after, needConfirm: true } };
+    },
+    deleteTask: function (id) {
+      var t = aiFind(id);
+      if (!t) return { ok: false, error: '找不到这条任务' };
+      return { ok: true, plan: { op: 'delete', taskId: id, title: t.title, needConfirm: true } };
+    },
+    completeTask: function (id) {
+      var t = aiFind(id);
+      if (!t) return { ok: false, error: '找不到这条任务' };
+      return { ok: true, plan: { op: 'done', taskId: id, title: t.title } };
+    },
+    postponeTask: function (id, when) {
+      var t = aiFind(id);
+      if (!t) return { ok: false, error: '找不到这条任务' };
+      var ts = 0;
+      try { ts = parseWhenX(when) || parseTimeExtra(when) || 0; } catch (e) { ts = 0 }
+      if (!ts) return { ok: false, error: '新的时间没听清' };
+      return { ok: true, plan: { op: 'postpone', taskId: id, title: t.title, ts: ts } };
+    },
+    addSubtask: function (id, text) {
+      var t = aiFind(id);
+      if (!t) return { ok: false, error: '找不到这条任务' };
+      text = aiClampTitle(text);
+      if (!text) return { ok: false, error: '子任务内容为空' };
+      return { ok: true, plan: { op: 'subtask', taskId: id, title: t.title, text: text } };
+    },
+    /* 执行计划：危险操作先确认 ------------------------------- */
+    run: function (plan) {
+      if (!plan) return false;
+      if (plan.op === 'delete' || plan.op === 'update' || plan.op === 'batch') {
+        aiRequestConfirm(plan);
+        return 'confirm';
+      }
+      if (plan.op === 'done') { var t = aiFind(plan.taskId); return t ? !!(doDoneOn(t) || true) : false; }
+      if (plan.op === 'postpone') { var t2 = aiFind(plan.taskId); return t2 ? !!(doPostponeOn(t2, plan.ts) || true) : false; }
+      if (plan.op === 'subtask') {
+        var t3 = aiFind(plan.taskId);
+        if (!t3) return false;
+        t3.subs = t3.subs || [];
+        t3.subs.push({ id: 's' + Date.now(), text: plan.text, done: false });
+        aiPersist();
+        say('加了一条子任务：' + plan.text, null);
+        return true;
+      }
+      return aiApply(plan);
+    }
+  };
+})();
+
+/* ── 短期上下文（用于「刚才那个任务」）────────────────────── */
+function aiReadCtx() {
+  try { return JSON.parse(localStorage.getItem(AI_CTX_KEY) || 'null'); } catch (e) { return null }
+}
+function aiPushCtx(role, text, extra) {
+  var c = aiReadCtx() || { v: 1, items: [], lastTaskId: null };
+  c.items.push({ r: role, t: String(text || '').slice(0, 300), at: Date.now() });
+  if (c.items.length > AI_CTX_MAX) c.items = c.items.slice(-AI_CTX_MAX);
+  if (extra && extra.taskId) c.lastTaskId = extra.taskId;
+  c.v = 1;
+  try { localStorage.setItem(AI_CTX_KEY, JSON.stringify(c)); } catch (e) {}
+  return c;
+}
+function aiRestoreCtx() {
+  var c = aiReadCtx();
+  if (!c) return;
+  // 只补「最后那条任务」的引用，不把历史对话硬塞回来（避免污染今天的会话）
+  var p = aiReadPending();
+  if (p) {
+    say('上次还有一条没确认的操作：' + (p.plan.title || '待确认'), {
+      k: '?', title: p.plan.title || '待确认', meta: '点下面确认或取消', id: p.plan.taskId || '',
+      acts: [{ k: 'aiok', t: '确认执行' }, { k: 'aicancel', t: '取消' }]
+    });
+  }
+}
+
+function execRemote(a, modelReply, userText) {
     a = normActType(a || {});
     if (a.type === 'create') {
       var whenStr = String(a.when || '');
@@ -10022,8 +10298,27 @@ try{
     if (a.type === 'list') { doList(); return 'done'; }
     var t = a.task_id ? allList().filter(function (x) { return x.id === a.task_id; })[0] : null;
     if (!t) return '那条待办已经不在列表里了。';
-    if (a.type === 'done') { doDoneOn(t); return 'done'; }
-    if (a.type === 'delete') { doDeleteOn(t); return 'done'; }
+    if (a.type === 'update') {
+    var patch = {};
+    if (a.title) patch.title = a.title;
+    if (a.when) {
+      var ts2 = 0;
+      try { ts2 = parseWhenX(a.when) || parseTimeExtra(a.when) || 0; } catch (e) { ts2 = 0 }
+      if (ts2) patch.ts = ts2;
+    }
+    if (a.level) patch.lv = a.level;
+    var up = AITools.updateTask(t.id, patch);
+    if (!up.ok) return up.error;
+    AITools.run(up.plan);
+    return 'confirm';
+  }
+  if (a.type === 'done') { doDoneOn(t); return 'done'; }
+    if (a.type === 'delete') {
+    var del = AITools.deleteTask(t.id);
+    if (!del.ok) return del.error;
+    AITools.run(del.plan);      // 不再直接删，先进确认卡
+    return 'confirm';
+  }
     if (a.type === 'postpone') {
       doPostponeOn(t, parseWhenX(a.when || '') || parseTimeExtra(a.when || ''));
       return 'done';
@@ -10038,7 +10333,9 @@ try{
     var act = b.dataset.xbAct, id = b.dataset.id;
     var t = id ? allList().filter(function (x) { return x.id === id; })[0] : null;
 
-    if (act === 'multi-ok') { commitMulti(); return; }
+    if (act === 'aiok') { aiRunPending(id); return; }
+  if (act === 'aicancel') { aiClearPending(); say('好，这条先不动。'); return; }
+  if (act === 'multi-ok') { commitMulti(); return; }
     if (act === 'multi-first') { commitMulti(1); return; }
     if (act === 'multi-no') { cancelMulti(); return; }
     if (act === 'undo') { doUndo(); return; }
@@ -10316,6 +10613,12 @@ try{
   }
 
   window.XiaoBu = { open: open, close: close, boot: boot, say: say, notify: notifyNow, arm: armNotify, preview: preview, _state: S };
+/* 测试与调试入口（Phase 1） */
+window.XiaoBu._p1 = {
+  tools: AITools, run: function (p) { return AITools.run(p); },
+  pending: aiReadPending, runPending: aiRunPending, cancel: function () { aiClearPending(); return true; },
+  ctx: aiReadCtx, pushCtx: aiPushCtx, ask: askLLM, exec: execRemote
+};
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
