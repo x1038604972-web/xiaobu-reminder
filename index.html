@@ -2324,6 +2324,14 @@ html[data-mode="dark"]:root .v2-progress{
   }
 }
 
+
+/* ═══ 图标：深色用专门的 sprite（不再是抠掉白底后的脏边） ═══ */
+html[data-mode="dark"]:root .v2-ic{background-image:url(ic-set-dark.png)!important}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"]:root .v2-ic{background-image:url(ic-set-dark.png)!important}
+}
+html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat!important;box-shadow:none!important}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7878,7 +7886,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb8').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb9').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8168,6 +8176,7 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
 
 
 
