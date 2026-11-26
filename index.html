@@ -2259,6 +2259,28 @@ html[data-mode="dark"]:root{--u-line:rgba(255,255,255,.17)}
 }
 
 
+
+/* ═══ 选中的那一天：品牌绿描边 + 数字高亮，一眼看出选了哪天 ═══ */
+#calGrid .cal-cell.sel{
+  box-shadow:inset 0 0 0 2px var(--brand)!important;
+  border-radius:10px!important;
+}
+#calGrid .cal-cell.sel .cal-num{color:var(--brand-ink)!important;font-weight:800!important}
+#calGrid .cal-cell.d-unused.sel{box-shadow:inset 0 0 0 2px var(--brand)!important;border-radius:10px!important}
+#calGrid .cal-cell.d-unused.sel .cal-num{color:var(--brand-ink)!important}
+#calGrid .cal-cell.d-done.sel{box-shadow:inset 0 0 0 2px #fff,inset 0 0 0 4px rgba(255,255,255,.55)!important;border-radius:10px!important}
+#calGrid .cal-cell.d-done.sel .cal-num{color:#fff!important}
+#calGrid .cal-cell.d-miss.sel{box-shadow:inset 0 0 0 2px var(--brand)!important}
+#calGrid .cal-cell.d-today.sel{box-shadow:inset 0 0 0 2px var(--brand)!important}
+html[data-mode="dark"] #calGrid .cal-cell.sel{box-shadow:inset 0 0 0 2px var(--brand)!important}
+html[data-mode="dark"] #calGrid .cal-cell.sel .cal-num{color:var(--brand-ink)!important}
+
+
+/* 选中态底色统一成浅品牌色，字色加深，避免叠在「错过」红底上看不清 */
+#calGrid .cal-cell.sel:not(.d-done){background:var(--brand-soft)!important}
+#calGrid .cal-cell.sel:not(.d-done):not(.d-today) .cal-num{color:var(--brand-press,#23784B)!important}
+html[data-mode="dark"] #calGrid .cal-cell.sel:not(.d-done){background:rgba(79,185,129,.18)!important}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7813,7 +7835,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb6').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8103,6 +8125,8 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
+
 
 
 
