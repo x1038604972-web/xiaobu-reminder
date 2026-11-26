@@ -1778,6 +1778,46 @@ html:root .sw.on::after{
   text-shadow:0 1px 2px rgba(0,0,0,.3)!important;
 }
 
+
+/* ═══ 深色模式滚动条：改成半透明深灰，不再是一条亮白 ═══ */
+html[data-mode="dark"] *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) rgba(255,255,255,.04)}
+html[data-mode="dark"] *::-webkit-scrollbar{width:6px;height:6px;background:transparent}
+html[data-mode="dark"] *::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:999px}
+html[data-mode="dark"] *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px}
+html[data-mode="dark"] *::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.22)}
+html[data-mode="dark"] *::-webkit-scrollbar-corner{background:transparent}
+html[data-mode="dark"] .sheet *::-webkit-scrollbar,
+html[data-mode="dark"] .modal *::-webkit-scrollbar,
+html[data-mode="dark"] .sheet::-webkit-scrollbar,
+html[data-mode="dark"] .modal::-webkit-scrollbar{width:5px;height:5px}
+html[data-mode="dark"] .sheet *::-webkit-scrollbar-thumb,
+html[data-mode="dark"] .modal *::-webkit-scrollbar-thumb,
+html[data-mode="dark"] .sheet::-webkit-scrollbar-thumb,
+html[data-mode="dark"] .modal::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"] *{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.14) rgba(255,255,255,.04)}
+  html[data-mode="auto"] *::-webkit-scrollbar-track{background:rgba(255,255,255,.04);border-radius:999px}
+  html[data-mode="auto"] *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14)}
+}
+
+
+/* 深色下「轻提醒」等选中项：不要整块亮绿（元素可能只有 .on 没有 .lv1） */
+html[data-mode="dark"] .lv-opt.on,
+html[data-mode="dark"] .lv-opt.on.lv1{
+  background:rgba(79,185,129,.16)!important;
+  border-color:rgba(79,185,129,.62)!important;
+  color:var(--ink)!important;
+}
+html[data-mode="dark"] .lv-opt.on small{color:var(--ink2)!important;opacity:1!important}
+html[data-mode="dark"] .lv-opt.on b{color:var(--ink)!important}
+html[data-mode="dark"] .lv-opt.on .lv-ico{border-color:currentColor!important;background:transparent!important}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"] .lv-opt.on,html[data-mode="auto"] .lv-opt.on.lv1{
+    background:rgba(79,185,129,.16)!important;border-color:rgba(79,185,129,.62)!important;color:var(--ink)!important;
+  }
+  html[data-mode="auto"] .lv-opt.on small{color:var(--ink2)!important}
+}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7255,11 +7295,13 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb4').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb5').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
 
 
 
