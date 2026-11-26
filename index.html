@@ -2218,6 +2218,47 @@ html:root .v2-progress .v2-prog-of{font-size:11.5px!important}
 }
 
 
+
+/* ═══ 没安排的日子（含上线前）：空心长条，和绿色块断开 ═══ */
+#calGrid .cal-cell.d-unused{
+  background:transparent!important;
+  border:1.5px solid rgba(37,42,39,.15)!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+  padding:4px 0!important;
+}
+#calGrid .cal-cell.d-unused .cal-num{color:var(--ink2)!important;font-weight:650!important;opacity:1!important}
+#calGrid .cal-cell.d-unused.u-s{border-radius:10px 0 0 10px!important}
+#calGrid .cal-cell.d-unused.u-e{border-radius:0 10px 10px 0!important}
+#calGrid .cal-cell.d-unused.u-s.u-e{border-radius:10px!important}
+#calGrid .cal-cell.d-unused:not(.u-s){border-left:0!important}
+#calGrid .cal-cell.d-unused:not(.u-e){border-right:0!important}
+/* 深浅色下都保持轻，不要抢绿条的注意力 */
+html[data-mode="dark"] #calGrid .cal-cell.d-unused{border-color:rgba(255,255,255,.16)!important}
+html[data-mode="dark"] #calGrid .cal-cell.d-unused .cal-num{color:var(--ink3)!important}
+
+
+/* 未使用长条：用 inset 阴影画上下边，中间不留竖线，看起来是一整条 */
+:root{--u-line:rgba(37,42,39,.16)}
+html[data-mode="dark"]:root{--u-line:rgba(255,255,255,.17)}
+#calGrid .cal-cell.d-unused{
+  border:0!important;background:transparent!important;border-radius:0!important;padding:4px 0!important;
+  box-shadow:inset 0 1.5px 0 var(--u-line),inset 0 -1.5px 0 var(--u-line)!important;
+}
+#calGrid .cal-cell.d-unused.u-s{
+  border-radius:10px 0 0 10px!important;
+  box-shadow:inset 1.5px 0 0 var(--u-line),inset 0 1.5px 0 var(--u-line),inset 0 -1.5px 0 var(--u-line)!important;
+}
+#calGrid .cal-cell.d-unused.u-e{
+  border-radius:0 10px 10px 0!important;
+  box-shadow:inset -1.5px 0 0 var(--u-line),inset 0 1.5px 0 var(--u-line),inset 0 -1.5px 0 var(--u-line)!important;
+}
+#calGrid .cal-cell.d-unused.u-s.u-e{
+  border-radius:10px!important;
+  box-shadow:inset 0 0 0 1.5px var(--u-line)!important;
+}
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4904,6 +4945,16 @@ function calMergeRuns(){
       for(let k=i;k<=j;k++){if(k>i&&k<j)row[k].classList.add('run-m')}
       i=j+1;
     }
+    // 连续「没安排」的日子连成一条空心长条（不与绿色块相连）
+    let a=0;
+    while(a<row.length){
+      if(!row[a].classList.contains('d-unused')){a++;continue}
+      let b2=a;
+      while(b2+1<row.length&&row[b2+1].classList.contains('d-unused'))b2++;
+      row[a].classList.add('u-s');
+      row[b2].classList.add('u-e');
+      a=b2+1;
+    }
     // 今天不是完成态时，若左右是绿条，就收平对应圆角，让方框和绿条咬合
     for(let k=0;k<row.length;k++){
       const c=row[k];
@@ -5720,8 +5771,8 @@ function renderCalendar(){
     state='d-done';                                      // 已经过去的日子：完成=实心
   }else if(list.length&&isPast){
     state='d-miss';
-  }else if(isPast){
-    state='d-skip';
+  }else if(isPast&&m===calMonth){
+    state='d-unused';                                   // 那天没有任何安排（含上线前）：画成长条空格
   }else{
     state='';
   }
@@ -7762,7 +7813,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb4').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb6').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8052,6 +8103,9 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
+
+
 
 
 
