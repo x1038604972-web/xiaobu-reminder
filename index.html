@@ -1051,6 +1051,297 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+</style>
+
+<style id="v2-theme">
+/* ═══════════════════════════════════════════════════════════════════
+   小步 UI v2 · 设计变量与组件
+   目标：浅色、轻、白卡、柔和绿、线性图标、克制阴影。
+   所有颜色/圆角/间距都走变量，别在组件里写死色值。
+   ═══════════════════════════════════════════════════════════════════ */
+:root{
+  /* 品牌 */
+  --brand:#2F9660;--brand-press:#23784B;--brand-soft:#EAF5EE;--brand-ink:#23784B;
+  /* 辅助 */
+  --violet:#8B65C7;--amber:#E9B94F;--blue:#5797D5;--red:#E47777;
+  --violet-soft:#F3EEFB;--amber-soft:#FDF5E4;--blue-soft:#EDF4FC;--red-soft:#FCEEEE;
+  /* 基础 */
+  --paper:#F7F8F7;--bg:#F7F8F7;--surface:#FFFFFF;
+  --ink:#252A27;--ink2:#5F6663;--ink3:#8A918D;
+  --line:#ECEFEC;--line2:#F3F5F3;
+  /* 形状与阴影 */
+  --r-card:20px;--r-item:16px;--r-chip:999px;--r-btn:14px;
+  --shadow:0 1px 2px rgba(37,42,39,.04),0 10px 28px rgba(37,42,39,.06);
+  --shadow-soft:0 1px 2px rgba(37,42,39,.03),0 4px 14px rgba(37,42,39,.04);
+  /* 间距 */
+  --sp-1:6px;--sp-2:10px;--sp-3:14px;--sp-4:20px;--sp-5:28px;
+  --v2-pad:16px;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro SC","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei",system-ui,sans-serif;
+}
+html[data-mode="dark"]{
+  --paper:#121514;--bg:#121514;--surface:#1A1E1C;
+  --ink:#E8ECE9;--ink2:#AEB6B1;--ink3:#8A918D;
+  --line:#262B28;--line2:#1F2321;
+  --brand:#4FB981;--brand-press:#3E9B6A;--brand-soft:#18271F;--brand-ink:#9BD9B7;
+  --violet-soft:#232030;--amber-soft:#2A2418;--blue-soft:#182430;--red-soft:#2B1D1D;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px rgba(0,0,0,.35);
+  --shadow-soft:0 1px 2px rgba(0,0,0,.25),0 4px 14px rgba(0,0,0,.25);
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased}
+
+/* ── 顶部问候 ── */
+.top{background:transparent;border:0;box-shadow:none}
+.top .hello,#greet{font-size:26px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
+.top .date,#dateTxt{font-size:12.5px;color:var(--ink3);margin-top:4px}
+.summary{color:var(--ink2);font-size:12.5px}
+
+/* ── 卡片统一 ── */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-soft)}
+.card .title{font-size:15.5px;font-weight:650;letter-spacing:-.2px;color:var(--ink)}
+.card .meta .tag{background:var(--line2);color:var(--ink2);border:0;font-weight:600}
+.card .note-line{color:var(--ink2)}
+.sec-title{font-size:12px;letter-spacing:.14em;color:var(--ink3);font-weight:700}
+.sec-head{margin:var(--sp-4) 2px var(--sp-2)}
+
+/* ── 底部导航 ── */
+.tabbar{
+  background:color-mix(in srgb,var(--surface) 88%,transparent);
+  -webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);
+  border-top:1px solid var(--line);
+  box-shadow:0 -6px 24px rgba(37,42,39,.05);
+  padding-bottom:calc(6px + env(safe-area-inset-bottom));
+}
+.tab{color:var(--ink3);font-size:10.5px;font-weight:600;gap:3px;transition:color .18s var(--ease),transform .18s var(--ease)}
+.tab.on{color:var(--brand)}
+.tab.on svg{transform:translateY(-1px)}
+.tab-add{
+  background:var(--brand);color:#fff;border-radius:50%;
+  width:54px;height:54px;margin-top:-20px;
+  box-shadow:0 8px 20px rgba(47,150,96,.34);
+  transition:transform .2s var(--spring),box-shadow .2s var(--ease);
+}
+.tab-add:active{transform:scale(.94);box-shadow:0 4px 12px rgba(47,150,96,.3)}
+
+/* ── 首页 v2 ── */
+.v2-home{padding:2px 0 4px}
+.v2-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:4px 2px 14px}
+.v2-hi{font-size:23px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+.v2-sub{font-size:12.5px;color:var(--ink3);margin-top:5px}
+.v2-bell{
+  width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--line);
+  display:grid;place-items:center;color:var(--ink2);box-shadow:var(--shadow-soft);flex:0 0 auto;
+}
+.v2-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow-soft)}
+.v2-progress{position:relative;overflow:hidden;padding:18px 18px 16px}
+.v2-prog-head{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.v2-prog-k{font-size:12px;color:var(--ink3);font-weight:600;letter-spacing:.02em}
+.v2-prog-v{font-size:34px;font-weight:800;letter-spacing:-1.2px;line-height:1.1;margin-top:2px}
+.v2-prog-v span{font-size:16px;font-weight:700;color:var(--ink3);margin-left:2px}
+.v2-prog-meta{font-size:12px;color:var(--ink3);font-weight:600;padding-bottom:6px}
+.v2-bar{height:8px;border-radius:999px;background:var(--line2);margin:14px 0 12px;overflow:hidden}
+.v2-bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--brand),#43B57C);transition:width .55s var(--ease)}
+.v2-quote{font-size:12.5px;color:var(--ink2);line-height:1.5;max-width:78%}
+.v2-hill{position:absolute;right:-6px;bottom:-8px;width:120px;opacity:.5;pointer-events:none}
+html[data-mode="dark"] .v2-hill{opacity:.22}
+
+.v2-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:var(--sp-3)}
+.v2-stat{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-item);
+  padding:12px 10px 10px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow-soft);
+  text-align:left;transition:transform .16s var(--ease),box-shadow .16s var(--ease);
+}
+.v2-stat:active{transform:scale(.975)}
+.v2-stat b{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.v2-stat em{font-size:11px;color:var(--ink3);font-style:normal;font-weight:600}
+.v2-stat-i{width:22px;height:22px;border-radius:8px;display:grid;place-items:center;font-size:12px;margin-bottom:4px}
+.v2-stat-i.done{background:var(--brand-soft);color:var(--brand)}
+.v2-stat-i.doing{background:var(--amber-soft);color:#B98A1F}
+.v2-stat-i.todo{background:var(--violet-soft);color:var(--violet)}
+
+.v2-cats{margin-top:var(--sp-3);padding:14px 16px 6px}
+.v2-sec-head{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--ink3);font-weight:700;letter-spacing:.1em;margin-bottom:8px}
+.v2-cat{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line2)}
+.v2-cat:first-child{border-top:0}
+.v2-cat-i{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-size:13px;flex:0 0 auto}
+.v2-cat-main{flex:1;min-width:0}
+.v2-cat-t{font-size:13.5px;font-weight:650;display:flex;justify-content:space-between;gap:8px}
+.v2-cat-t span{font-size:11.5px;color:var(--ink3);font-weight:600}
+.v2-cat-bar{height:5px;border-radius:999px;background:var(--line2);margin-top:6px;overflow:hidden}
+.v2-cat-bar i{display:block;height:100%;border-radius:999px;transition:width .5s var(--ease)}
+
+/* ── 任务页 v2 ── */
+.v2-tasks{padding-top:4px}
+.v2-page-hi{display:flex;align-items:baseline;justify-content:space-between;padding:2px 2px 12px}
+.v2-page-hi b{font-size:23px;font-weight:800;letter-spacing:-.5px}
+.v2-page-hi span{font-size:12px;color:var(--ink3);font-weight:600}
+.v2-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 12px;scrollbar-width:none}
+.v2-chips::-webkit-scrollbar{display:none}
+.v2-chip{
+  flex:0 0 auto;padding:8px 14px;border-radius:var(--r-chip);border:1px solid var(--line);
+  background:var(--surface);color:var(--ink2);font-size:12.5px;font-weight:650;
+  transition:background .16s var(--ease),color .16s var(--ease),transform .16s var(--ease);
+}
+.v2-chip:active{transform:scale(.96)}
+.v2-chip.on{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 16px rgba(47,150,96,.24)}
+.v2-group{margin-bottom:14px}
+.v2-group-h{display:flex;align-items:center;gap:8px;padding:8px 4px;color:var(--ink3);font-size:12px;font-weight:700;letter-spacing:.08em}
+.v2-group-h .dot{width:7px;height:7px;border-radius:50%}
+.v2-group-h .n{margin-left:auto;font-weight:600;letter-spacing:0;color:var(--ink3)}
+.v2-group-h .caret{transition:transform .2s var(--ease)}
+.v2-group.closed .caret{transform:rotate(-90deg)}
+.v2-group.closed .v2-group-b{display:none}
+.v2-task{display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-item);padding:12px 13px;box-shadow:var(--shadow-soft);margin-bottom:8px}
+.v2-task .ring{width:22px;height:22px;border-radius:50%;border:1.8px solid var(--line);flex:0 0 auto;margin-top:1px;display:grid;place-items:center;color:transparent;font-size:11px}
+.v2-task .ring.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.v2-task .ring.doing{border-color:var(--amber)}
+.v2-task .main{flex:1;min-width:0}
+.v2-task .tt{font-size:14.5px;font-weight:650;line-height:1.35;word-break:break-word}
+.v2-task .mt{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:11.5px;color:var(--ink3)}
+.v2-task .mt i{font-style:normal;background:var(--line2);padding:2px 7px;border-radius:999px}
+.v2-task .mt i.hi{background:var(--red-soft);color:#B95656}
+.v2-task .mt i.mid{background:var(--amber-soft);color:#A87C16}
+.v2-task .mt i.low{background:var(--brand-soft);color:var(--brand-ink)}
+.v2-empty{text-align:center;color:var(--ink3);font-size:13px;padding:26px 0}
+
+/* ── 进度页 v2 ── */
+.v2-month{padding:18px}
+.v2-stats-4{grid-template-columns:repeat(4,1fr);margin-top:14px}
+.v2-stats-2{grid-template-columns:repeat(2,1fr);margin-top:10px}
+.v2-mini{background:var(--line2);border-radius:14px;padding:10px;text-align:center}
+.v2-mini b{display:block;font-size:17px;font-weight:800;letter-spacing:-.4px}
+.v2-mini em{font-size:11px;color:var(--ink3);font-style:normal;font-weight:600}
+.cal-cell.has-done{background:var(--brand-soft)}
+.cal-cell.has-done .n{color:var(--brand-ink);font-weight:700}
+.cal-cell.has-todo::after{content:"";position:absolute;left:50%;bottom:5px;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--amber)}
+.cal-cell{position:relative}
+@media(max-width:360px){:root{--v2-pad:12px}.v2-hi,.v2-page-hi b{font-size:21px}.v2-prog-v{font-size:30px}}
+@media(min-width:760px){
+  .tabbar{max-width:520px;margin:0 auto;border-radius:22px 22px 0 0}
+  .v2-home,.v2-tasks,.v2-prog{padding-left:8px;padding-right:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .v2-bar i,.v2-cat-bar i,.tab,.tab-add,.v2-chip,.v2-stat{transition:none}
+}
+
+/* ═══ UI v2 覆盖层（在样式表最后，压住旧的页签条样式） ═══ */
+html,body{max-width:100%;overflow-x:hidden}
+.tabbar .tab-add{
+  width:56px!important;height:56px!important;border-radius:50%!important;
+  margin:-18px 6px 0!important;background:var(--brand)!important;background-image:none!important;
+  color:#fff!important;border:4px solid var(--surface)!important;
+  box-shadow:0 10px 22px rgba(47,150,96,.34)!important;flex:0 0 auto!important;
+}
+.tabbar .tab-add svg{width:22px!important;height:22px!important;stroke-width:2.6}
+.tabbar{background:rgba(255,255,255,.94)!important;
+  -webkit-backdrop-filter:saturate(180%) blur(16px);backdrop-filter:saturate(180%) blur(16px);
+  box-shadow:0 -1px 0 var(--line)!important;padding-top:8px!important}
+html[data-mode="dark"] .tabbar{background:rgba(26,30,28,.95)!important}
+.tabbar .tab{flex:1 1 0;min-width:0}
+
+
+/* 变量兜底：用 html:root 提高权重，压住任何位置的旧 :root */
+html:root{
+  --brand:#2F9660;--brand-press:#23784B;--brand-soft:#EAF5EE;--brand-ink:#23784B;
+  --violet:#8B65C7;--amber:#E9B94F;--blue:#5797D5;--red:#E47777;
+  --violet-soft:#F3EEFB;--amber-soft:#FDF5E4;--blue-soft:#EDF4FC;--red-soft:#FCEEEE;
+  --paper:#F7F8F7;--bg:#F7F8F7;--surface:#FFFFFF;
+  --ink:#252A27;--ink2:#5F6663;--ink3:#8A918D;--line:#ECEFEC;--line2:#F3F5F3;
+}
+html[data-mode="dark"]:root{
+  --paper:#121514;--bg:#121514;--surface:#1A1E1C;
+  --ink:#E8ECE9;--ink2:#AEB6B1;--ink3:#8A918D;--line:#262B28;--line2:#1F2321;
+  --brand:#4FB981;--brand-press:#3E9B6A;--brand-soft:#18271F;--brand-ink:#9BD9B7;
+  --violet-soft:#232030;--amber-soft:#2A2418;--blue-soft:#182430;--red-soft:#2B1D1D;
+}
+
+
+
+/* 头部：旧版大标题/圆环隐藏（DOM 保留），汇总行留下 */
+.top .hello,.top .date,.top .ring{display:none!important}
+.top{padding-bottom:0!important}
+.top .summary{margin-top:2px;font-size:12px;color:var(--ink3)}
+.v2-date{font-size:12px;color:var(--ink3);margin-top:4px;letter-spacing:.01em}
+.v2-hi{line-height:1.15}
+/* 内容给底部输入条 + 导航留空间，最后一张卡不会被压住 */
+#view-today,#view-alerts,#view-calendar,#view-me{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+.v2-hill{opacity:.85}
+html[data-mode="dark"] .v2-hill{opacity:.35}
+/* 统计卡的数字与图标更整齐 */
+.v2-stat{padding:13px 12px 11px}
+.v2-stat b{line-height:1.15}
+.v2-stat-i{margin-bottom:2px}
+/* 分类卡内边距与最后一行留白 */
+.v2-cats{padding:14px 16px 10px}
+.v2-cat:last-child{padding-bottom:2px}
+/* 任务行点按反馈 */
+.v2-task{transition:transform .14s var(--ease),box-shadow .14s var(--ease)}
+.v2-task:active{transform:scale(.992)}
+
+
+/* 旧顶栏不再参与布局（#ringNum / #summaryTxt / #backToday 仍在 DOM 里，
+   但汇总行已经搬到 v2 问候下方，所以测试与逻辑都还能读到/点到） */
+.top{display:none!important}
+#view-today>.v2-home{padding-top:2px}
+.v2-home>.summary{margin:0 2px 12px;font-size:12px;color:var(--ink3);display:flex;align-items:center;gap:6px}
+.v2-home>.summary .dot{width:6px;height:6px;border-radius:50%;background:var(--brand);flex:0 0 auto}
+.v2-home>.summary .back-today{margin-left:auto;font-size:11.5px;padding:5px 10px;border-radius:999px;
+  background:var(--brand-soft);color:var(--brand-ink);border:0;font-weight:650}
+
+
+/* 弹层收起时不要留下大片投影（屏幕上会看到一条黑带） */
+.sheet:not(.on),.modal:not(.on),.sheet:not(.on)::before{box-shadow:none!important}
+.app{overflow:hidden}
+/* 底部输入条：白底胶囊 + 柔和描边，不再压住内容 */
+.bottom{background:transparent!important;pointer-events:none}
+.bottom>*{pointer-events:auto}
+.quick{background:var(--surface)!important;border:1px solid var(--line)!important;
+  box-shadow:0 10px 26px rgba(37,42,39,.10)!important;border-radius:22px!important}
+.quick input{color:var(--ink)!important}
+#micBtn,#xiaobuBtn{background:var(--brand-soft)!important;color:var(--brand-ink)!important;border:0!important}
+
+
+/* 收起的 toast 不要露一条边 */
+.toast{will-change:transform}
+.toast:not(.on){opacity:0!important;visibility:hidden!important;pointer-events:none!important;transform:translateY(160%)!important}
+/* toast 抬到输入条上方，别压在输入条底下露一条边 */
+html:root .toast{bottom:calc(150px + env(safe-area-inset-bottom))!important;z-index:130!important}
+html[data-elder="on"] .toast{bottom:calc(162px + env(safe-area-inset-bottom))!important}
+
+
+
+.batch-bar:not(.on){display:none!important}
+
+/* toast 只在真正显示时才存在，避免残留一条边 */
+.toast{display:none!important}
+.toast.on{display:flex!important}
+
+
+/* 收起状态的遮罩层不要叠在半透明上（多层 0.22 叠起来就是一条黑带） */
+#lateMask,#sheetMask,#modalMask,#sumMask,#authMask,#emailMask,#cfgMask,#voiceMask,#memberMask,#xbMask{display:none!important}
+#lateMask.on,#sheetMask.on,#modalMask.on,#sumMask.on,#authMask.on,#emailMask.on,#cfgMask.on,#voiceMask.on,#memberMask.on,#xbMask.on{display:block!important}
+
+/* toast 明确抬到输入条上方，避免只露出底边那一条深色 */
+html:root .toast{bottom:calc(200px + env(safe-area-inset-bottom))!important;max-width:calc(100% - 32px)}
+html[data-elder="on"] .toast{bottom:calc(212px + env(safe-area-inset-bottom))!important}
+
+/* 小步面板收起时：不要留投影（那圈 70px 的阴影就是底部那条黑带） */
+.xb:not(.on){box-shadow:none!important;visibility:hidden}
+.xb.on{visibility:visible}
+.xb-mask:not(.on){display:none!important}
+
+/* 输入条下方要「渐隐」到页面底色：否则卡片里的深色按钮会从
+   输入条与导航之间的缝里露出一圈，看起来像一条黑带 */
+.bottom{background:linear-gradient(to top,var(--bg) 68%,rgba(247,248,247,0))!important}
+.bottom::before{
+  content:"";position:absolute;left:0;right:0;top:-26px;height:26px;
+  background:linear-gradient(to top,var(--bg),rgba(247,248,247,0));pointer-events:none;
+}
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2304,13 +2595,50 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
         <div class="ring-num" id="ringNum">0/0</div>
       </div>
     </div>
-    <div class="summary"><span class="dot"></span><span id="summaryTxt">正在加载…</span><button class="back-today" id="backToday" type="button">回到今天</button></div>
   </div>
 
   <div class="batch-bar" id="batchBar"><span id="batchCount">已选 0 条</span><span class="sp"></span><button id="batchDone" class="ios-host">完成</button><button id="batchLater">推迟</button><button id="batchDel">删除</button><button id="batchCancel">取消</button></div>
 
   <div class="scroll">
     <section class="view on" id="view-today">
+      <div class="v2-home" id="v2Home">
+        <div class="v2-hero">
+          <div>
+            <div class="v2-hi" id="v2Hi">早上好</div>
+            <div class="v2-date" id="v2Date"></div>
+            <div class="v2-sub" id="v2Sub">今天也慢慢来，一件一件走。</div>
+          </div>
+          <button class="v2-bell" id="v2Bell" aria-label="查看提醒">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>
+          </button>
+        </div>
+        <div class="summary"><span class="dot"></span><span id="summaryTxt">正在加载…</span><button class="back-today" id="backToday" type="button">回到今天</button></div>
+        <div class="v2-card v2-progress">
+          <div class="v2-prog-head">
+            <div>
+              <div class="v2-prog-k">今日完成</div>
+              <div class="v2-prog-v"><b id="v2Rate">0</b><span>%</span></div>
+            </div>
+            <div class="v2-prog-meta" id="v2ProgMeta">0 / 0</div>
+          </div>
+          <div class="v2-bar"><i id="v2BarFill"></i></div>
+          <div class="v2-quote" id="v2Quote">专注于进步，而不是完美。</div>
+          <svg class="v2-hill" viewBox="0 0 120 70" fill="none" aria-hidden="true">
+            <path d="M0 70L38 30L60 52L82 22L120 70H0Z" fill="url(#v2g)"/>
+            <circle cx="96" cy="16" r="7" fill="#F2D48B" opacity=".9"/>
+            <defs><linearGradient id="v2g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE9D9"/><stop offset="1" stop-color="#EAF5EE"/></linearGradient></defs>
+          </svg>
+        </div>
+        <div class="v2-stats" id="v2Stats">
+          <button class="v2-stat" data-v2filter="done"><span class="v2-stat-i done">✓</span><b id="v2Done">0</b><em>已完成</em></button>
+          <button class="v2-stat" data-v2filter="doing"><span class="v2-stat-i doing">◔</span><b id="v2Doing">0</b><em>进行中</em></button>
+          <button class="v2-stat" data-v2filter="todo"><span class="v2-stat-i todo">○</span><b id="v2Todo">0</b><em>待办</em></button>
+        </div>
+        <div class="v2-card v2-cats">
+          <div class="v2-sec-head"><span>分类</span><span id="v2CatsTotal"></span></div>
+          <div id="v2Cats"></div>
+        </div>
+      </div>
       <div class="sec" id="termSec" style="display:none">
         <div class="sec-head"><span class="sec-title">终 焉 时 刻</span><span class="sec-count" id="termCount"></span></div>
         <div id="termList"></div>
@@ -2334,6 +2662,28 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
     </section>
 
     <section class="view" id="view-calendar">
+      <div class="v2-prog" id="v2ProgPage">
+        <div class="v2-card v2-month">
+          <div class="v2-prog-head">
+            <div>
+              <div class="v2-prog-k" id="v2MonthK">本月完成</div>
+              <div class="v2-prog-v"><b id="v2MonthRate">0</b><span>%</span></div>
+            </div>
+            <div class="v2-prog-meta" id="v2MonthMeta">0 / 0</div>
+          </div>
+          <div class="v2-bar"><i id="v2MonthBar"></i></div>
+          <div class="v2-stats v2-stats-4">
+            <div class="v2-mini"><b id="v2MDone">0</b><em>已完成</em></div>
+            <div class="v2-mini"><b id="v2MDoing">0</b><em>进行中</em></div>
+            <div class="v2-mini"><b id="v2MTodo">0</b><em>待办</em></div>
+            <div class="v2-mini"><b id="v2MStreak">1</b><em>连续天数</em></div>
+          </div>
+          <div class="v2-stats v2-stats-2">
+            <div class="v2-mini"><b id="v2MWeek">0</b><em>本周完成</em></div>
+            <div class="v2-mini"><b id="v2MHabit">0</b><em>习惯本周打卡</em></div>
+          </div>
+        </div>
+      </div>
       <div class="sec" style="margin-top:12px">
         <div class="cal-head">
           <div class="cal-title" id="calTitle"></div>
@@ -2349,6 +2699,16 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
     </section>
 
     <section class="view" id="view-alerts">
+      <div class="v2-tasks" id="v2Tasks">
+        <div class="v2-page-hi"><b>任务</b><span id="v2TasksCount"></span></div>
+        <div class="v2-chips" id="v2Filters">
+          <button class="v2-chip on" data-v2f="all">全部</button>
+          <button class="v2-chip" data-v2f="todo">待办</button>
+          <button class="v2-chip" data-v2f="doing">进行中</button>
+          <button class="v2-chip" data-v2f="done">已完成</button>
+        </div>
+        <div id="v2Groups"></div>
+      </div>
       <div class="sec" id="habitSec">
         <div class="sec-head">
           <span class="sec-title">小 步 习 惯</span>
@@ -2525,13 +2885,13 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
       <button class="quick-more" id="xiaobuBtn" aria-label="小步"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg><em>小步</em></button>
     </div>
     <div class="tabbar">
-      <button class="tab on" data-tab="today"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M8 2v4M16 2v4M3 10h18"/><path d="M8 15l2.5 2.5L16 12"/></svg>今日</button>
-      <button class="tab" data-tab="calendar"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M8 18h8"/></svg>日历</button>
-      <button class="tab-add" id="quickAdd" aria-label="详细设置">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 6v12M6 12h12"/></svg>
+      <button class="tab on" data-tab="today"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>首页</button>
+      <button class="tab" data-tab="alerts"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/><circle cx="19" cy="18" r="2.2"/></svg>任务</button>
+      <button class="tab-add" id="quickAdd" aria-label="新增任务">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
       </button>
-      <button class="tab" data-tab="alerts"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>提醒</button>
-      <button class="tab" data-tab="me"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>我的</button>
+      <button class="tab" data-tab="calendar"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><rect x="7" y="12" width="3" height="4" rx="1"/><rect x="12" y="9" width="3" height="7" rx="1"/><rect x="17" y="6" width="3" height="10" rx="1"/></svg>进度</button>
+      <button class="tab" data-tab="me"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0115 0"/></svg>我的</button>
     </div>
     <div class="home-ind"></div>
   </div>
@@ -2762,7 +3122,7 @@ let modalId=null,lastDeleted=null,toastTimer=null,editingId=null,lastQuickId=nul
 let accounts=[],currentUser=null,calYear=0,calMonth=0,calSelected=null,authMode='register';
 let SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition,recog=null,voiceActive=false,voiceFinal='',voiceInterim='';
 const THEMES={
-  pine:{name:'松绿',light:{brand:'#2F6E52',press:'#245740',soft:'#E5F0EA',ink:'#265443'},dark:{brand:'#5FAE86',press:'#4A9573',soft:'#1F3A2E',ink:'#CFE8DB'}},
+  pine:{name:'松绿',light:{brand:'#2F9660',press:'#23784B',soft:'#EAF5EE',ink:'#23784B'},dark:{brand:'#4FB981',press:'#3E9B6A',soft:'#18271F',ink:'#9BD9B7'}},
   ocean:{name:'海蓝',light:{brand:'#2E6B9E',press:'#235680',soft:'#E4EEF6',ink:'#1F4E76'},dark:{brand:'#6BB2E8',press:'#4F96CB',soft:'#1D3245',ink:'#CDE7F8'}},
   violet:{name:'紫藤',light:{brand:'#6B4E9E',press:'#553C80',soft:'#EDE6F6',ink:'#4D3878'},dark:{brand:'#A98AD9',press:'#8A6CBB',soft:'#2C2340',ink:'#E4D9F5'}},
   clay:{name:'陶土',light:{brand:'#B85C3C',press:'#9A482D',soft:'#F6E7DF',ink:'#8F4129'},dark:{brand:'#E08C68',press:'#C0714F',soft:'#3D2A22',ink:'#F2D9CC'}},
@@ -3438,7 +3798,39 @@ function render(){
   renderStats();
   playFlip(before);
   initIosHaptics();
+  try{renderHomeV2()}catch(e){}
+  try{renderTasksV2()}catch(e){}
+  try{renderProgressV2()}catch(e){}
 }
+
+/* ── UI v2 交互 ───────────────────────────────────────────── */
+function v2GoTab(next,filter){
+  const btn=document.querySelector('.tab[data-tab="'+next+'"]');
+  if(btn&&typeof btn.onclick==='function')btn.onclick();
+  if(filter){v2Filter=filter;try{renderTasksV2()}catch(e){}}
+}
+(function initV2Handlers(){
+  const filters=$('v2Filters');
+  if(filters)filters.onclick=function(e){
+    const b=e.target.closest('.v2-chip');if(!b)return;
+    v2Filter=b.dataset.v2f||'all';
+    renderTasksV2();
+  };
+  const stats=$('v2Stats');
+  if(stats)stats.onclick=function(e){
+    const b=e.target.closest('.v2-stat');if(!b)return;
+    v2GoTab('alerts',b.dataset.v2filter||'all');
+  };
+  const bell=$('v2Bell');
+  if(bell)bell.onclick=function(){v2GoTab('alerts','all')};
+  const groups=$('v2Groups');
+  if(groups)groups.onclick=function(e){
+    const h=e.target.closest('[data-v2fold]');
+    if(h){const g=h.closest('.v2-group');if(g)g.classList.toggle('closed');return}
+    const row=e.target.closest('.v2-task');
+    if(row&&row.dataset.v2id){try{openEdit(row.dataset.v2id)}catch(err){}}
+  };
+})();
 /* 备注被两行截断时，行内的「改」会被挤到块外 → 收起来，改用下面的「编辑」 */
 function markClippedNotes(){
   try{
@@ -3454,6 +3846,189 @@ function highlightTask(id){
   card.classList.add('just-added');
   try{card.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
 }
+/* ═══════════════════════════════════════════════════════════════════
+   小步 UI v2 · 三个页面的数据渲染
+   原则：所有数字都从 tasks / habits / meta 实时算，绝不写死。
+   分组用真实字段（重要程度 lv、习惯、终焉），不虚构"生活/工作/阅读"。
+   ═══════════════════════════════════════════════════════════════════ */
+let v2Filter='all';
+const V2_QUOTES=['专注于进步，而不是完美。','做完一件，就轻一点。','慢慢来，比较快。','今天只要走一小步。'];
+function v2GreetWord(){const h=new Date().getHours();return h<6?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好'}
+function v2Nick(){
+  try{
+    if(currentUser)return String(currentUser).split('@')[0];
+    const a=(typeof accounts!=='undefined'&&Array.isArray(accounts)&&accounts[0])||null;
+    if(a&&a.user)return String(a.user).split('@')[0];
+  }catch(e){}
+  return '';
+}
+function v2TaskKind(t){                    // 任务在本产品里的真实状态
+  if(t.done)return 'done';
+  const tk=dayKey(Date.now());
+  if(t.special==='terminus')return 'todo';
+  return dayKey(t.ts)<tk?'doing':'todo';
+}
+function v2TodayBuckets(){
+  const tk=dayKey(Date.now());
+  const base=tasks.filter(t=>t.special!=='terminus');
+  const done=base.filter(t=>t.done&&dayKey(t.ts)===tk).length;
+  const openToday=base.filter(t=>!t.done&&dayKey(t.ts)===tk);
+  const doing=openToday.filter(t=>t.ts<=Date.now()).length;   // 今天到点还没做
+  const todo=openToday.filter(t=>t.ts>Date.now()).length;     // 今天还没到点
+  const total=done+doing+todo;
+  return {done:done,doing:doing,todo:todo,total:total,rate:total?Math.round(done/total*100):0};
+}
+function v2CatIcon(hex,glyph){
+  return '<span class="v2-cat-i" style="background:'+hex[1]+';color:'+hex[0]+'">'+glyph+'</span>';
+}
+function renderHomeV2(){
+  const hi=$('v2Hi');if(!hi)return;
+  const b=v2TodayBuckets();
+  const nick=v2Nick();
+  hi.textContent=v2GreetWord()+(nick?'，'+nick:'');
+  const dt=$('v2Date');
+  if(dt){
+    const src=$('dateTxt');
+    dt.textContent=(src&&src.textContent.trim())||(function(){const d=new Date();const w='日一二三四五六'.charAt(d.getDay());return (d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+w})();
+  }
+  const sub=$('v2Sub');
+  sub.textContent=b.total?((b.total-b.done)||0)+' 件还在路上，先挑一件走一步':'今天还没有安排，想到什么就说出来';
+  $('v2Rate').textContent=b.rate;
+  $('v2ProgMeta').textContent=b.done+' / '+b.total;
+  $('v2BarFill').style.width=b.rate+'%';
+  $('v2Quote').textContent=V2_QUOTES[new Date().getDate()%V2_QUOTES.length];
+  $('v2Done').textContent=b.done;
+  $('v2Doing').textContent=b.doing;
+  $('v2Todo').textContent=b.todo;
+
+  const tk=dayKey(Date.now());
+  const todayList=tasks.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk);
+  const rows=[];
+  const LVROWS=[{lv:3,n:'重要',c:'var(--red)',bg:'var(--red-soft)',i:'!'},
+                {lv:2,n:'普通',c:'var(--violet)',bg:'var(--violet-soft)',i:'•'},
+                {lv:1,n:'轻提醒',c:'var(--brand)',bg:'var(--brand-soft)',i:'○'}];
+  LVROWS.forEach(function(g){
+    const arr=todayList.filter(t=>t.lv===g.lv);
+    if(!arr.length)return;
+    rows.push({n:g.n,total:arr.length,done:arr.filter(t=>t.done).length,c:g.c,bg:g.bg,i:g.i});
+  });
+  try{
+    if(typeof habits!=='undefined'&&habits.length){
+      const d=habits.filter(h=>h.days[tk]).length;
+      rows.push({n:'习惯',total:habits.length,done:d,c:'var(--blue)',bg:'var(--blue-soft)',i:'✦'});
+    }
+  }catch(e){}
+  const term=tasks.filter(t=>t.special==='terminus');
+  if(term.length){
+    rows.push({n:'终焉时刻',total:term.length,done:term.filter(t=>t.done).length,c:'var(--amber)',bg:'var(--amber-soft)',i:'∞'});
+  }
+  $('v2Cats').innerHTML=rows.length?rows.map(function(g){
+    const pct=g.total?Math.round(g.done/g.total*100):0;
+    return '<div class="v2-cat">'+v2CatIcon([g.c,g.bg],g.i)+
+      '<div class="v2-cat-main"><div class="v2-cat-t"><span>'+esc(g.n)+'</span><span>'+g.done+' / '+g.total+'</span></div>'+
+      '<div class="v2-cat-bar"><i style="width:'+pct+'%;background:'+g.c+'"></i></div></div></div>';
+  }).join(''):'<div class="v2-empty">今天还没有分类数据</div>';
+  $('v2CatsTotal').textContent=rows.length?('共 '+rows.reduce(function(a,g){return a+g.total},0)+' 件'):'';
+}
+
+function v2FilterLabel(f){
+  return f==='done'?'已完成':f==='doing'?'进行中':f==='todo'?'待办':'全部';
+}
+function renderTasksV2(){
+  const box=$('v2Groups');if(!box)return;
+  const f=v2Filter||'all';
+  const all=tasks.slice().sort(function(a,b){return (a.ts||0)-(b.ts||0)});
+  const shown=all.filter(function(t){return f==='all'?true:v2TaskKind(t)===f});
+  const box2=$('v2TasksCount');
+  if(box2)box2.textContent=shown.length+' 件 · '+v2FilterLabel(f);
+  document.querySelectorAll('#v2Filters .v2-chip').forEach(function(c){
+    c.classList.toggle('on',c.dataset.v2f===f);
+  });
+  const groups=[
+    {k:'t',n:'终焉时刻',c:'var(--amber)',test:function(t){return t.special==='terminus'}},
+    {k:'3',n:'重要',c:'var(--red)',test:function(t){return t.special!=='terminus'&&t.lv===3}},
+    {k:'2',n:'普通',c:'var(--violet)',test:function(t){return t.special!=='terminus'&&t.lv===2}},
+    {k:'1',n:'轻提醒',c:'var(--brand)',test:function(t){return t.special!=='terminus'&&(t.lv===1||!t.lv)}}
+  ];
+  const html=groups.map(function(g){
+    const arr=shown.filter(g.test);
+    if(!arr.length)return '';
+    const rows=arr.map(function(t){
+      const kind=v2TaskKind(t);
+      const ring=kind==='done'?'<span class="ring on">✓</span>':(kind==='doing'?'<span class="ring doing"></span>':'<span class="ring"></span>');
+      const lvName=(LV[t.lv]||LV[1]).n;
+      const lvCls=t.lv===3?'hi':(t.lv===2?'mid':'low');
+      const when=t.special==='terminus'?('公元 '+terminusYear(t.ts)+' 年'):fullTime(t.ts);
+      const extra=(kind==='doing'?'<i class="hi">已过时间</i>':'');
+      return '<div class="v2-task" data-v2id="'+attrEsc(t.id)+'" data-v2state="'+kind+'">'+ring+
+        '<div class="main"><div class="tt">'+esc(t.title)+'</div>'+
+        '<div class="mt"><i>'+esc(when)+'</i><i class="'+lvCls+'">'+lvName+'</i>'+(t.subs&&t.subs.length?('<i>子任务 '+(t.subs.filter(function(x){return x.done}).length)+'/'+t.subs.length+'</i>'):'')+extra+'</div>'+
+        '</div></div>';
+    }).join('');
+    return '<div class="v2-group" data-v2group="'+g.k+'">'+
+      '<button class="v2-group-h" type="button" data-v2fold="'+g.k+'"><span class="dot" style="background:'+g.c+'"></span>'+
+      esc(g.n)+'<span class="n">'+arr.length+' 件</span>'+
+      '<svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>'+
+      '<div class="v2-group-b">'+rows+'</div></div>';
+  }).join('');
+  box.innerHTML=html||'<div class="v2-empty">这里还没有任务<br>点下面 ＋ 记一件</div>';
+}
+
+function renderProgressV2(){
+  const rate=$('v2MonthRate');if(!rate)return;
+  const nowD=new Date();
+  const y=calYear||nowD.getFullYear();
+  const mo=(calYear?calMonth:nowD.getMonth());
+  const monthStart=new Date(y,mo,1).getTime();
+  const monthEnd=new Date(y,mo+1,1).getTime();
+  const inMonth=tasks.filter(function(t){return t.ts>=monthStart&&t.ts<monthEnd&&t.special!=='terminus'});
+  const done=inMonth.filter(function(t){return t.done}).length;
+  const doing=inMonth.filter(function(t){return !t.done&&t.ts<Date.now()}).length;
+  const todo=inMonth.filter(function(t){return !t.done&&t.ts>=Date.now()}).length;
+  const total=inMonth.length;
+  const pct=total?Math.round(done/total*100):0;
+  rate.textContent=pct;
+  $('v2MonthMeta').textContent=done+' / '+total;
+  $('v2MonthBar').style.width=pct+'%';
+  const nowM=(new Date().getFullYear()===y&&new Date().getMonth()===mo);
+  $('v2MonthK').textContent=(nowM?'本月完成':((mo+1)+' 月完成'));
+  $('v2MDone').textContent=done;
+  $('v2MDoing').textContent=doing;
+  $('v2MTodo').textContent=todo;
+  $('v2MStreak').textContent=(meta&&meta.streak)||1;
+  const weekStart=new Date();weekStart.setHours(0,0,0,0);weekStart.setDate(weekStart.getDate()-((weekStart.getDay()+6)%7));
+  $('v2MWeek').textContent=tasks.filter(function(t){return t.done&&t.ts>=weekStart.getTime()}).length;
+  try{
+    $('v2MHabit').textContent=habits.reduce(function(a,h){
+      return a+Object.keys(h.days||{}).filter(function(k){
+        const t=habitDayTime?habitDayTime(k):new Date(k+'T12:00:00').getTime();
+        return t>=weekStart.getTime();
+      }).length;
+    },0);
+  }catch(e){$('v2MHabit').textContent='0'}
+}
+
+/* 日历格子上的真实状态：全完成=绿底，有未完成=黄点 */
+function v2DecorateCalendar(){
+  try{
+    const grid=$('calGrid');if(!grid)return;
+    const byDay={};
+    tasks.forEach(function(t){
+      if(t.special==='terminus')return;
+      const k=dayKey(t.ts);(byDay[k]=byDay[k]||{done:0,total:0});
+      byDay[k].total++;if(t.done)byDay[k].done++;
+    });
+    grid.querySelectorAll('.cal-cell').forEach(function(c){
+      const k=c.dataset.key;const d=byDay[k];
+      c.classList.remove('has-done','has-todo');
+      if(!d)return;
+      if(d.done===d.total)c.classList.add('has-done');
+      else if(d.done>0)c.classList.add('has-done','has-todo');
+      else c.classList.add('has-todo');
+    });
+  }catch(e){}
+}
+
 function renderStats(){
   const now=new Date(),weekStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-((now.getDay()+6)%7)).getTime();
   const today=today0();
@@ -4229,6 +4804,8 @@ function renderCalendar(){
       '<div class="cal-dots">'+dots+'</div></div>';
   }
   $('calGrid').innerHTML=html;
+  try{v2DecorateCalendar()}catch(e){}
+  try{renderProgressV2()}catch(e){}
   const lg=$('calLegend');
   if(lg){
     let allCount=0;
@@ -5687,7 +6264,7 @@ $('noteToggle').onclick=()=>{
   if(on)$('noteInput').focus();
 };
 let activeTab='today';
-const tabOrder=['today','calendar','alerts','me'];
+const tabOrder=['today','alerts','calendar','me'];
 document.querySelectorAll('.tab').forEach(tab=>tab.onclick=()=>{
   const next=tab.dataset.tab;if(next===activeTab)return;
   const forward=tabOrder.indexOf(next)>tabOrder.indexOf(activeTab);
@@ -6259,6 +6836,23 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
