@@ -1451,6 +1451,274 @@ html[data-elder="on"] .v2-hero-art{width:132px}
 @media(max-width:355px){.v2-hero-art{width:118px!important}}
 
 
+
+/* ═══════════ 修复：液态玻璃在新浅色主题下的透光值 ═══════════
+   旧值 rgba(36,34,32,.62) 是给深色底准备的，套到浅色主题上卡片就发黑。 */
+html:root{
+  --glass-bg:rgba(255,255,255,.74);
+  --glass-bg-2:rgba(255,255,255,.60);
+  --glass-line:rgba(255,255,255,.78);
+  --glass-sheen:rgba(255,255,255,.55);
+  --glass-shadow:0 10px 30px rgba(37,42,39,.10),inset 0 1px 0 rgba(255,255,255,.75);
+}
+html[data-mode="dark"]:root{
+  --glass-bg:rgba(26,30,28,.74);
+  --glass-bg-2:rgba(22,26,24,.62);
+  --glass-line:rgba(255,255,255,.14);
+  --glass-sheen:rgba(255,255,255,.06);
+  --glass-shadow:0 12px 34px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);
+}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"]:root{
+    --glass-bg:rgba(26,30,28,.74);
+    --glass-bg-2:rgba(22,26,24,.62);
+    --glass-line:rgba(255,255,255,.14);
+    --glass-sheen:rgba(255,255,255,.06);
+    --glass-shadow:0 12px 34px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);
+  }
+}
+
+/* 终焉时刻卡：浅色主题下走「琥珀色液态玻璃」，不再用深色金卡底 */
+html:root .card.terminus{
+  background:linear-gradient(150deg,rgba(255,250,235,.92) 0%,rgba(255,255,255,.86) 60%,rgba(253,245,228,.9) 100%)!important;
+  border:1px solid rgba(233,185,79,.42)!important;
+  box-shadow:0 10px 26px rgba(154,115,20,.12),inset 0 1px 0 rgba(255,255,255,.85)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(150%);backdrop-filter:blur(10px) saturate(150%);
+}
+html:root .card.terminus::after{background:radial-gradient(circle,rgba(233,185,79,.20),transparent 66%)}
+html:root .card.terminus .title{color:#3B3320!important}
+html:root .card.terminus .title .hl,
+html:root .card.terminus .terminus-when{color:#8A6B1F!important}
+html:root .card.terminus .check{border-color:rgba(233,200,122,.78)!important;background:rgba(255,255,255,.72)!important;box-shadow:none!important}
+html:root .card.terminus .check.on,
+html:root .card.terminus .check.done,
+html:root .card.terminus .check.checked{
+  border-color:transparent!important;
+  background:linear-gradient(135deg,#F2D488,#E9C87A 60%,#D9B463)!important;
+}
+html:root .card.terminus.done .check{
+  border-width:0!important;
+  background:linear-gradient(135deg,#F2D488,#E9C87A 60%,#D9B463)!important;
+}
+html:root .card.terminus .tag.terminus-tag{
+  background:rgba(233,185,79,.20)!important;color:#7E6113!important;border-color:rgba(233,185,79,.5)!important;
+}
+html:root .card.terminus .tag:not(.terminus-tag){background:rgba(37,42,39,.06)!important;color:#5F6663!important}
+html:root .card.terminus .meta{color:#8A6B1F}
+html:root .card.terminus .postpone-btn{color:#8A6B1F!important;border-color:rgba(233,185,79,.45)!important}
+html:root .card.terminus .icon-btn.del{color:rgba(154,115,20,.6)!important}
+html:root .card.terminus .card-edit{color:#8A6B1F!important}
+html:root .card.terminus .note-line{color:#6B6047!important}
+
+/* 深色主题仍保留「金线深卡」，但底色跟主题走 */
+html[data-mode="dark"]:root .card.terminus{
+  background:linear-gradient(150deg,#26221C 0%,#1C1915 62%,#241F18 100%)!important;
+  border-color:rgba(233,200,122,.34)!important;
+}
+html[data-mode="dark"]:root .card.terminus .title{color:#F3E4BE!important}
+html[data-mode="dark"]:root .card.terminus .tag.terminus-tag{background:rgba(233,200,122,.16)!important;color:#F1D68A!important}
+html[data-mode="dark"]:root .card.terminus .terminus-when{color:rgba(233,200,122,.82)!important}
+
+/* 主题色色块：选中环画在容器内，不再被裁掉一个口 */
+.swatches{
+  padding:9px 9px 9px 7px!important;
+  margin:8px 0 0!important;
+  overflow:visible!important;
+}
+html:root .sw{
+  width:26px!important;height:26px!important;flex:none;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.75)!important;
+}
+html:root .sw.on{
+  transform:none!important;
+  border-color:transparent!important;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.85),0 0 0 2px var(--brand),0 0 0 5px rgba(47,150,96,.16)!important;
+}
+html:root .sw::after{inset:2px!important;border-color:rgba(255,255,255,.5)!important}
+
+
+
+/* ═══════════ 新图标：一张 sprite 打六格（已完成/时钟/圆环/叶子/星芒/无限） ═══════════ */
+.v2-ic{
+  width:26px;height:26px;border-radius:8px;flex:0 0 auto;display:block;
+  background-image:url(ic-set.png);background-size:300% 200%;background-repeat:no-repeat;
+  box-shadow:0 2px 6px rgba(37,42,39,.06);
+}
+.v2-ic.big{width:30px;height:30px;border-radius:10px}
+.v2-ic.done{background-position:0 0}
+.v2-ic.clock{background-position:50% 0}
+.v2-ic.circle{background-position:100% 0}
+.v2-ic.leaf{background-position:0 100%}
+.v2-ic.spark{background-position:50% 100%}
+.v2-ic.inf{background-position:100% 100%}
+.v2-stat .v2-ic{margin-bottom:6px}
+.v2-stat b{font-size:20px}
+
+/* ═══════════ 插画直接做卡片底：左侧白色渐隐托住数字，右侧透出画面 ═══════════ */
+.v2-progress{
+  background-image:
+    linear-gradient(90deg,rgba(255,255,255,.98) 0%,rgba(255,255,255,.96) 38%,rgba(255,255,255,.72) 62%,rgba(255,255,255,.10) 88%,rgba(255,255,255,0) 100%),
+    url(hero-hills.png);
+  background-size:auto,cover;
+  background-position:left top,right center;
+  background-repeat:no-repeat,no-repeat;
+  padding-right:96px;
+}
+.v2-progress .v2-prog-head{position:relative;z-index:1}
+.v2-progress .v2-bar{position:relative;z-index:1;margin-right:-84px}
+.v2-quote{position:relative;z-index:1;max-width:100%!important;color:var(--ink2)}
+html[data-mode="dark"] .v2-progress{
+  background-image:
+    linear-gradient(90deg,rgba(26,30,28,.97) 0%,rgba(26,30,28,.94) 40%,rgba(26,30,28,.62) 64%,rgba(26,30,28,.12) 90%,rgba(26,30,28,0) 100%),
+    url(hero-hills.png);
+}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"] .v2-progress{
+    background-image:
+      linear-gradient(90deg,rgba(26,30,28,.97) 0%,rgba(26,30,28,.94) 40%,rgba(26,30,28,.62) 64%,rgba(26,30,28,.12) 90%,rgba(26,30,28,0) 100%),
+      url(hero-hills.png);
+  }
+}
+.v2-hero-art{display:none!important}
+
+
+
+/* ═══════════ 深色模式适配（滚动条 / 表单 / 选中态 / 弹层） ═══════════ */
+html[data-mode="light"]{color-scheme:light}
+html[data-mode="dark"]{color-scheme:dark}
+html[data-mode="auto"]{color-scheme:light dark}
+@media(prefers-color-scheme:dark){html[data-mode="auto"]{color-scheme:dark}}
+
+/* 滚动条：浅色细灰，深色半透明白，不再一条亮白 */
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(37,42,39,.16);border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(37,42,39,.26)}
+html[data-mode="dark"] *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
+html[data-mode="dark"] *::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.26)}
+html[data-mode="dark"] .sheet,html[data-mode="dark"] .modal,html[data-mode="dark"] .sum-card,
+html[data-mode="dark"] #memberModal,html[data-mode="dark"] .xb{scrollbar-color:rgba(255,255,255,.18) transparent}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"] *::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16)}
+  html[data-mode="auto"] .sheet,html[data-mode="auto"] .modal,html[data-mode="auto"] .sum-card{scrollbar-color:rgba(255,255,255,.18) transparent}
+}
+
+/* 输入框 / 文本域：深色下用下沉底 + 细描边，聚焦时只加一圈柔光 */
+html[data-mode="dark"] .sheet textarea,
+html[data-mode="dark"] .sheet input,
+html[data-mode="dark"] .modal input,
+html[data-mode="dark"] .field input,
+html[data-mode="dark"] .field textarea,
+html[data-mode="dark"] .auth-field input,
+html[data-mode="dark"] .cfg-field input{
+  background:rgba(255,255,255,.05)!important;
+  border:1px solid rgba(255,255,255,.12)!important;
+  color:var(--ink)!important;
+}
+html[data-mode="dark"] .sheet textarea::placeholder,
+html[data-mode="dark"] .sheet input::placeholder{color:rgba(232,236,233,.42)!important}
+html[data-mode="dark"] .sheet textarea:focus,
+html[data-mode="dark"] .sheet input:focus,
+html[data-mode="dark"] .field input:focus,
+html[data-mode="dark"] .field textarea:focus{
+  border-color:rgba(79,185,129,.6)!important;
+  box-shadow:0 0 0 3px rgba(79,185,129,.16)!important;
+  outline:none!important;
+}
+/* 深色下浅色的快捷键/模板胶囊 */
+html[data-mode="dark"] .tpl,
+html[data-mode="dark"] .chip{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:var(--ink2)}
+html[data-mode="dark"] .chip.on{background:var(--brand);border-color:var(--brand);color:#0F1A14}
+
+/* 提醒强度选中：深色下不要再铺一块亮绿，改成淡色块 + 品牌描边 */
+html[data-mode="dark"] .lv-opt{background:var(--surface);border-color:var(--line);color:var(--ink)}
+html[data-mode="dark"] .lv-opt.on.lv1{background:rgba(79,185,129,.16);border-color:rgba(79,185,129,.65);color:var(--ink)}
+html[data-mode="dark"] .lv-opt.on.lv2{background:rgba(87,151,213,.16);border-color:rgba(87,151,213,.6);color:var(--ink)}
+html[data-mode="dark"] .lv-opt.on.lv3{background:rgba(228,119,119,.18);border-color:rgba(228,119,119,.62);color:var(--ink)}
+html[data-mode="dark"] .lv-opt.on small{color:var(--ink2)!important;opacity:1}
+html[data-mode="dark"] .lv-opt.on .lv-ico{border-color:currentColor}
+html[data-mode="dark"] .lv-opt.on.lv2 .lv-ico{background:linear-gradient(90deg,currentColor 50%,transparent 50%)}
+html[data-mode="dark"] .lv-opt.on.lv3 .lv-ico{background:currentColor}
+/* 什么时候提醒 / 重复：深色选中同样淡色处理 */
+html[data-mode="dark"] .when-chip.on,
+html[data-mode="dark"] .rep-chip.on{background:rgba(79,185,129,.18);border-color:rgba(79,185,129,.6);color:var(--ink)}
+
+/* 会员弹层：深色下卡片与描边更清楚 */
+html[data-mode="dark"] .member-plan{background:var(--surface);border-color:var(--line)}
+html[data-mode="dark"] .member-plan.rec{background:rgba(79,185,129,.10);border-color:rgba(79,185,129,.55)}
+html[data-mode="dark"] .member-plan.current{box-shadow:0 0 0 2px rgba(79,185,129,.7) inset}
+html[data-mode="dark"] .member-plan-tag{background:var(--brand);color:#0F1A14}
+html[data-mode="dark"] .member-plan-btn{background:var(--brand);color:#0F1A14}
+html[data-mode="dark"] .member-plan-btn.current{background:rgba(255,255,255,.08);color:var(--ink2)}
+html[data-mode="dark"] .member-price{color:var(--ink)}
+
+
+/* ═══════════ 今日完成卡：插画直接做整张卡背景，文字加白色描边 ═══════════ */
+html:root .v2-progress{
+  background-image:url(hero-hills.png)!important;
+  background-size:cover!important;
+  background-position:center 58%!important;
+  background-repeat:no-repeat!important;
+  padding:16px 18px!important;
+  border-color:rgba(255,255,255,.55)!important;
+  box-shadow:0 10px 26px rgba(37,42,39,.10),inset 0 1px 0 rgba(255,255,255,.7)!important;
+}
+html:root .v2-progress .v2-prog-head,
+html:root .v2-progress .v2-bar,
+html:root .v2-progress .v2-quote{position:relative;z-index:2}
+html:root .v2-progress .v2-prog-k{
+  color:#2A5740!important;
+  -webkit-text-stroke:.6px rgba(255,255,255,.95);
+  text-shadow:0 1px 0 #fff,0 0 8px rgba(255,255,255,.9);
+}
+html:root .v2-progress .v2-prog-v b{
+  color:#183A26!important;
+  -webkit-text-stroke:3px #fff;
+  paint-order:stroke fill;
+  text-shadow:0 2px 6px rgba(255,255,255,.75);
+}
+html:root .v2-progress .v2-prog-v span{
+  color:#2A5740!important;
+  -webkit-text-stroke:2px #fff;
+  paint-order:stroke fill;
+}
+html:root .v2-progress .v2-prog-of{
+  color:#2A5740!important;
+  -webkit-text-stroke:1.6px #fff;
+  paint-order:stroke fill;
+  margin-left:10px;
+}
+html:root .v2-progress .v2-quote{
+  color:#26483A!important;max-width:100%!important;
+  -webkit-text-stroke:1.5px #fff;
+  paint-order:stroke fill;
+  text-shadow:0 1px 4px rgba(255,255,255,.7);
+}
+html:root .v2-progress .v2-bar{
+  margin:12px 0 10px!important;height:8px;
+  background:rgba(255,255,255,.62)!important;
+  box-shadow:inset 0 1px 2px rgba(37,42,39,.10);
+}
+html:root .v2-progress .v2-bar i{background:linear-gradient(90deg,#2F9660,#43B57C)!important;box-shadow:0 1px 3px rgba(47,150,96,.35)}
+/* 深色模式：同一张图压一层暗色，文字仍用白描边 */
+html[data-mode="dark"]:root .v2-progress{
+  background-image:linear-gradient(rgba(12,18,15,.55),rgba(12,18,15,.55)),url(hero-hills.png)!important;
+  border-color:rgba(255,255,255,.10)!important;
+}
+html[data-mode="dark"]:root .v2-progress .v2-prog-k{color:#EAF5EE!important;-webkit-text-stroke:.6px rgba(0,0,0,.45);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+html[data-mode="dark"]:root .v2-progress .v2-prog-v b{color:#fff!important;-webkit-text-stroke:3px rgba(0,0,0,.55)}
+html[data-mode="dark"]:root .v2-progress .v2-prog-v span,
+html[data-mode="dark"]:root .v2-progress .v2-prog-of{color:#EAF5EE!important;-webkit-text-stroke:2px rgba(0,0,0,.5)}
+html[data-mode="dark"]:root .v2-progress .v2-quote{color:#F2F7F3!important;-webkit-text-stroke:1.5px rgba(0,0,0,.5)}
+html[data-mode="dark"]:root .v2-progress .v2-bar{background:rgba(255,255,255,.22)!important}
+@media(prefers-color-scheme:dark){
+  html[data-mode="auto"]:root .v2-progress{
+    background-image:linear-gradient(rgba(12,18,15,.55),rgba(12,18,15,.55)),url(hero-hills.png)!important;
+  }
+}
+/* 终焉卡：浅色主题用琥珀玻璃；并且和输入条之间留出安全距离 */
+html:root #termSec .card.terminus{margin-bottom:10px}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2731,12 +2999,11 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           </div>
           <div class="v2-bar"><i id="v2BarFill"></i></div>
           <div class="v2-quote" id="v2Quote">专注于进步，而不是完美。</div>
-          <img class="v2-hero-art" src="hero-hills.png" alt="" width="339" height="202" decoding="async">
-        </div>
+                  </div>
         <div class="v2-stats" id="v2Stats">
-          <button class="v2-stat" data-v2filter="done"><span class="v2-stat-i done">✓</span><b id="v2Done">0</b><em>已完成</em></button>
-          <button class="v2-stat" data-v2filter="doing"><span class="v2-stat-i doing">◔</span><b id="v2Doing">0</b><em>进行中</em></button>
-          <button class="v2-stat" data-v2filter="todo"><span class="v2-stat-i todo">○</span><b id="v2Todo">0</b><em>待办</em></button>
+          <button class="v2-stat" data-v2filter="done"><span class="v2-ic done"></span><b id="v2Done">0</b><em>已完成</em></button>
+          <button class="v2-stat" data-v2filter="doing"><span class="v2-ic clock"></span><b id="v2Doing">0</b><em>进行中</em></button>
+          <button class="v2-stat" data-v2filter="todo"><span class="v2-ic circle"></span><b id="v2Todo">0</b><em>待办</em></button>
         </div>
         <div class="v2-card v2-cats">
           <div class="v2-sec-head"><span>分类</span><span id="v2CatsTotal"></span></div>
@@ -2890,13 +3157,6 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
               <div class="lbl">主题色</div>
               <div class="swatches" id="swatches"></div>
               <div class="sw-name" id="swName">松绿</div>
-            </div>
-            <div class="set-row" style="display:block">
-              <div><div class="lbl">视觉风格</div><div class="sub">原版 / 液态玻璃 / 磨砂</div></div>
-              <div class="seg" id="styleSeg">
-                <button data-style="original">原版</button><button data-style="liquid" class="on">液态玻璃</button><button data-style="frosted">磨砂</button>
-              </div>
-              <div class="sw-name" id="styleName">液态玻璃</div>
             </div>
             <div class="set-row" style="display:block">
               <div><div class="lbl">适老化模式</div><div class="sub">字号更大、按钮更高、对比更强，方便长辈使用</div></div>
@@ -3983,7 +4243,8 @@ function v2TodayBuckets(){
   return {done:done,doing:doing,todo:todo,total:total,rate:total?Math.round(done/total*100):0};
 }
 function v2CatIcon(hex,glyph){
-  return '<span class="v2-cat-i" style="background:'+hex[1]+';color:'+hex[0]+'">'+glyph+'</span>';
+  const key=({ '!':'clock','•':'circle','○':'leaf','✦':'spark','∞':'inf' })[glyph]||'circle';
+  return '<span class="v2-ic '+key+' big"></span>';
 }
 function renderHomeV2(){
   const hi=$('v2Hi');if(!hi)return;
@@ -5404,7 +5665,7 @@ function applyVisualStyle(){
   const nm=$('styleName');if(nm)nm.textContent=perf?'性能优先（'+VISUAL_STYLES[style]+'）':(VISUAL_STYLES[visualStyle]||VISUAL_STYLES.liquid);
 }
 function initVisualStyle(){
-  try{const v=JSON.parse(localStorage.getItem(STYLE_KEY));if(v&&VISUAL_STYLES[v.style])visualStyle=v.style}catch(e){}
+  visualStyle='liquid';   // 视觉风格选择已移除，固定液态玻璃（兼容旧存档：不再读取）
   try{const v=JSON.parse(localStorage.getItem(PERF_KEY));if(v&&['auto','on','off'].indexOf(v.mode)>=0)perfMode=v.mode}catch(e){}
   try{const v=JSON.parse(localStorage.getItem(ELDER_KEY));if(v&&['on','off'].indexOf(v.mode)>=0)elderMode=v.mode}catch(e){}
   applyElder();
@@ -5415,7 +5676,7 @@ function initVisualStyle(){
     try{localStorage.setItem(ELDER_KEY,JSON.stringify({mode:elderMode}))}catch(x){}
     applyElder();toast(elderMode==='on'?'适老化模式已开启':'适老化模式已关闭');
   };
-  const seg=$('styleSeg');
+  const seg=$('styleSeg');   // 已从界面移除，节点不存在时下面整段自动跳过
   if(seg)seg.onclick=e=>{
     const b=e.target.closest('button');if(!b||!VISUAL_STYLES[b.dataset.style])return;
     visualStyle=b.dataset.style;
@@ -5661,7 +5922,7 @@ const DEMO_STEPS=[
   {img:'guide/06-terminus.jpg',focus:{x:0.0256,y:0.1991,w:0.9487,h:0.2848},title:"⑥ 终焉时刻：留给很久以后",body:"写一句话丢到一万年后，它永远待在待办最上面，不参与今天的判断。\n建多条也行，最新的排最上；做完会变成实心金圈，一直留在那儿。"},
   {img:'guide/07-calendar.jpg',focus:{x:0.02,y:0.14,w:0.96,h:0.58},title:"⑦ 日历：点哪天，就看哪天",body:"点日历上的某一天，今日 / 提醒 / 顶部环都会切到那天（顶部会写「不是今天」）。\n看完点一下旁边的「回到今天」就回来了。"},
   {img:'guide/08-fx.jpg',focus:{x:0,y:0.3829,w:1,h:0.1682},title:"⑧ 完成效果随便挑",body:"彩纸（默认）/ 碎片 / 星光 / 花瓣，四种完成动画，点一下会当场演示。\n嫌花哨可以在同一页把「性能优先」打开，动画会自动减量。"},
-  {img:'guide/09-elder.jpg',focus:{x:0,y:0.387,w:1,h:0.154},title:"⑨ 字小？还有适老化",body:"这里能开适老化（字更大、按钮更好按）、深色模式，也能换主题色和视觉风格。\n这几项都在「我的 → 系统设置」里。"}
+  {img:'guide/09-elder.jpg',focus:{x:0,y:0.387,w:1,h:0.154},title:"⑨ 字小？还有适老化",body:"这里能开适老化（字更大、按钮更好按）、深色模式，也能换主题色和深浅色。\n这几项都在「我的 → 系统设置」里。"}
 ];
 let guideActive=false,demoStep=0,guideCheckTimer=null;
 function guideSeen(){try{return localStorage.getItem(GUIDE_KEY)==='2'}catch(e){return false}}
@@ -6935,11 +7196,17 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb2').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb3').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
 
 
 
