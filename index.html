@@ -2131,6 +2131,7 @@ html:root .v2-mini .v2-ic{border-radius:7px!important}
 html body #calGrid .cal-cell.today.d-done .cal-num,
 html body #calGrid .cal-cell.today.all-done .cal-num{color:#FFFFFF!important;-webkit-text-stroke:0!important}
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3631,6 +3632,10 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           <div class="set-title">关于你的数据<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
           <div class="set-desc">所有事项只保存在这台设备上，不会上传。</div>
           <div class="set-detail">
+            <div class="set-row" style="display:block">
+              <div class="lbl">版本</div>
+              <div class="sub">缓存 <span id="appVer">20261126-xb17</span> · <button class="wcfg" id="forceUpdate" style="padding:0;min-height:0">检查更新</button></div>
+            </div>
             <div class="data-btns">
               <button class="data-btn" id="exportBtn">导出备份</button>
               <button class="data-btn" id="importBtn">导入备份</button>
@@ -7651,7 +7656,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb16').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb17').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -7916,6 +7921,31 @@ try{
 
 
 
+
+
+<script>
+/* 检查更新：SW 的缓存键就是构建号 */
+(function(){
+  function bind(){
+    var b=document.getElementById('forceUpdate');
+    if(!b||b.__bound)return; b.__bound=1;
+    b.onclick=function(){
+      b.textContent='检查中…';
+      var done=function(){setTimeout(function(){location.reload()},400)};
+      try{
+        if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration){
+          navigator.serviceWorker.getRegistration().then(function(r){
+            if(!r){done();return}
+            r.update().then(done).catch(done);
+          }).catch(done);
+        }else done();
+      }catch(e){done()}
+    };
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind); else bind();
+  setTimeout(bind,1500);
+})();
+</script>
 
 
 <script>
