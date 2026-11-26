@@ -1048,6 +1048,9 @@ html[data-elder="on"] .modal-mark-img{width:42px;height:42px;border-radius:13px;
 
 
 
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -5262,27 +5265,218 @@ function voiceIdleUI(){
   if(m)m.classList.remove('rec');
 }
 
-function stopVoice(){
-  voiceWanting=false;voiceStarting=false;voiceActive=false;
-  clearTimeout(voiceRestartTimer);voiceRestartTimer=null;
-  clearTimeout(voiceStallTimer);voiceStallTimer=null;
-  if(recog){
-    try{
-      recog.onstart=recog.onresult=recog.onerror=recog.onend=null;
-      recog.abort();
-    }catch(e){}
-    recog=null;
-  }
-  // 引擎释放麦克风是异步的：留出冷却，避免下一次会话抢不到音频
-  voiceCooldownUntil=Date.now()+350;
-  voiceIdleUI();
+/* ── 语音会话：每轮新建实例 + 单飞 + 兜底释放 ────────────────────
+   为什么这么写（Android Edge 的坑）：
+   1) 复用同一个 SpeechRecognition 实例，第二次 start() 经常抛 InvalidStateError
+      或者「起来了但收不到音频」→ 每轮都 new 一个，旧实例只 abort 不重用。
+   2) abort 之后引擎释放麦克风是异步的，立刻再 start 会抢不到音频 →
+      同一时刻只允许一个会话（voiceSession），上一轮没真结束就排队。
+   3) 某些情况下 onend 根本不来（Edge/被系统掐掉）→ stop 后 1.1 秒强制释放状态，
+      保证「再点一次麦克风」永远有效，不需要刷新页面。
+   4) 每轮开始只清临时结果（voiceInterim），已确认的 voiceFinal 一定保留。 */
+let voiceState='idle';               // idle | starting | listening | stopping
+let voiceSession=null;               // {id, rec, ended}
+let voiceSessionSeq=0;
+let voiceWantRestart=false;
+let voiceStartingTimer=null, voiceForceTimer=null, voiceLastClickAt=0;
+const VOICE_LOGS=[];
+function voiceNow(){try{return Math.round(performance.now())}catch(e){return Date.now()}}
+function voiceLog(ev,extra){
+  const sid=voiceSession?voiceSession.id:null;
+  const row={t:voiceNow(),ev:ev,sid:sid,state:voiceState};
+  if(extra){Object.keys(extra).forEach(function(k){row[k]=extra[k]})}
+  VOICE_LOGS.push(row);
+  if(VOICE_LOGS.length>300)VOICE_LOGS.shift();
+  try{console.info('[voice]',JSON.stringify(row))}catch(e){}
 }
+window.__voiceLogs=VOICE_LOGS;
+window.__voiceDebug=function(){return {state:voiceState,sid:voiceSession?voiceSession.id:null,final:voiceFinal,interim:voiceInterim,logs:VOICE_LOGS.slice()}};
+
+/* 无条件把这一轮收掉：不管引擎有没有回调，状态都要回到 idle */
+function voiceReleaseSession(why){
+  clearTimeout(voiceStartingTimer);voiceStartingTimer=null;
+  clearTimeout(voiceForceTimer);voiceForceTimer=null;
+  clearTimeout(voiceStallTimer);voiceStallTimer=null;
+  const s=voiceSession;
+  voiceSession=null;voiceState='idle';voiceActive=false;voiceStarting=false;
+  if(s){
+    s.ended=true;
+    try{s.rec.onstart=s.rec.onresult=s.rec.onerror=s.rec.onend=s.rec.onaudiostart=s.rec.onspeechstart=null}catch(e){}
+  }
+  voiceIdleUI();
+  voiceLog('release',{why:why});
+}
+
+function stopVoice(keepText){
+  clearTimeout(voiceRestartTimer);voiceRestartTimer=null;
+  voiceWanting=false;voiceWantRestart=false;
+  const s=voiceSession;
+  if(!s){
+    voiceReleaseSession('stop-no-session');
+    voiceCooldownUntil=Date.now()+250;
+    return;
+  }
+  voiceState='stopping';
+  voiceLog('stop',{keepText:!!keepText});
+  try{
+    if(keepText&&typeof s.rec.stop==='function')s.rec.stop();   // 正常结束：保留已识别文字
+    else s.rec.abort();                                        // 取消：丢弃这一轮
+  }catch(e){voiceLog('stop-throw',{e:String((e&&e.message)||e)})}
+  clearTimeout(voiceForceTimer);
+  voiceForceTimer=setTimeout(function(){
+    if(voiceSession===s)voiceReleaseSession('force-after-stop');
+  },1100);
+  voiceCooldownUntil=Date.now()+320;
+}
+
+function voiceStartRound(reason){
+  if(!SpeechRec){voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');return false}
+  /* 上一轮没真结束：让它收尾，onend 之后再来一轮，避免两个会话抢麦克风 */
+  if(voiceSession&&!voiceSession.ended){
+    voiceLog('start-blocked',{reason:reason});
+    voiceWantRestart=true;
+    try{voiceSession.rec.abort()}catch(e){}
+    return false;
+  }
+  if(voiceState==='starting'||voiceState==='listening')return false;
+  const cool=voiceCooldownUntil-Date.now();
+  if(cool>0){
+    voiceLog('start-cool',{cool:cool});
+    setTimeout(function(){if(voicePanelOpen())voiceStartRound('cool')},cool+30);
+    return false;
+  }
+  let rec=null;
+  try{rec=new SpeechRec()}catch(err){
+    voiceLog('ctor-throw',{e:String((err&&err.message)||err)});
+    voiceReleaseSession('ctor-throw');
+    voiceSay('无法启动麦克风','请检查浏览器麦克风权限，或直接用输入框打字');
+    return false;
+  }
+  const sid='v'+(++voiceSessionSeq)+'-'+Date.now().toString(36);
+  const session={id:sid,rec:rec,ended:false};
+  voiceSession=session;
+  voiceState='starting';
+  voiceWanting=true;voiceWantRestart=true;voiceGotResult=false;voiceMicOk=false;
+  voiceInterim='';                       // 只清临时结果，voiceFinal 一律保留
+  voiceLog('create',{reason:reason,seq:voiceSessionSeq});
+  const mine=function(){return voiceSession===session};
+  voiceSay('正在启动麦克风…','如果弹出麦克风授权，请点「允许」');
+
+  rec.lang='zh-CN';
+  rec.continuous=false;                  // 安卓上 continuous 会「刚连上就断」，靠 onend 续
+  rec.interimResults=true;
+  rec.maxAlternatives=1;
+  if(voiceLocalOk){try{rec.processLocally=true}catch(e){}}
+
+  rec.onstart=function(){
+    if(!mine())return;
+    voiceState='listening';voiceStarting=false;voiceActive=true;voiceGotResult=false;voiceMicOk=false;
+    voiceLog('onstart');
+    voiceSay('正在聆听…','说完会自动收尾；想补一句就再点一次麦克风');
+    $('voicePanel').classList.add('rec');
+    $('voiceMic').classList.add('rec');
+    voiceRender();
+    clearTimeout(voiceStartingTimer);voiceStartingTimer=null;
+    clearTimeout(voiceStallTimer);
+    voiceStallTimer=setTimeout(function(){
+      if(!mine()||voiceGotResult||voiceMicOk||!voicePanelOpen())return;
+      voiceLog('stall',{});
+      voiceReleaseSession('stall');
+      voiceSay('没收到识别结果','麦克风可能还被上一次占着，再点一次麦克风试试；也可以改用打字。');
+    },4000);
+  };
+  rec.onaudiostart=function(){if(!mine())return;voiceMicOk=true;clearTimeout(voiceStallTimer);voiceLog('audiostart')};
+  rec.onspeechstart=function(){if(!mine())return;voiceMicOk=true;clearTimeout(voiceStallTimer);voiceLog('speechstart')};
+
+  rec.onresult=function(e){
+    if(!mine())return;
+    let interim='',final='';
+    for(let k=e.resultIndex;k<e.results.length;k++){
+      const r=e.results[k],txt=r[0].transcript;
+      if(r.isFinal)final+=txt;else interim+=txt;
+    }
+    if(final){
+      const add=final.trim();
+      if(add&&voiceFinal.indexOf(add)<0)voiceFinal=(voiceFinal+' '+add).trim();
+      if(add&&(!interim||add.indexOf(interim.trim())>=0))interim='';   // 最终结果包含临时结果时清掉，别重复
+    }
+    if(interim||final)voiceGotResult=true;
+    voiceInterim=interim;
+    voiceLog('onresult',{finalLen:final.length,interimLen:interim.length,resultIndex:e.resultIndex});
+    voiceRender();
+  };
+
+  rec.onerror=function(e){
+    if(!mine())return;
+    const err=(e&&e.error)||'';
+    voiceLog('onerror',{err:err,msg:String((e&&e.message)||'')});
+    if(err==='aborted')return;                    // 自己 abort 的，等 onend / 兜底
+    if(err==='no-speech'){voiceSay('没听到声音，还在听…','靠近一点、说大声些');return}
+    voiceWantRestart=false;
+    voiceErrAt=Date.now();
+    voiceReleaseSession('error:'+err);
+    const pair=voiceErrorHint(err);
+    voiceSay(pair[0],pair[1]);
+    toast(pair[0]);
+  };
+
+  rec.onend=function(){
+    if(!mine())return;
+    const hadText=!!voiceFinal.trim();
+    voiceLog('onend',{hadText:hadText,interim:voiceInterim});
+    const freshErr=(Date.now()-voiceErrAt)<900;
+    const want=voiceWantRestart&&voicePanelOpen()&&!hadText&&!freshErr;
+    voiceReleaseSession('onend');
+    if(want&&voiceRestarts<3){
+      voiceRestarts++;
+      clearTimeout(voiceRestartTimer);
+      voiceRestartTimer=setTimeout(function(){if(voicePanelOpen())voiceStartRound('auto')},320);
+      return;
+    }
+    if(voicePanelOpen()){
+      if(!freshErr){
+        voiceSay(hadText?'已停止，点麦克风继续补一句':'已停止，点麦克风继续',
+          '也可以直接用输入框打字');
+      }
+      voiceRender();
+    }
+  };
+
+  clearTimeout(voiceStartingTimer);
+  voiceStartingTimer=setTimeout(function(){
+    if(!mine()||voiceState!=='starting')return;
+    voiceLog('start-timeout',{});
+    voiceReleaseSession('start-timeout');
+    voiceSay('麦克风没启动起来','再点一次麦克风；还不行就改用打字，一样能识别时间。');
+  },2600);
+
+  try{
+    rec.start();
+    voiceLog('start-called');
+  }catch(err){
+    const name=String((err&&err.name)||'');
+    voiceLog('start-throw',{name:name,e:String((err&&err.message)||err)});
+    voiceReleaseSession('start-throw');
+    if(name==='InvalidStateError'){
+      voiceCooldownUntil=Date.now()+260;
+      voiceSay('正在重新连接麦克风…','稍等一下，马上重试');
+      setTimeout(function(){if(voicePanelOpen())voiceStartRound('retry-invalid-state')},300);
+    }else{
+      voiceWantRestart=false;
+      voiceSay('无法启动麦克风','请检查浏览器麦克风权限，或直接用输入框打字');
+    }
+    return false;
+  }
+  return true;
+}
+function startVoice(){return voiceStartRound('user')}
 
 function openVoice(){
   voiceRestarts=0;voiceStalls=0;voiceGotResult=false;
   clearTimeout(voiceStallTimer);voiceStallTimer=null;
-  // 导览正在显示时先收起来，否则会盖住语音面板
   try{ if(typeof guideActive!=='undefined'&&guideActive&&typeof endGuide==='function') endGuide(); }catch(e){}
+  voiceReleaseSession('open');            // 面板重开：先把上一轮的残留彻底收掉
+  voiceCooldownUntil=0;
   buildWave();voiceFinal='';voiceInterim='';
   $('voiceMic').style.opacity='1';
   $('voiceMask').classList.add('on');
@@ -5299,7 +5493,7 @@ function openVoice(){
 }
 
 function closeVoice(){
-  stopVoice();
+  stopVoice(false);
   $('voicePanel').classList.remove('on');
   $('voiceMask').classList.remove('on');
 }
@@ -5323,121 +5517,6 @@ function voiceErrorHint(err){
     return ['不支持中文识别','换 Chrome / Edge 再试，或直接打字。'];
   }
   return ['识别出错','可以再点一次麦克风，或者直接打字。'];
-}
-
-function startVoice(){
-  if(!SpeechRec){voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');return}
-  if(voiceStarting||voiceActive)return;
-  voiceWanting=true;            // 用户意图先记下来，冷却期结束后靠它续启动
-  const cool=voiceCooldownUntil-Date.now();
-  if(cool>0){
-    // 上一次刚 abort，等引擎松手再开，否则新会话收不到任何结果
-    voiceStarting=true;
-    setTimeout(function(){voiceStarting=false;if(voiceWanting&&voicePanelOpen())startVoice()},cool+20);
-    return;
-  }
-  voiceStarting=true;voiceGotResult=false;voiceMicOk=false;
-  voiceSay('正在启动麦克风…','如果弹出麦克风授权，请点「允许」');
-  try{
-    if(recog){try{recog.abort()}catch(e){}}
-    recog=new SpeechRec();
-    recog.lang='zh-CN';
-    recog.continuous=false;      // 安卓上更稳，靠 onend 自动续
-    recog.interimResults=true;
-    recog.maxAlternatives=1;
-    if(voiceLocalOk){try{recog.processLocally=true}catch(e){}}
-
-    recog.onstart=()=>{
-      voiceStarting=false;voiceActive=true;voiceGotResult=false;
-      voiceSay('正在聆听…','说完会自动断句，停了也会继续听；确认后点「记下」');
-      $('voicePanel').classList.add('rec');
-      $('voiceMic').classList.add('rec');
-      voiceRender();
-      // 看门狗：起来了却连音频都没有，多半是麦克风还挂在旧会话上
-      voiceMicOk=false;
-      clearTimeout(voiceStallTimer);
-      voiceStallTimer=setTimeout(function(){
-        if(!voiceActive||voiceGotResult||voiceMicOk)return;
-        if(!voicePanelOpen())return;
-        try{recog&&recog.abort()}catch(e){}
-        voiceActive=false;voiceStarting=false;
-        voiceStalls++;
-        if(voiceStalls<=2){
-          voiceSay('正在重新连接麦克风…','上一次的识别可能没放开，稍等一下');
-          voiceCooldownUntil=Date.now()+250;
-          startVoice();
-        }else{
-          voiceWanting=false;
-          voiceSay('没收到识别结果',
-            '可能是麦克风被别的 App 占用，或在线识别服务连不上。<br>可以点下面的「改用打字」。');
-        }
-      },3500);
-    };
-
-    recog.onaudiostart=function(){voiceMicOk=true;clearTimeout(voiceStallTimer)};
-    recog.onspeechstart=function(){voiceMicOk=true;clearTimeout(voiceStallTimer)};
-
-    recog.onresult=e=>{
-      let interim='',final='';
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const r=e.results[i],txt=r[0].transcript;
-        if(r.isFinal)final+=txt;else interim+=txt;
-      }
-      if(final){
-        const add=final.trim();
-        if(add&&voiceFinal.indexOf(add)<0)voiceFinal=(voiceFinal+' '+add).trim();
-        // 最终结果已经包含上一段临时结果时，清掉它，避免「交作业 交作业」
-        if(add&&(!interim||add.indexOf(interim.trim())>=0))interim='';
-      }
-      if(interim||final)voiceGotResult=true;
-      voiceInterim=interim;
-      voiceRender();
-    };
-
-    recog.onerror=e=>{
-      voiceActive=false;voiceStarting=false;voiceIdleUI();
-      const err=(e&&e.error)||'';
-      if(err==='aborted')return;            // 我们自己 abort 的，不打扰
-      if(err==='no-speech'){               // 没说话：继续听
-        voiceSay('没听到声音，还在听…','靠近一点、说大声些');
-        return;
-      }
-      voiceWanting=false;                   // 其他错误不再自动续
-      voiceErrAt=Date.now();
-      const [head,hint]=voiceErrorHint(err);
-      voiceSay(head,hint);
-      toast(head);
-    };
-
-    recog.onend=()=>{
-      voiceActive=false;voiceStarting=false;voiceIdleUI();
-      if(voiceWanting&&voicePanelOpen()&&voiceRestarts<24){
-        voiceRestarts++;
-        clearTimeout(voiceRestartTimer);
-        voiceRestartTimer=setTimeout(()=>{
-          if(voiceWanting&&voicePanelOpen())startVoice();
-        },300);
-        return;
-      }
-      if(voicePanelOpen()){
-        if(Date.now()-voiceErrAt>900){       // 刚报过错就保留错误说明，别覆盖
-          voiceSay(voiceFinal.trim()?'已停止，可点麦克风继续':'已停止，点麦克风继续',
-            '也可以直接用输入框打字');
-        }
-        voiceRender();
-      }
-    };
-
-    recog.start();
-  }catch(err){
-    voiceStarting=false;
-    if(err&&err.name==='InvalidStateError'){
-      setTimeout(()=>{voiceStarting=false;if(voicePanelOpen()&&voiceWanting)startVoice()},400);
-    }else{
-      voiceWanting=false;
-      voiceSay('无法启动麦克风','请检查浏览器麦克风权限，或直接用输入框打字');
-    }
-  }
 }
 
 function commitVoice(){
@@ -6087,13 +6166,27 @@ $('voiceType').onclick=()=>{
   if(text)try{renderParsePreview(text,'parsePreview',true)}catch(e){}
 };
 $('voiceMic').onclick=()=>{
+  const now=Date.now();
+  if(now-voiceLastClickAt<350){voiceLog('click-ignored',{gap:now-voiceLastClickAt});return}   // 防快速连点
+  voiceLastClickAt=now;
   if(!SpeechRec){
     voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');
     return;
   }
-  if(voiceWanting){ stopVoice(); voiceSay('已暂停','点麦克风继续，或直接点「记下」'); return; }
-  voiceRestarts=0;
-  startVoice();          // 在点击手势里同步启动，安卓才认
+  voiceLog('click',{hasText:!!voiceFinal.trim()});
+  if(voiceState==='listening'){
+    stopVoice(true);                                     // 正常结束，保留已识别文字
+    voiceSay('已暂停','点麦克风继续补一句，或直接点「记下」');
+    return;
+  }
+  if(voiceState==='starting'){
+    stopVoice(false);                                    // 还没听上：取消这一轮
+    voiceSay('已取消','点麦克风重新开始');
+    return;
+  }
+  if(voiceState==='stopping')voiceReleaseSession('click-while-stopping');
+  voiceRestarts=0;voiceErrAt=0;
+  startVoice();                                          // 必须在点击手势里同步启动，安卓才认
 };
 $('calPrev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--}calSelected=null;renderCalendar();render()};
 $('calNext').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++}calSelected=null;renderCalendar();render()};
@@ -6161,11 +6254,14 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261125-xb7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb1').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
