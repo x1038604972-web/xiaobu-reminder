@@ -2132,6 +2132,34 @@ html body #calGrid .cal-cell.today.d-done .cal-num,
 html body #calGrid .cal-cell.today.all-done .cal-num{color:#FFFFFF!important;-webkit-text-stroke:0!important}
 
 
+
+
+/* ═══ 今天：始终方框；内部填充表示「今天已经全部做完」，实心留到明天 ═══ */
+#calGrid .cal-cell.d-today{
+  background:transparent!important;
+  border:2px solid var(--brand)!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+  padding:3px 0!important;
+}
+#calGrid .cal-cell.d-today .cal-num{color:var(--brand-ink)!important;font-weight:800!important;opacity:1!important}
+/* 今天做完：方框内铺一层浅绿，仍然看得见框 */
+#calGrid .cal-cell.d-today.d-today-done{
+  background:rgba(47,150,96,.16)!important;
+}
+#calGrid .cal-cell.d-today.d-today-done .cal-num{color:var(--brand-ink)!important}
+/* 与左侧绿条咬合 */
+#calGrid .cal-cell.d-today.join-l{border-left-color:transparent!important;border-radius:0 10px 10px 0!important}
+#calGrid .cal-cell.d-today.join-r{border-right-color:transparent!important;border-radius:10px 0 0 10px!important}
+#calGrid .cal-cell.d-today.join-l.join-r{border-radius:0!important}
+/* 旧规则兜底：今天即便带 all-done 也不许变成实心 */
+#calGrid .cal-cell.all-done:not(.d-done){background:transparent!important}
+#calGrid .cal-cell.today:not(.d-today){background:transparent!important;border:2px solid var(--brand)!important;box-shadow:none!important;border-radius:10px!important}
+
+
+/* 今天做完也还是方框：数字保持深绿，不要反白 */
+html body #calGrid .cal-cell.d-today.d-today-done .cal-num{color:var(--brand-ink)!important;-webkit-text-stroke:0!important}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4821,7 +4849,7 @@ function calMergeRuns(){
     // 今天不是完成态时，若左右是绿条，就收平对应圆角，让方框和绿条咬合
     for(let k=0;k<row.length;k++){
       const c=row[k];
-      if(!c.classList.contains('today')||c.classList.contains('d-done'))continue;
+      if(!c.classList.contains('d-today'))continue;
       if(k>0&&row[k-1].classList.contains('d-done'))c.classList.add('join-l');
       if(k<row.length-1&&row[k+1].classList.contains('d-done'))c.classList.add('join-r');
     }
@@ -5618,7 +5646,18 @@ function renderCalendar(){
   const allDone=list.length>0&&list.every(t=>t.done);
   const todayK=dayKey(Date.now());
   const isPast=k<todayK;
-  const state=allDone?'d-done':(list.length?(isPast||k===todayK?'d-miss':''):(isPast?'d-skip':''));
+  let state;
+  if(k===todayK){
+    state=allDone?'d-today d-today-done':'d-today';      // 今天：永远方框，做完只加内部填充
+  }else if(allDone){
+    state='d-done';                                      // 已经过去的日子：完成=实心
+  }else if(list.length&&isPast){
+    state='d-miss';
+  }else if(isPast){
+    state='d-skip';
+  }else{
+    state='';
+  }
   const cls=['cal-cell',(m!==calMonth?'dim':''),(k===todayK?'today':''),(k===calSelected?'sel':''),(allDone?'all-done':''),state].join(' ');
     html+='<div class="'+cls+'" data-key="'+k+'"'+(allDone?' title="这天的 '+list.length+' 件事都完成了"':'')+'>'+
       '<i class="cal-flag" aria-label="当天全部完成">🚩</i>'+
@@ -7656,7 +7695,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb17').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb18').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -7946,6 +7985,9 @@ try{
   setTimeout(bind,1500);
 })();
 </script>
+
+
+
 
 
 <script>
