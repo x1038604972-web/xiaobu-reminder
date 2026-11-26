@@ -1432,6 +1432,25 @@ html[data-mode="dark"] .card.terminus{background:linear-gradient(180deg,#221F18,
 .sheet{padding-bottom:calc(14px + env(safe-area-inset-bottom))}
 
 .member-title{color:var(--ink)!important}.member-top .member-title{color:var(--ink)!important}.member-link{color:var(--brand-ink)!important}.brand-words .wordmark{color:var(--ink)}
+
+/* 用户绘制的山丘路径插画（首屏进度卡右下角） */
+.v2-hero-art{
+  position:absolute;right:10px;bottom:9px;width:146px;height:auto;
+  border-radius:12px;pointer-events:none;user-select:none;
+  box-shadow:0 6px 16px rgba(37,42,39,.08);
+}
+.v2-quote{max-width:56%}
+@media(max-width:355px){.v2-hero-art{width:128px}.v2-quote{max-width:52%}}
+html[data-elder="on"] .v2-hero-art{width:132px}
+
+
+.v2-prog-of{font-size:12px;color:var(--ink3);font-style:normal;font-weight:650;margin-left:8px;letter-spacing:0}
+.v2-hero-art{top:12px;bottom:auto!important;width:132px!important;right:12px!important}
+.v2-bar{margin-top:14px!important}
+.v2-quote{max-width:60%!important}
+@media(max-width:355px){.v2-hero-art{width:118px!important}}
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -2707,17 +2726,12 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           <div class="v2-prog-head">
             <div>
               <div class="v2-prog-k">今日完成</div>
-              <div class="v2-prog-v"><b id="v2Rate">0</b><span>%</span></div>
+              <div class="v2-prog-v"><b id="v2Rate">0</b><span>%</span><em class="v2-prog-of" id="v2ProgMeta">0 / 0</em></div>
             </div>
-            <div class="v2-prog-meta" id="v2ProgMeta">0 / 0</div>
           </div>
           <div class="v2-bar"><i id="v2BarFill"></i></div>
           <div class="v2-quote" id="v2Quote">专注于进步，而不是完美。</div>
-          <svg class="v2-hill" viewBox="0 0 120 70" fill="none" aria-hidden="true">
-            <path d="M0 70L38 30L60 52L82 22L120 70H0Z" fill="url(#v2g)"/>
-            <circle cx="96" cy="16" r="7" fill="#F2D48B" opacity=".9"/>
-            <defs><linearGradient id="v2g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE9D9"/><stop offset="1" stop-color="#EAF5EE"/></linearGradient></defs>
-          </svg>
+          <img class="v2-hero-art" src="hero-hills.png" alt="" width="339" height="202" decoding="async">
         </div>
         <div class="v2-stats" id="v2Stats">
           <button class="v2-stat" data-v2filter="done"><span class="v2-stat-i done">✓</span><b id="v2Done">0</b><em>已完成</em></button>
@@ -6921,11 +6935,15 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb1').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb2').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
+
 
 
 

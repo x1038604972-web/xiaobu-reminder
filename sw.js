@@ -4,11 +4,11 @@
    ─ 其他来源（CDN / Supabase）：直接透传，失败就是失败，不拿 index.html 冒充
 */
 const PREFIX = 'xiaobu-';
-const CACHE='xiaobu-20261126-xb1';
+const CACHE='xiaobu-20261126-xb2';
 const OFFLINE_HTML = './index.html';
 
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './ava-96.png',
-  './body-320.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+  './body-320.png', './hero-hills.png', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 /* 新手导览演示资源：单独预缓存，单张失败不影响核心离线能力（首屏仍能离线启动） */
 const GUIDE_ASSETS = ['./guide/demo.json',
