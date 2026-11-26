@@ -4,7 +4,7 @@
    ─ 其他来源（CDN / Supabase）：直接透传，失败就是失败，不拿 index.html 冒充
 */
 const PREFIX = 'xiaobu-';
-const CACHE='xiaobu-20261127-xb14';
+const CACHE='xiaobu-20261127-xb15';
 const OFFLINE_HTML = './index.html';
 
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './ava-96.png',

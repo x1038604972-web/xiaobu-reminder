@@ -2343,6 +2343,8 @@ html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat
 
 
 
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7919,7 +7921,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb14').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb15').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8383,6 +8385,8 @@ try{
   };
 })();
 </script>
+
+
 
 
 
@@ -10322,25 +10326,219 @@ function tasksOnDays(keys) {
     try { return !!set[dayStampOf(t.ts)]; } catch (e) { return false; }
   }).sort(function (a, b) { return a.ts - b.ts; });
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   日期范围：本地时区计算（getFullYear/Month/Date，不用 toISOString，避免 UTC 偏移）
+   支持：今天/明天/后天/大后天、下周一~下周日、下周末、本周、本月、
+        未来三天/七天、12月5日、12/5、最近的重要任务
+   无法识别时返回 unknown，交给调用方如实说明，绝不静默当成今天
+   ══════════════════════════════════════════════════════════════════ */
+function mkKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function keyToDate(k) {
+  var p = String(k).split('-');
+  return new Date(+p[0], +p[1] - 1, +p[2]);
+}
+function addDaysKey(n) {
+  var d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + n);
+  return mkKey(d);
+}
+function weekdayOf(d) { return (d.getDay() + 6) % 7; }   /* 周一=0 … 周日=6 */
+var CN_WEEK = { '一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6 };
+
+function parseExplicitDate(text) {
+  var t = String(text || '');
+  var m = t.match(/(\d{1,2})\s*[月\/\-]\s*(\d{1,2})\s*[日号]?/);
+  if (!m) return null;
+  var mo = +m[1], dd = +m[2];
+  if (mo < 1 || mo > 12 || dd < 1 || dd > 31) return null;
+  var now = new Date();
+  var y = now.getFullYear();
+  var d = new Date(y, mo - 1, dd, 12, 0, 0, 0);
+  if (d.getMonth() !== mo - 1) return null;            /* 2月31日这种直接判废 */
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  if (d.getTime() < today.getTime()) d = new Date(y + 1, mo - 1, dd, 12, 0, 0, 0);
+  return { key: mkKey(d), label: (d.getMonth() + 1) + '月' + d.getDate() + '日' };
+}
+
+function queryScopeV2(text) {
+  var t = String(text || '');
+  var hasDateHint = /(今天|今日|今儿|明天|明日|后天|大后天|下周|本周|这周|周末|月|号|日|未来|接下来|这几天)/.test(t);
+
+  /* 1) 显式日期 */
+  var ex = parseExplicitDate(t);
+  if (ex) return { keys: [ex.key], label: ex.label };
+
+  /* 2) 下周X / 下周末 */
+  if (/下周/.test(t)) {
+    var target = null;
+    var mw = t.match(/下周([一二三四五六日天])/);
+    if (mw) target = CN_WEEK[mw[1]];
+    if (/下周末/.test(t)) {
+      var base = new Date(); base.setHours(12, 0, 0, 0);
+      var toMon = (8 - (base.getDay() === 0 ? 7 : base.getDay())) % 7;   /* 到下周一的偏移 */
+      var nextMon = new Date(base.getTime());
+      nextMon.setDate(nextMon.getDate() + (toMon === 0 ? 7 : toMon));
+      var sat = new Date(nextMon.getTime()); sat.setDate(sat.getDate() + 5);
+      var sun = new Date(nextMon.getTime()); sun.setDate(sun.getDate() + 6);
+      return { keys: [mkKey(sat), mkKey(sun)], label: '下周末' };
+    }
+    if (target !== null) {
+      var d0 = new Date(); d0.setHours(12, 0, 0, 0);
+      var cur = weekdayOf(d0);
+      var delta = (7 - cur) + target;                     /* 下周一起算 */
+      d0.setDate(d0.getDate() + delta);
+      return { keys: [mkKey(d0)], label: '下周' + ['一', '二', '三', '四', '五', '六', '日'][target] };
+    }
+    return { keys: [], label: '下周', unknown: true };
+  }
+
+  /* 3) 本周 / 这周（今天到本周日） */
+  if (/(本周|这周|这一周)/.test(t)) {
+    var keys = [];
+    var cur2 = weekdayOf(new Date());
+    for (var i = 0; i <= 6 - cur2; i++) keys.push(addDaysKey(i));
+    return { keys: keys, label: '这周' };
+  }
+
+  /* 4) 本月 */
+  if (/(本月|这个月|当月)/.test(t)) {
+    var now = new Date();
+    var last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    var out = [];
+    for (var dnum = now.getDate(); dnum <= last.getDate(); dnum++) {
+      out.push(mkKey(new Date(now.getFullYear(), now.getMonth(), dnum)));
+    }
+    return { keys: out, label: '本月剩下的 ' + out.length + ' 天' };
+  }
+
+  /* 5) 未来 N 天 */
+  var mf = t.match(/未来\s*([0-9一二三四五六七两]+)\s*天/);
+  if (mf) {
+    var numMap = { '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7 };
+    var n = numMap[mf[1]] || parseInt(mf[1], 10);
+    if (n >= 1 && n <= 30) {
+      var ks = [];
+      for (var j = 0; j < n; j++) ks.push(addDaysKey(j));
+      return { keys: ks, label: '未来 ' + n + ' 天' };
+    }
+  }
+  if (/(未来一周|接下来一周)/.test(t)) {
+    var k7 = [];
+    for (var q = 0; q < 7; q++) k7.push(addDaysKey(q));
+    return { keys: k7, label: '未来 7 天' };
+  }
+
+  /* 5b) N 天后 / N 天后（三天后、5天后） */
+  var md = t.match(/([0-9一二三四五六七八九十两]+)\s*天\s*(后|以后|之后)/);
+  if (md) {
+    var map2 = { '一': 1, '二': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10 };
+    var nd = map2[md[1]] || parseInt(md[1], 10);
+    if (nd >= 1 && nd <= 60) return { keys: [addDaysKey(nd)], label: nd + ' 天后' };
+  }
+
+  /* 6) 相对日 */
+  if (/大后天/.test(t)) return { keys: [addDaysKey(3)], label: '大后天' };
+  if (/后天/.test(t)) return { keys: [addDaysKey(2)], label: '后天' };
+  if (/(明天|明日)/.test(t)) return { keys: [addDaysKey(1)], label: '明天' };
+  if (/(今天|今日|今儿)/.test(t)) return { keys: [addDaysKey(0)], label: '今天' };
+
+  /* 7) 有日期意味但没解析出来 → 不猜 */
+  if (hasDateHint) return { keys: [], label: '', unknown: true };
+  return { keys: [addDaysKey(0)], label: '今天' };
+}
+
+/* ── 重复任务展开（只算展示实例，绝不写库） ── */
+function repeatHits(t, key) {
+  if (!t || !t.repeat || t.repeat === 'none') return false;
+  var d = keyToDate(key);
+  var wd = weekdayOf(d);
+  if (t.repeat === 'daily') return true;
+  if (t.repeat === 'weekly') {
+    var base = new Date(t.ts);
+    return weekdayOf(base) === wd;
+  }
+  if (t.repeat === 'custom' && t.weekMask) return !!(t.weekMask & (1 << wd));
+  return false;
+}
+function timeOfDayOf(ts) {
+  var d = new Date(ts);
+  return { h: d.getHours(), m: d.getMinutes() };
+}
+function expandInstances(keys) {
+  var out = [];
+  var real = tasksOnDays(keys);          /* 真实任务（含非重复） */
+  var realKey = {};
+  real.forEach(function (t) { realKey[t.title + '@' + dayStampOf(t.ts)] = 1; });
+  real.forEach(function (t) {
+    out.push({ id: t.id, title: t.title, ts: t.ts, done: !!t.done, lv: t.lv || 1, repeat: t.repeat || 'none', virtual: false });
+  });
+  allList().forEach(function (t) {
+    if (!t.repeat || t.repeat === 'none') return;
+    keys.forEach(function (k) {
+      if (!repeatHits(t, k)) return;
+      var tod = timeOfDayOf(t.ts);
+      var inst = keyToDate(k);
+      inst.setHours(tod.h, tod.m, 0, 0);
+      var key = t.title + '@' + k;
+      if (realKey[key]) return;
+      if (inst.getTime() < startOfDay(t.ts)) return;   /* 重复任务开始之前不生成 */
+      out.push({ id: t.id, title: t.title, ts: inst.getTime(), done: false, lv: t.lv || 1, repeat: t.repeat, virtual: true });
+    });
+  });
+  out.sort(function (a, b) { return a.ts - b.ts; });
+  return out;
+}
+function startOfDay(ts) {
+  var d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime();
+}
+
 function answerQuery(text) {
-  var scope = queryScope(text);
-  var list = tasksOnDays(scope.keys);
-  var wantDone = /(完成|做完|已完成)/.test(String(text || ''));
-  if (!wantDone) list = list.filter(function (t) { return !t.done; });
-  if (!list.length) {
-    say(scope.label + '没有安排。' + (scope.label === '今天' ? '要不要现在记一件？' : '要不要我帮你排一件？'),
-      null, ['明天 9 点提醒我交作业', '看看这周的安排']);
+  var t = String(text || '');
+  var important = /(重要|最要紧|关键的)/.test(t);
+  var scope = queryScopeV2(t);
+  if (important && !scope.keys.length && scope.unknown) scope = queryScopeV2('未来 7 天');
+
+  if (scope.unknown || !scope.keys.length) {
+    say('这句里的日期我没听清。可以说「今天 / 明天 / 下周三 / 本月 / 未来三天 / 12月5日」。',
+      null, ['明天有哪些待办', '本月还有哪些待办', '未来三天有什么']);
     return true;
   }
-  var over = list.filter(function (t) { return !t.done && t.ts < Date.now(); });
-  var lines = list.slice(0, 6).map(function (t) {
-    var flag = t.done ? '✓ ' : (t.ts < Date.now() ? '⚠ ' : '');
-    return flag + ft(t.ts) + ' · ' + t.title;
+  if (important) {
+    var endK = addDaysKey(7);
+    scope = { keys: [], label: '最近的重要任务' };
+    for (var i = 0; i <= 7; i++) scope.keys.push(addDaysKey(i));
+    var imp = expandInstances(scope.keys).filter(function (x) { return (x.lv || 1) >= 2; });
+    if (!imp.length) { say('最近 7 天没有标为重要的任务。', null, ['明天有哪些待办']); return true; }
+    var il = imp.slice(0, 6).map(function (x) {
+      return '· ' + ft(x.ts) + ' · ' + x.title + (x.lv >= 3 ? '（重要）' : '');
+    });
+    say('最近 7 天有 ' + imp.length + ' 件重要的：\n' + il.join('\n'), null, ['把最早一件推迟 1 小时']);
+    return true;
+  }
+
+  var list = expandInstances(scope.keys);
+  var wantDone = /(完成|做完|已完成)/.test(t);
+  if (!wantDone) list = list.filter(function (x) { return !x.done; });
+
+  if (!list.length) {
+    say(scope.label + '没有安排。' + (scope.label === '今天' ? '要不要现在记一件？' : '要不要我帮你排一件？'),
+      null, ['明天 9 点提醒我交作业', '本月还有哪些待办']);
+    return true;
+  }
+  var over = list.filter(function (x) { return !x.done && x.ts < Date.now(); });
+  var lines = list.slice(0, 6).map(function (x) {
+    var flag = x.done ? '✓ ' : (x.ts < Date.now() ? '⚠ ' : '');
+    var tag = x.virtual ? '（重复）' : '';
+    return flag + ft(x.ts) + ' · ' + x.title + tag;
   });
   if (list.length > 6) lines.push('…还有 ' + (list.length - 6) + ' 件');
   var head = scope.label + (wantDone ? '完成 ' : '有 ') + list.length + ' 件' +
     (over.length ? '，其中 ' + over.length + ' 件过点了' : '') + '：';
-  say(head + '\n' + lines.join('\n'), null, ['把最早一件推迟 1 小时', '明天有哪些待办', '看看这周的安排']);
+  say(head + '\n' + lines.join('\n'), null, ['把最早一件推迟 1 小时', '明天有哪些待办', '本月还有哪些待办']);
   return true;
 }
 
@@ -11282,7 +11480,8 @@ window.XiaoBu._p1 = {
   tools: AITools, run: function (p) { return AITools.run(p); },
   pending: aiReadPending, runPending: aiRunPending, cancel: function () { aiClearPending(); return true; },
   ctx: aiReadCtx, pushCtx: aiPushCtx, ask: askLLM, exec: execRemote,
-  sys: function () { return sysPrompt(); }, query: function (t) { return answerQuery(t); }, intent: function (t) { return detectIntent(t); }
+  sys: function () { return sysPrompt(); }, query: function (t) { return answerQuery(t); }, intent: function (t) { return detectIntent(t); },
+  scope: function (t) { return queryScopeV2(t); }, expand: function (t) { var sc = queryScopeV2(t); return expandInstances(sc.keys); }
 };
 
   if (document.readyState === 'loading') {
