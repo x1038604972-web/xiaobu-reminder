@@ -2097,6 +2097,40 @@ html:root .v2-mini .v2-ic{border-radius:7px!important}
 
 
 
+
+/* ═══ 今天：没做完 = 方框；做完了 = 实心（跟随绿条） ═══ */
+#calGrid .cal-cell.today:not(.d-done){
+  background:transparent!important;
+  border:2px solid var(--brand)!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+  padding:3px 0!important;
+}
+#calGrid .cal-cell.today:not(.d-done) .cal-num{
+  color:var(--brand-ink)!important;font-weight:800!important;opacity:1!important;
+}
+/* 和左边绿条咬合：左边不画线、左侧圆角收平 */
+#calGrid .cal-cell.today:not(.d-done).join-l{
+  border-left-color:transparent!important;
+  border-radius:0 10px 10px 0!important;
+}
+/* 和右边绿条咬合 */
+#calGrid .cal-cell.today:not(.d-done).join-r{
+  border-right-color:transparent!important;
+  border-radius:10px 0 0 10px!important;
+}
+#calGrid .cal-cell.today:not(.d-done).join-l.join-r{border-radius:0!important}
+/* 今天已完成：实心，和普通完成日一致 */
+#calGrid .cal-cell.d-done.today{
+  background:var(--brand)!important;border:0!important;border-radius:10px!important;box-shadow:none!important;
+}
+#calGrid .cal-cell.d-done.today .cal-num{color:#fff!important}
+
+
+/* 今天已完成：数字反白（用更高的选择器压住旧规则） */
+html body #calGrid .cal-cell.today.d-done .cal-num,
+html body #calGrid .cal-cell.today.all-done .cal-num{color:#FFFFFF!important;-webkit-text-stroke:0!important}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4778,6 +4812,13 @@ function calMergeRuns(){
       row[j].classList.add('run-e');
       for(let k=i;k<=j;k++){if(k>i&&k<j)row[k].classList.add('run-m')}
       i=j+1;
+    }
+    // 今天不是完成态时，若左右是绿条，就收平对应圆角，让方框和绿条咬合
+    for(let k=0;k<row.length;k++){
+      const c=row[k];
+      if(!c.classList.contains('today')||c.classList.contains('d-done'))continue;
+      if(k>0&&row[k-1].classList.contains('d-done'))c.classList.add('join-l');
+      if(k<row.length-1&&row[k+1].classList.contains('d-done'))c.classList.add('join-r');
     }
   }
 }
@@ -7610,11 +7651,13 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb15').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb16').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
 
 
 
