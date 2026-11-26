@@ -1818,6 +1818,17 @@ html[data-mode="dark"] .lv-opt.on .lv-ico{border-color:currentColor!important;ba
   html[data-mode="auto"] .lv-opt.on small{color:var(--ink2)!important}
 }
 
+
+/* 提醒强度三选一：内容是多行的，圆角不该用胶囊 999px，改小一点更像卡片 */
+.lv-grid .lv-opt,
+.lv-opt{
+  border-radius:14px!important;
+  padding:12px 12px!important;
+}
+.lv-opt.on,.lv-opt.on.lv1,.lv-opt.on.lv2,.lv-opt.on.lv3{border-radius:14px!important}
+html[data-elder="on"] .lv-opt{border-radius:16px!important}
+@media(min-width:430px){.lv-opt{border-radius:16px!important}}
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7295,11 +7306,12 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb5').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb6').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
 
 
 
