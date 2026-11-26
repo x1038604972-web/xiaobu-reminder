@@ -2023,6 +2023,14 @@ html[data-mode="dark"]:root .v2-progress .v2-quote{color:#F2F7F3!important;-webk
 
 
 
+
+/* 我的页：账号卡置顶（原品牌块已移除） */
+#view-me #accountCard{margin-top:0!important}
+#view-me #accountCard .acc-head{margin-bottom:2px}
+#view-me #memberCard{margin-top:14px!important}
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3422,15 +3430,13 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
 
     <section class="view" id="view-me">
       <div class="sec" style="margin-top:8px">
-        <div class="brand-block">
-          <svg class="brand-mark" viewBox="0 0 1024 1024" aria-label="小步图形标">
-            <rect width="1024" height="1024" rx="232" fill="var(--brand)"/>
-            <path d="M320 510L450 640L770 300" fill="none" stroke="#FFFBF2" stroke-width="112" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <div class="brand-words">
-            <div class="wordmark">小步</div>
-            <div class="slogan">说出来，就有人替你记住</div>
+        <div class="set-card auth-only" id="accountCard">
+          <div class="acc-head">
+            <div class="acc-avatar" id="accAvatar">游</div>
+            <div style="flex:1"><div class="acc-name" id="accName">本地模式</div><div class="acc-sub" id="accSub">数据只存在这台设备</div></div>
           </div>
+          <div class="acc-btns" id="accBtns"></div>
+          <button class="wcfg" id="cfgEntry" style="padding:8px 0 0">配置真实登录（GitHub / 邮箱）→</button>
         </div>
         <div class="member-card" id="memberCard">
           <div class="member-top">
@@ -3439,14 +3445,6 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           </div>
           <div class="member-desc" id="memberCardDesc">会员功能暂未开通，现在所有人都可以免费使用现有功能。</div>
           <div class="member-link" id="memberCardLink">查看会员方案 →</div>
-        </div>
-        <div class="set-card auth-only" id="accountCard">
-          <div class="acc-head">
-            <div class="acc-avatar" id="accAvatar">游</div>
-            <div style="flex:1"><div class="acc-name" id="accName">本地模式</div><div class="acc-sub" id="accSub">数据只存在这台设备</div></div>
-          </div>
-          <div class="acc-btns" id="accBtns"></div>
-          <button class="wcfg" id="cfgEntry" style="padding:8px 0 0">配置真实登录（GitHub / 邮箱）→</button>
         </div>
         <div class="set-card" data-set>
           <div class="set-title">系统设置<svg class="chev" style="margin-left:auto" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
@@ -7535,6 +7533,9 @@ try{
   }
 }catch(e){}
 </script>
+
+
+
 
 
 
