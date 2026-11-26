@@ -2333,6 +2333,7 @@ html[data-mode="dark"]:root .v2-ic{background-image:url(ic-set-dark.png)!importa
 html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat!important;box-shadow:none!important}
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7119,8 +7120,11 @@ function openVoice(){
       $('voiceMic').style.opacity='1';
       return;
     }
-    voiceSay('这个浏览器不支持语音识别',
-      '当前环境既没有浏览器语音，也没有可用的录音通道。<br>可以直接用下面的输入框打字，一样能自动识别时间。');
+    var _wx = /MicroMessenger/i.test(navigator.userAgent || '');
+    voiceSay(_wx ? '微信里要先接上语音识别' : '这个浏览器不支持语音识别',
+      _wx
+        ? '微信内置浏览器没有浏览器语音，需要先在小步设置里填「接口地址」（服务端代理）。<br>没配之前可以直接在下面打字，一样能识别时间。'
+        : '当前环境既没有浏览器语音，也没有可用的录音通道。<br>可以直接用下面的输入框打字，一样能自动识别时间。');
     $('voiceMic').style.opacity='.4';
     return;
   }
@@ -7906,7 +7910,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb10').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb11').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8370,6 +8374,7 @@ try{
   };
 })();
 </script>
+
 
 
 <script>
