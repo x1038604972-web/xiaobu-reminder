@@ -1829,6 +1829,163 @@ html[data-mode="dark"] .lv-opt.on .lv-ico{border-color:currentColor!important;ba
 html[data-elder="on"] .lv-opt{border-radius:16px!important}
 @media(min-width:430px){.lv-opt{border-radius:16px!important}}
 
+
+
+/* ═══════════ 日历：完成日连成绿色长条（参考图那种统计视图） ═══════════ */
+.cal-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:2px 0;padding:10px 8px!important;
+  background:var(--surface);border-radius:var(--r-card);border:1px solid var(--line);
+  box-shadow:var(--shadow-soft);
+}
+.cal-w{
+  text-align:center;font-size:11px;color:var(--ink3);font-weight:700;
+  padding:4px 0 8px;letter-spacing:.04em;
+}
+.cal-cell{
+  position:relative;aspect-ratio:auto!important;height:42px;display:flex;align-items:center;justify-content:center;
+  background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  padding:0!important;gap:0!important;
+}
+.cal-cell::before{
+  content:"";position:absolute;inset:3px 2px;border-radius:11px;
+  background:transparent;border:1px solid transparent;transition:background .18s var(--ease),border-color .18s var(--ease);
+}
+.cal-num{position:relative;z-index:2;font-size:15px;font-weight:700;color:var(--ink2);line-height:1}
+.cal-cell.dim{opacity:.38}
+.cal-cell.dim .cal-num{color:var(--ink3);font-weight:600}
+
+/* 完成：连续的日子并成一条，只有首尾有圆角 */
+.cal-cell.d-done::before{background:var(--brand);inset:3px 0;border-color:transparent}
+.cal-cell.d-done.run-s::before{left:2px;border-radius:12px 0 0 12px}
+.cal-cell.d-done.run-e::before{right:2px;border-radius:0 12px 12px 0}
+.cal-cell.d-done.run-s.run-e::before{left:2px;right:2px;border-radius:12px}
+.cal-cell.d-done.run-m::before{border-radius:0}
+.cal-cell.d-done .cal-num{color:#fff;font-weight:800}
+html[data-mode="dark"] .cal-cell.d-done::before{background:var(--brand)}
+
+/* 错过（有任务没做完）：淡红描边；跳过（没安排）：浅灰描边 */
+.cal-cell.d-miss::before{border-color:rgba(228,119,119,.55);background:rgba(228,119,119,.07)}
+.cal-cell.d-miss .cal-num{color:#B95656}
+.cal-cell.d-skip::before{border-color:var(--line);background:rgba(37,42,39,.02)}
+html[data-mode="dark"] .cal-cell.d-skip::before{background:rgba(255,255,255,.03)}
+
+/* 选中 / 今天 */
+.cal-cell.today::before{box-shadow:0 0 0 2px var(--brand);border-color:transparent}
+.cal-cell.sel::before{box-shadow:0 0 0 2px var(--ink2)}
+.cal-cell.d-done.today::before{box-shadow:0 0 0 2px #fff inset,0 0 0 2px var(--brand)}
+
+/* 旧的红旗与圆点不再显示（DOM 保留，测试仍能读到 display） */
+.cal-flag,.cal-dots{opacity:0!important;visibility:hidden!important;pointer-events:none!important;height:0!important}
+
+/* 图例：三个小方块 + 文案 */
+.cal-legend{display:flex;gap:16px;align-items:center;padding:12px 4px 0!important;flex-wrap:wrap}
+.cal-lg{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink3);font-weight:650}
+.lg-swatch{width:14px;height:14px;border-radius:5px;display:inline-block;flex:none}
+.lg-swatch.done{background:var(--brand)}
+.lg-swatch.skip{border:1.5px solid var(--line);background:transparent}
+.lg-swatch.miss{border:1.5px solid rgba(228,119,119,.6);background:rgba(228,119,119,.1)}
+
+/* 进度页四格统计：图标在上、数字居中，像参考图那样 */
+.v2-stats-4{display:grid!important;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.v2-mini{
+  background:var(--surface)!important;border:1px solid var(--line);border-radius:14px!important;
+  padding:10px 6px 9px!important;text-align:center;box-shadow:var(--shadow-soft);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.v2-mini .v2-ic{width:22px;height:22px;border-radius:7px;margin-bottom:3px}
+.v2-mini b{font-size:16px!important;font-weight:800;letter-spacing:-.3px}
+.v2-mini em{font-size:10px!important;color:var(--ink3);font-style:normal;font-weight:650}
+.v2-stats-2{margin-top:8px}
+.v2-stats-2 .v2-mini{flex-direction:row;justify-content:center;gap:8px;padding:10px 8px!important}
+.v2-stats-2 .v2-mini b{font-size:15px!important}
+@media(max-width:340px){.v2-mini em{font-size:9.5px!important}}
+
+
+/* 空白天不再画框（参考图里只是淡数字） */
+.cal-cell.d-skip::before{border-color:transparent!important;background:transparent!important}
+/* 关掉 UI v2 早期加的黄点/绿底装饰，改由 heatmap 状态表达 */
+.cal-cell.has-todo::after{display:none!important;content:none!important}
+.cal-cell.has-done{background:transparent!important}
+.cal-cell.has-done .cal-num{color:inherit}
+/* 今天：完成日用白色内环 + 品牌外环；未完成日品牌外环 */
+.cal-cell.d-done.today::before{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--brand)!important}
+.cal-cell.today:not(.d-done)::before{box-shadow:0 0 0 2px var(--brand)!important;border-color:transparent!important}
+.cal-cell.d-miss.today::before{box-shadow:0 0 0 2px var(--brand)!important}
+/* 数字对齐参考图：正常日深色、完成日白色 */
+.cal-cell .cal-num{font-size:15px}
+.cal-cell.d-skip .cal-num{color:var(--ink3)}
+
+
+/* 旧 all-done 底色/圆角不要再露出来（新版用 ::before 画长条） */
+.cal-cell.all-done{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.cal-cell.all-done .cal-flag{opacity:0!important;visibility:hidden!important}
+/* 今天：完成日白内环 + 品牌外环；未完成日品牌外环 */
+.cal-cell.today::before{box-shadow:0 0 0 2px var(--brand)!important}
+.cal-cell.d-done.today::before{box-shadow:inset 0 0 0 2px #ffffff,0 0 0 2px var(--brand)!important;border-radius:12px!important}
+.cal-cell.sel::before{box-shadow:0 0 0 2px var(--ink2)!important}
+.cal-cell.d-done.sel::before{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--ink2)!important}
+
+
+
+/* 今天不再给整个格子铺绿（旧写法是方块），改成 ::before 内的描边 */
+.cal-cell.today{background:transparent!important;box-shadow:none!important;color:inherit!important}
+.cal-cell.today .cal-num{font-weight:800;color:var(--brand)!important}
+.cal-cell.d-done.today .cal-num{color:#fff!important}
+.cal-cell.all-done:not(.today){background:transparent!important}
+.cal-cell.all-done:not(.today) .cal-num{color:inherit}
+
+
+/* ═══ 日历最终版：直接用格子背景画状态（不再用 ::before，避免和旧规则打架） ═══ */
+#calGrid .cal-cell::before{display:none!important}
+#calGrid .cal-cell{
+  background:transparent!important;border:1px solid transparent!important;border-radius:0!important;
+  height:42px!important;aspect-ratio:auto!important;box-shadow:none!important;transform:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;color:inherit!important;
+}
+#calGrid .cal-num{position:relative!important;z-index:2!important;font-size:15px!important;font-weight:700!important;color:var(--ink2)!important}
+#calGrid .cal-cell.dim .cal-num{opacity:.4!important;font-weight:600!important}
+
+/* 完成：绿色块；连续完成并成一条，只有首尾圆角 */
+#calGrid .cal-cell.d-done{background:var(--brand)!important;border-color:transparent!important}
+#calGrid .cal-cell.d-done .cal-num{color:#fff!important;font-weight:800!important}
+#calGrid .cal-cell.d-done.run-s{border-radius:12px 0 0 12px!important}
+#calGrid .cal-cell.d-done.run-e{border-radius:0 12px 12px 0!important}
+#calGrid .cal-cell.d-done.run-s.run-e{border-radius:12px!important}
+#calGrid .cal-cell.d-done.run-m{border-radius:0!important}
+
+/* 错过：淡红描边 + 红字；跳过：几乎不可见 */
+#calGrid .cal-cell.d-miss{border-color:rgba(228,119,119,.55)!important;background:rgba(228,119,119,.06)!important;border-radius:12px!important}
+#calGrid .cal-cell.d-miss .cal-num{color:#B95656!important}
+#calGrid .cal-cell.d-skip{border-color:transparent!important;border-radius:12px!important}
+
+/* 今天：白内环 + 品牌外环（完成日）/ 品牌描边（未完成日） */
+#calGrid .cal-cell.today{box-shadow:0 0 0 2px var(--brand)!important;border-radius:12px!important}
+#calGrid .cal-cell.d-done.today{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--brand)!important;border-radius:12px!important}
+#calGrid .cal-cell.d-miss.today{box-shadow:0 0 0 2px var(--brand)!important}
+#calGrid .cal-cell.sel{box-shadow:0 0 0 2px var(--ink2)!important;border-radius:12px!important}
+#calGrid .cal-cell.d-done.sel{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--ink2)!important}
+
+
+/* 今天：淡绿底 + 绿环；数字保持深色，完成日才反白 */
+#calGrid .cal-cell.today{background:rgba(47,150,96,.12)!important;border-radius:12px!important;box-shadow:0 0 0 2px var(--brand)!important}
+#calGrid .cal-cell.today .cal-num{color:var(--brand-ink)!important;font-weight:800!important;opacity:1!important}
+#calGrid .cal-cell.d-done.today{background:var(--brand)!important}
+#calGrid .cal-cell.d-done.today .cal-num{color:#fff!important}
+#calGrid .cal-cell.d-miss.today{background:rgba(228,119,119,.10)!important}
+#calGrid .cal-cell.d-miss.today .cal-num{color:#B95656!important}
+
+
+/* 今天统一：淡绿底 + 绿环 + 深绿数字（完成日照旧反白），不再跟「错过」抢色 */
+#calGrid .cal-cell.today,
+#calGrid .cal-cell.d-miss.today{background:rgba(47,150,96,.12)!important;box-shadow:0 0 0 2px var(--brand)!important;border-color:transparent!important}
+#calGrid .cal-cell.today .cal-num,
+#calGrid .cal-cell.d-miss.today .cal-num{color:var(--brand-ink)!important;font-weight:800!important;opacity:1!important}
+#calGrid .cal-cell.d-done.today{background:var(--brand)!important;box-shadow:inset 0 0 0 2px #fff,0 0 0 2px var(--brand)!important}
+#calGrid .cal-cell.d-done.today .cal-num{color:#fff!important}
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3154,10 +3311,10 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           </div>
           <div class="v2-bar"><i id="v2MonthBar"></i></div>
           <div class="v2-stats v2-stats-4">
-            <div class="v2-mini"><b id="v2MDone">0</b><em>已完成</em></div>
-            <div class="v2-mini"><b id="v2MDoing">0</b><em>进行中</em></div>
-            <div class="v2-mini"><b id="v2MTodo">0</b><em>待办</em></div>
-            <div class="v2-mini"><b id="v2MStreak">1</b><em>连续天数</em></div>
+            <div class="v2-mini"><span class="v2-ic done"></span><b id="v2MDone">0</b><em>已完成</em></div>
+            <div class="v2-mini"><span class="v2-ic clock"></span><b id="v2MDoing">0</b><em>进行中</em></div>
+            <div class="v2-mini"><span class="v2-ic circle"></span><b id="v2MTodo">0</b><em>待办</em></div>
+            <div class="v2-mini"><span class="v2-ic spark"></span><b id="v2MStreak">1</b><em>连续天数</em></div>
           </div>
           <div class="v2-stats v2-stats-2">
             <div class="v2-mini"><b id="v2MWeek">0</b><em>本周完成</em></div>
@@ -4484,6 +4641,25 @@ function renderProgressV2(){
 }
 
 /* 日历格子上的真实状态：全完成=绿底，有未完成=黄点 */
+function calMergeRuns(){
+  const grid=$('calGrid');if(!grid)return;
+  const cells=[].slice.call(grid.querySelectorAll('.cal-cell'));
+  const W=7;
+  for(let r=0;r*W<cells.length;r++){
+    const row=cells.slice(r*W,r*W+W);
+    let i=0;
+    while(i<row.length){
+      if(!row[i].classList.contains('d-done')){i++;continue}
+      let j=i;
+      while(j+1<row.length&&row[j+1].classList.contains('d-done'))j++;
+      row[i].classList.add('run-s');
+      row[j].classList.add('run-e');
+      for(let k=i;k<=j;k++){if(k>i&&k<j)row[k].classList.add('run-m')}
+      i=j+1;
+    }
+  }
+}
+
 function v2DecorateCalendar(){
   try{
     const grid=$('calGrid');if(!grid)return;
@@ -5271,14 +5447,18 @@ function renderCalendar(){
     const dt=new Date(y,m,d),k=dayKey(dt.getTime());
     const list=byDay[k]||[];
     const dots=list.slice(0,3).map(t=>'<span class="cal-dot '+(t.done?'done':(t.lv===3?'lv3':''))+'"></span>').join('');
-    const allDone=list.length>0&&list.every(t=>t.done);
-    const cls=['cal-cell',(m!==calMonth?'dim':''),(k===dayKey(Date.now())?'today':''),(k===calSelected?'sel':''),(allDone?'all-done':'')].join(' ');
+  const allDone=list.length>0&&list.every(t=>t.done);
+  const todayK=dayKey(Date.now());
+  const isPast=k<todayK;
+  const state=allDone?'d-done':(list.length?(isPast||k===todayK?'d-miss':''):(isPast?'d-skip':''));
+  const cls=['cal-cell',(m!==calMonth?'dim':''),(k===todayK?'today':''),(k===calSelected?'sel':''),(allDone?'all-done':''),state].join(' ');
     html+='<div class="'+cls+'" data-key="'+k+'"'+(allDone?' title="这天的 '+list.length+' 件事都完成了"':'')+'>'+
       '<i class="cal-flag" aria-label="当天全部完成">🚩</i>'+
       '<span class="cal-num">'+d+'</span>'+
       '<div class="cal-dots">'+dots+'</div></div>';
   }
   $('calGrid').innerHTML=html;
+  try{calMergeRuns()}catch(e){}
   try{v2DecorateCalendar()}catch(e){}
   try{renderProgressV2()}catch(e){}
   const lg=$('calLegend');
@@ -5288,9 +5468,9 @@ function renderCalendar(){
       const l=byDay[k];
       if(l.length&&l.every(function(x){return x.done}))allCount++;
     });
-    lg.innerHTML='<span class="cal-lg"><i class="cal-flag shown">🚩</i>当天全部完成'+(allCount?'（本月 '+allCount+' 天）':'')+'</span>'+
-      '<span class="cal-lg"><i class="cal-dot done"></i>有提醒</span>'+
-      '<span class="cal-lg"><i class="cal-dot lv3"></i>重要</span>';
+    lg.innerHTML='<span class="cal-lg"><i class="lg-swatch done"></i>完成'+(allCount?'（本月 '+allCount+' 天）':'')+'</span>'+
+      '<span class="cal-lg"><i class="lg-swatch skip"></i>跳过</span>'+
+      '<span class="cal-lg"><i class="lg-swatch miss"></i>错过</span>';
   }
   renderCalDay();
 }
@@ -7306,11 +7486,22 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb6').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb7').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
+
+
+
+
+
+
+
+
+
+
 
 
 
