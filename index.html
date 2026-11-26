@@ -2334,6 +2334,12 @@ html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat
 
 
 
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -7910,7 +7916,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb11').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb13').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8374,6 +8380,12 @@ try{
   };
 })();
 </script>
+
+
+
+
+
+
 
 
 
@@ -10198,7 +10210,62 @@ try{
     return pickLine('filler' + hour, filler);
   }
 
-  function localChat(text, aiFailed) {
+  
+/* ══════════════════════════════════════════════════════════════════
+   意图闸门：模型不可用 / 返回异常时，只有「明确让我提醒」才可能建任务；
+   「明天要交作业」这类陈述只问一句要不要提醒；其它一律普通聊天。
+   任何情况下都不再静默创建。
+   ══════════════════════════════════════════════════════════════════ */
+var _REMIND_RE = /(提醒我|提醒一下|记得提醒|叫我|到点叫|别忘|别忘记|帮我记|记一下|记一笔|设个提醒|加个提醒)/;
+var _CHATQ_RE = /[？?]$|吗$|呢$|怎么办|你觉得|是不是|好不好/;
+var _ACTION_RE = /^(去|要|得|需要|想|准备|帮我)?(交|写|买|做|准备|开个|开|打|取|送|发|订|装|洗|打扫|复习|看|读|练|查|改|修|付|抢|约|报|背|算|填|排版|打印|收拾|整理)/;
+var _CHAT_WORDS = /(过得|不错|挺好的|还行|有点累|开心|不开心|无聊|烦|郁闷|哈哈|困|饿)/;
+
+function detectIntent(text) {
+  var t = String(text || '').trim();
+  if (!t) return { kind: 'chat' };
+  var d = null;
+  try { d = parseDraft(t); } catch (e) { d = null; }
+  var hasTime = !!(d && d.ts);
+  if (_REMIND_RE.test(t)) return { kind: 'create', draft: d, hasTime: hasTime };
+  var title = d && d.title ? String(d.title) : '';
+  if (hasTime && title && title.length <= 14 && _ACTION_RE.test(title) && !_CHAT_WORDS.test(t) && !_CHATQ_RE.test(t)) {
+    return { kind: 'suggest', draft: d };
+  }
+  return { kind: 'chat' };
+}
+
+function fallbackReply(text, aiFailed) {
+  var it = detectIntent(text);
+  if (it.kind === 'create' && it.draft && it.draft.ts) {
+    aiRequestConfirm({
+      op: 'create', title: it.draft.title, needConfirm: true,
+      data: {
+        title: it.draft.title, ts: it.draft.ts, lv: it.draft.lv || 1,
+        repeat: it.draft.repeat || 'none', note: '', weekMask: it.draft.weekMask || 0
+      }
+    });
+    return true;
+  }
+  if (it.kind === 'create') {
+    say('要记的是哪件事、大概什么时候？\n比如「明天 9 点提醒我交作业」。',
+      null, ['明天 9 点提醒我交作业', '一小时后提醒我给妈妈打电话']);
+    return true;
+  }
+  if (it.kind === 'suggest') {
+    S._pendingSuggest = it.draft;
+    say('「' + String(it.draft.title || text).slice(0, 14) + '」要不要我到时候提醒你？',
+      {
+        k: '?', title: it.draft.title || text, meta: ft(it.draft.ts) || '时间待定',
+        acts: [{ k: 'suggest-yes', t: '好，提醒我' }, { k: 'suggest-no', t: '不用' }]
+      });
+    return true;
+  }
+  localChat(text, aiFailed);
+  return true;
+}
+
+function localChat(text, aiFailed) {
     var reply = chitchatReply(text);
     var chips = ['明天 9 点提醒我交作业', '我今天还有几件事'];
     for (var i = 0; i < TOPICS.length; i++) {
@@ -10251,6 +10318,125 @@ try{
       '这个 App 每条任务只有一个提醒时间，用户要「两次 / 三点到五点之间」时先建第一个并说明。';
   }
 
+
+/* ── 流式气泡：先把字吐出来，收尾时再归并成正式消息 ── */
+function aiStreamStart() {
+  S.msgs.push({ r: 'b', t: '', streaming: true });
+  if (S.msgs.length > MAXMSG) S.msgs = S.msgs.slice(-MAXMSG);
+  render();
+  var body = X$('xbBody');
+  return { msg: S.msgs[S.msgs.length - 1], body: body };
+}
+function aiStreamPush(st, txt) {
+  if (!st || !st.msg) return;
+  st.msg.t = txt;
+  if (!st.body) return;
+  var rows = st.body.querySelectorAll('.xb-row');
+  var last = rows[rows.length - 1];
+  var bb = last && last.querySelector('.xb-bb');
+  if (bb) bb.innerHTML = esc(txt).replace(/\n/g, '<br>');
+  st.body.scrollTop = st.body.scrollHeight;
+}
+function aiStreamDrop(st) {
+  if (!st || !st.msg) return;
+  var i = S.msgs.indexOf(st.msg);
+  if (i >= 0) S.msgs.splice(i, 1);
+  render();
+}
+
+/* 模型给出的结构化结果统一在这里落地（流式 / 非流式共用同一套语义） */
+function applyAIResult(obj, text) {
+  if (obj && obj.memory && typeof obj.memory === 'string') {
+    try { addMemory(obj.memory); } catch (e) {}
+  }
+  if (obj && obj.name && typeof obj.name === 'string' && !S.mem.name) {
+    S.mem.name = String(obj.name).slice(0, 8); saveMem();
+  }
+  var reply = (obj && obj.reply) || '我不太确定，再说一次？';
+  var act = obj && obj.action;
+  if (act && act.type && act.type !== 'none') {
+    var extra = execRemote(act, reply, text);
+    if (!extra) say(reply || '已经处理好了。');
+  } else {
+    say(reply);
+  }
+}
+
+/* 代理模式下的流式请求：SSE 逐字显示，结束后再决定是不是结构化动作 */
+function askLLMStream(text, hist, url, hdr, ctrl, timer) {
+  var st = null, acc = '';
+  var body = {
+    model: S.ai.model || 'deepseek-chat',
+    temperature: 0.2,
+    stream: true,
+    messages: [{ role: 'system', content: sysPrompt() }].concat(hist)
+  };
+  return fetch(url, {
+    method: 'POST',
+    signal: ctrl ? ctrl.signal : undefined,
+    headers: hdr,
+    body: JSON.stringify(body)
+  }).then(function (r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var ct = (r.headers && r.headers.get && r.headers.get('content-type')) || '';
+    if (!/event-stream/.test(ct) || !r.body || !r.body.getReader) {
+      return r.json().then(function (j) {
+        var t = (j && j.ok && j.text) || '';
+        if (!t) throw new Error('empty');
+        return { text: t };
+      });
+    }
+    st = aiStreamStart();
+    var reader = r.body.getReader();
+    var dec = new TextDecoder();
+    var buf = '';
+    function pump() {
+      return reader.read().then(function (res) {
+        if (res.done) return { text: acc };
+        buf += dec.decode(res.value, { stream: true });
+        var idx;
+        while ((idx = buf.indexOf('\n\n')) >= 0) {
+          var chunk = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          chunk.split('\n').forEach(function (line) {
+            var t = line.replace(/^data:\s*/, '').trim();
+            if (!t || t === '[DONE]') return;
+            try {
+              var j = JSON.parse(t);
+              var d = j.choices && j.choices[0] && (j.choices[0].delta || {}).content;
+              if (d) { acc += d; aiStreamPush(st, acc); }
+            } catch (e) {}
+          });
+        }
+        return pump();
+      });
+    }
+    return pump();
+  }).then(function (out) {
+    if (timer) { clearTimeout(timer); timer = null; }
+    S.busy = false; typing(false);
+    var txt = ((out && out.text) || acc || '').trim();
+    if (st) aiStreamDrop(st);
+    if (!txt) { fallbackReply(text, true); return; }
+    var obj = normJSON(txt);
+    if (!obj) {
+      // 模型只说了人话（没给 JSON）：
+      //  · 用户这句话确实是「让我记 / 提醒」→ 走确认卡，绝不静默建
+      //  · 其它 → 就当聊天说
+      var _it = detectIntent(text);
+      if (_it.kind === 'create' || _it.kind === 'suggest') { fallbackReply(text, false); return; }
+      say(txt.replace(/[`*#]/g, '').slice(0, 400));
+      return;
+    }
+    applyAIResult(obj, text);
+  }).catch(function () {
+    if (timer) { clearTimeout(timer); timer = null; }
+    S.busy = false; typing(false);
+    if (st) aiStreamDrop(st);
+    fallbackReply(text, true);
+  });
+}
+
   function askLLM(text) {
     var base = (S.ai.base || '').replace(/\/+$/, '');
     if (!/^https?:/.test(base)) { localChat(text, true); return; }
@@ -10264,6 +10450,7 @@ try{
     var viaProxy = /\/v1\/chat(\?|$)/.test(base);
     var url = viaProxy ? base : (base + '/chat/completions');
     var hdr = viaProxy ? { 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + S.ai.key };
+    if (viaProxy) return askLLMStream(text, hist, url, hdr, ctrl, timer);
     return fetch(url, {
       method: 'POST',
       signal: ctrl ? ctrl.signal : undefined,
@@ -10286,15 +10473,11 @@ try{
       S.busy = false;
       typing(false);
       var obj = res && res.obj;
-      if (!obj) {
-        // 兜底：标题不靠谱就别建（否则会建出「到之间两次吃药」）
-        var d = parseDraft(text);
-        var bad = !d || !d.title || !d.ts || d.title.length > 12 || /(之间|两次|三次|都|再|又|每|到$)/.test(d.title);
-        if (!bad && canCreate(text, d)) { doCreate(text, d); return; }
-        var raw = String((res && res.raw) || '').replace(/[{}[\]"']/g, '').slice(0, 60);
-        say((raw || '这句我没把握') + '\n再说具体点？比如「明天 9 点交作业」。', null, ['明天 9 点交作业', '看看今天剩下的']);
-        return;
-      }
+    if (!obj) {
+      // 安全兜底：模型没给结构化结果 → 只可能是聊天 / 提问 / 确认卡，绝不静默建任务
+      fallbackReply(text, true);
+      return;
+    }
       if (obj && obj.memory && typeof obj.memory === 'string') {
         try { addMemory(obj.memory); } catch (e) {}
       }
@@ -10313,7 +10496,7 @@ try{
       if (timer) { clearTimeout(timer); timer = null; }
       S.busy = false;
       typing(false);
-      localChat(text, true);
+      try { fallbackReply(text, true); } catch (e) { localChat(text, true); }
     });
   }
 
@@ -10692,7 +10875,16 @@ function execRemote(a, modelReply, userText) {
     var act = b.dataset.xbAct, id = b.dataset.id;
     var t = id ? allList().filter(function (x) { return x.id === id; })[0] : null;
 
-    if (act === 'aiok') { aiRunPending(id); return; }
+    if (act === 'suggest-yes') {
+    var _d = S._pendingSuggest;
+    S._pendingSuggest = null;
+    if (!_d || !_d.ts) { say('时间还没确定，说个大概时间我就记下。'); return; }
+    aiRequestConfirm({ op: 'create', title: _d.title, needConfirm: true,
+      data: { title: _d.title, ts: _d.ts, lv: _d.lv || 1, repeat: 'none', note: '', weekMask: 0 } });
+    return;
+  }
+  if (act === 'suggest-no') { S._pendingSuggest = null; say('好，那就不提醒。'); return; }
+  if (act === 'aiok') { aiRunPending(id); return; }
   if (act === 'aicancel') { aiClearPending(); say('好，这条先不动。'); return; }
   if (act === 'multi-ok') { commitMulti(); return; }
     if (act === 'multi-first') { commitMulti(1); return; }
