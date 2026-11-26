@@ -2096,6 +2096,7 @@ html:root .v2-ic.big{border-radius:11px!important}
 html:root .v2-mini .v2-ic{border-radius:7px!important}
 
 
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -4599,16 +4600,21 @@ function v2TaskKind(t){                    // 任务在本产品里的真实状�
   if(t.special==='terminus')return 'todo';
   return dayKey(t.ts)<tk?'doing':'todo';
 }
-function v2TodayBuckets(){
-  const tk=dayKey(Date.now());
+function v2DayBuckets(k){
+  const tk=k||dayKey(Date.now());
+  const todayK=dayKey(Date.now());
   const base=tasks.filter(t=>t.special!=='terminus');
-  const done=base.filter(t=>t.done&&dayKey(t.ts)===tk).length;
-  const openToday=base.filter(t=>!t.done&&dayKey(t.ts)===tk);
-  const doing=openToday.filter(t=>t.ts<=Date.now()).length;   // 今天到点还没做
-  const todo=openToday.filter(t=>t.ts>Date.now()).length;     // 今天还没到点
+  const ofDay=base.filter(t=>dayKey(t.ts)===tk);
+  const done=ofDay.filter(t=>t.done).length;
+  const open=ofDay.filter(t=>!t.done);
+  let doing=0,todo=0;
+  if(tk<todayK){ doing=open.length; }                       // 过去的日子：没做的都算「进行中（已过）」
+  else if(tk>todayK){ todo=open.length; }                   // 未来的日子：都算「待办」
+  else{ doing=open.filter(t=>t.ts<=Date.now()).length; todo=open.filter(t=>t.ts>Date.now()).length; }
   const total=done+doing+todo;
-  return {done:done,doing:doing,todo:todo,total:total,rate:total?Math.round(done/total*100):0};
+  return {done:done,doing:doing,todo:todo,total:total,rate:total?Math.round(done/total*100):0,key:tk,isToday:tk===todayK};
 }
+function v2TodayBuckets(){ return v2DayBuckets(dayKey(Date.now())); }
 function v2CatIcon(hex,glyph){
   const key=({ '!':'clock','•':'circle','○':'leaf','✦':'spark','∞':'inf' })[glyph]||'circle';
   return '<span class="v2-ic '+key+' big"></span>';
@@ -4627,7 +4633,8 @@ function applyHeroArt(force){
 function renderHomeV2(){
   applyHeroArt();
   const hi=$('v2Hi');if(!hi)return;
-  const b=v2TodayBuckets();
+  const focusKeyVal=(typeof focusKey==='function')?focusKey():dayKey(Date.now());
+  const b=v2DayBuckets(focusKeyVal);
   const nick=v2Nick();
   hi.textContent=v2GreetWord()+(nick?'，'+nick:'');
   const dt=$('v2Date');
@@ -4636,7 +4643,10 @@ function renderHomeV2(){
     dt.textContent=(src&&src.textContent.trim())||(function(){const d=new Date();const w='日一二三四五六'.charAt(d.getDay());return (d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+w})();
   }
   const sub=$('v2Sub');
-  sub.textContent=b.total?((b.total-b.done)||0)+' 件还在路上，先挑一件走一步':'今天还没有安排，想到什么就说出来';
+  const dayWord=b.isToday?'今天':((+focusKeyVal.slice(5,7))+'月'+(+focusKeyVal.slice(8,10))+'日');
+  sub.textContent=b.total?((b.total-b.done)||0)+' 件还在路上，先挑一件走一步':(b.isToday?'今天还没有安排，想到什么就说出来':(dayWord+'没有安排，可以加一件'));
+  const kEl=document.querySelector('.v2-prog-k');
+  if(kEl)kEl.textContent=b.isToday?'今日完成':(dayWord+'完成');
   $('v2Rate').textContent=b.rate;
   $('v2ProgMeta').textContent=b.done+' / '+b.total;
   $('v2BarFill').style.width=b.rate+'%';
@@ -4645,7 +4655,7 @@ function renderHomeV2(){
   $('v2Doing').textContent=b.doing;
   $('v2Todo').textContent=b.todo;
 
-  const tk=dayKey(Date.now());
+  const tk=focusKeyVal;
   const todayList=tasks.filter(t=>t.special!=='terminus'&&dayKey(t.ts)===tk);
   const rows=[];
   const LVROWS=[{lv:3,n:'重要',c:'var(--red)',bg:'var(--red-soft)',i:'!'},
@@ -7600,11 +7610,12 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261126-xb14').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261126-xb15').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
 </script>
+
 
 
 
