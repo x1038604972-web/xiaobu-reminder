@@ -2349,6 +2349,16 @@ html:root .v2-ic{background-size:300% 200%!important;background-repeat:no-repeat
 
 
 
+
+
+
+
+
+
+
+
+
+
 /* ==== XIAOBU CSS START ==== */
 /* ═══════════════════════════════════════════════
    小步 · AI 助手
@@ -3851,7 +3861,7 @@ html[data-elder="on"] .demo-btns button{height:46px;font-size:15px}
           <div class="set-detail">
             <div class="set-row" style="display:block">
               <div class="lbl">版本</div>
-              <div class="sub">缓存 <span id="appVer">20261127-xb16</span> · <button class="wcfg" id="forceUpdate" style="padding:0;min-height:0">检查更新</button></div>
+              <div class="sub">缓存 <span id="appVer">20261127-xb19</span> · <button class="wcfg" id="forceUpdate" style="padding:0;min-height:0">检查更新</button></div>
             </div>
             <div class="data-btns">
               <button class="data-btn" id="exportBtn">导出备份</button>
@@ -4109,6 +4119,28 @@ let tasks=[],meta={firstUse:0,lastOpen:0,streak:0,dnd:{on:false,from:22,to:8},hi
 let modalId=null,lastDeleted=null,toastTimer=null,editingId=null,lastQuickId=null,batchMode=false,selected=new Set(),undoAction=null,lastPostponeCustom=0,lateId=null;
 let accounts=[],currentUser=null,calYear=0,calMonth=0,calSelected=null,authMode='register';
 let SpeechRec=window.SpeechRecognition||window.webkitSpeechRecognition,recog=null,voiceActive=false,voiceFinal='',voiceInterim='';
+/* 微信内置浏览器里 webkitSpeechRecognition 存在但连不上服务，必然 network 失败 */
+function isWeChatUA(){ return /MicroMessenger/i.test(navigator.userAgent || ''); }
+function canUseRecVoice(){ try { return !!(window.XBVoice && window.XBVoice.canUse()); } catch(e){ return false; } }
+function preferRecVoice(){
+  // 微信里、或浏览器语音明显不可用时，优先用「录音 + 服务端识别」
+  if (!canUseRecVoice()) return false;
+  if (isWeChatUA()) return true;
+  return false;
+}
+/* 微信里没配 AI 地址：既不进 Web Speech，也不假装能录音，直接给下一步 */
+function wxNeedsSetup(){ return isWeChatUA() && !canUseRecVoice(); }
+function wxSetupSay(sayFn){
+  var title = '微信里要先接上语音识别';
+  var hint = '请先在「设置 → AI 增强」里填写 AI 接口地址（服务端代理）；<br>没配之前可以直接用下面的输入框打字。';
+  if (typeof sayFn === 'function') sayFn(title, hint); else if (typeof voiceSay === 'function') voiceSay(title, hint);
+  try { toast(title); } catch (e) {}
+}
+window.isWeChatUA = isWeChatUA;
+window.canUseRecVoice = canUseRecVoice;
+window.preferRecVoice = preferRecVoice;
+window.wxNeedsSetup = wxNeedsSetup;
+window.wxSetupSay = wxSetupSay;
 const THEMES={
   pine:{name:'松绿',light:{brand:'#2F9660',press:'#23784B',soft:'#EAF5EE',ink:'#23784B'},dark:{brand:'#4FB981',press:'#3E9B6A',soft:'#18271F',ink:'#9BD9B7'}},
   ocean:{name:'海蓝',light:{brand:'#2E6B9E',press:'#235680',soft:'#E4EEF6',ink:'#1F4E76'},dark:{brand:'#6BB2E8',press:'#4F96CB',soft:'#1D3245',ink:'#CDE7F8'}},
@@ -7062,6 +7094,21 @@ function voiceStartRound(reason){
     voiceWantRestart=false;
     voiceErrAt=Date.now();
     voiceReleaseSession('error:'+err);
+    // 浏览器语音被墙 / 不可用，但我们有录音通道 → 自动切换过去，不打断用户
+    if((err==='network'||err==='service-not-allowed'||err==='language-not-supported') && isWeChatUA()){
+      if(!canUseRecVoice()){ wxSetupSay(voiceSay); return; }
+      // 微信里已能录音 → 直接接管
+    }
+    if((err==='network'||err==='service-not-allowed'||err==='language-not-supported') && canUseRecVoice()){
+      toast('浏览器语音不可用，已切换为录音识别');
+      voiceSay('点麦克风开始录音','浏览器语音连不上，改成录音识别：点一下开始，说完再点一次。');
+      window.XBVoice.toggle(function(text){
+        voiceFinal=(voiceFinal+' '+text).trim();
+        voiceRender();
+        voiceSay('识别完成','听到：「'+text+'」<br>确认没问题就点「记下」');
+      }, function(msg){ voiceSay('语音没识别成功', msg); });
+      return;
+    }
     const pair=voiceErrorHint(err);
     voiceSay(pair[0],pair[1]);
     toast(pair[0]);
@@ -7129,6 +7176,21 @@ function openVoice(){
   $('voiceMask').classList.add('on');
   $('voicePanel').classList.add('on');
   voiceRender();
+  if(isWeChatUA()){
+    if(canUseRecVoice()){
+      voiceSay('点麦克风开始录音','微信里不能直接用浏览器语音，改成录音识别。点一下开始，说完再点一次，我转成文字。');
+      $('voiceMic').style.opacity='1';
+    }else{
+      wxSetupSay(voiceSay);
+      $('voiceMic').style.opacity='.4';
+    }
+    return;                       // 微信里绝不落到 Web Speech
+  }
+  if(preferRecVoice()){
+    voiceSay('点麦克风开始录音','点一下开始，说完再点一次，我转成文字。');
+    $('voiceMic').style.opacity='1';
+    return;
+  }
   if(!SpeechRec){
     if(window.XBVoice&&XBVoice.canUse()){
       voiceSay('点麦克风开始录音','微信里用系统录音，说完再点一次，我把它转成文字。');
@@ -7155,6 +7217,10 @@ function closeVoice(){
 
 function voiceErrorHint(err){
   if(err==='network'){
+    if(isWeChatUA()){
+      return ['微信里用不了浏览器语音',
+        '微信内置浏览器连不上语音服务。<br>要么在「设置 → AI 增强」里填好接口地址改用录音识别，要么直接在下面打字。'];
+    }
     return ['识别服务连不上',
       '语音识别用的是浏览器的在线识别服务，需要能访问到服务器；<br>国内网络经常被挡。换个网络再试，或者直接打字。'];
   }
@@ -7823,8 +7889,23 @@ $('voiceType').onclick=()=>{
   if(text)try{renderParsePreview(text,'parsePreview',true)}catch(e){}
 };
 $('voiceMic').onclick=()=>{
+  // ① 微信：只有「录音通道可用」才进录音；没配地址就给指引，绝不放行 Web Speech
+  if(isWeChatUA()){
+    if(!canUseRecVoice()){ wxSetupSay(voiceSay); return; }
+    XBVoice.toggle(function(text){
+      voiceFinal=(voiceFinal+' '+text).trim();
+      voiceRender();
+      voiceSay('识别完成','听到：「'+text+'」<br>确认没问题就点「记下」');
+    },function(msg){
+      voiceSay('语音没识别成功',msg);
+    },function(info){
+      voiceSay(info,'识别完会在这里显示结果');
+    });
+    return;
+  }
+  // ①b 其它环境没有 Web Speech 但有录音能力 → 录音
   if(!SpeechRec){
-    if(!(window.XBVoice&&XBVoice.canUse())){
+    if(!(window.XBVoice && XBVoice.canUse())){
       voiceSay('当前环境不支持语音','可以直接用下面的输入框打字，一样能识别时间。');
       return;
     }
@@ -7834,16 +7915,15 @@ $('voiceMic').onclick=()=>{
       voiceSay('识别完成','听到：「'+text+'」<br>确认没问题就点「记下」');
     },function(msg){
       voiceSay('语音没识别成功',msg);
+    },function(info){
+      voiceSay(info,'识别完会在这里显示结果');
     });
     return;
   }
+  // ② 普通浏览器 / APK：保持原有 Web Speech 行为
   const now=Date.now();
   if(now-voiceLastClickAt<350){voiceLog('click-ignored',{gap:now-voiceLastClickAt});return}   // 防快速连点
   voiceLastClickAt=now;
-  if(!SpeechRec){
-    voiceSay('这个浏览器不支持语音识别','直接用输入框打字吧，一样能识别时间');
-    return;
-  }
   voiceLog('click',{hasText:!!voiceFinal.trim()});
   if(voiceState==='listening'){
     stopVoice(true);                                     // 正常结束，保留已识别文字
@@ -7925,7 +8005,7 @@ window.addEventListener('load',()=>{if(sbConfig&&window.supabase&&!sb)loadSbConf
 try{
   if('serviceWorker' in navigator&&location.protocol!=='file:'){
     window.addEventListener('load',()=>{
-      navigator.serviceWorker.register('sw.js?v=20261127-xb16').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
+      navigator.serviceWorker.register('sw.js?v=20261127-xb19').then(reg=>{if(reg.update)reg.update().catch(()=>{})}).catch(()=>{});
     });
   }
 }catch(e){}
@@ -8250,7 +8330,9 @@ try{
   var isPC = /Windows NT|Macintosh/i.test(UA) && !/Mobile/i.test(UA);
   var hasRec = !!(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
-  var rec = null, chunks = [], stream = null, recording = false, cbOk = null, cbErr = null;
+  var rec = null, chunks = [], stream = null, recording = false, cbOk = null, cbErr = null, cbInfo = null;
+  var xferBusy = false;                 // 一次只允许一个识别请求（防重复上传）
+  var maxSeconds = 60;                  // 可用 _setMaxSeconds 在测试里调小
   var fileInput = null;
 
   function aiBase(){
@@ -8282,17 +8364,117 @@ try{
       fr.readAsDataURL(blob);
     });
   }
+
+  /* ── 音频转码：任意浏览器录音 → 16-bit PCM WAV（DeepSeek ASR 只吃 WAV / Ogg Opus） ── */
+  var VOICE_MAX_SECONDS = 60;          // 见 _setMaxSeconds()：测试可调小
+  function pcmToWav(samples, sampleRate) {
+    var n = samples.length;
+    var buf = new ArrayBuffer(44 + n * 2);
+    var dv = new DataView(buf);
+    function ws(off, str) { for (var i = 0; i < str.length; i++) dv.setUint8(off + i, str.charCodeAt(i)); }
+    ws(0, 'RIFF');
+    dv.setUint32(4, 36 + n * 2, true);
+    ws(8, 'WAVE');
+    ws(12, 'fmt ');
+    dv.setUint32(16, 16, true);
+    dv.setUint16(20, 1, true);        // PCM
+    dv.setUint16(22, 1, true);        // mono
+    dv.setUint32(24, sampleRate, true);
+    dv.setUint32(28, sampleRate * 2, true);
+    dv.setUint16(32, 2, true);
+    dv.setUint16(34, 16, true);       // 16-bit
+    ws(36, 'data');
+    dv.setUint32(40, n * 2, true);
+    var off = 44;
+    for (var i = 0; i < n; i++) {
+      var x = Math.max(-1, Math.min(1, samples[i]));
+      dv.setInt16(off, x < 0 ? x * 0x8000 : x * 0x7FFF, true);
+      off += 2;
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+  function downmixMono(ab) {
+    if (ab.numberOfChannels === 1) return ab.getChannelData(0);
+    var a = ab.getChannelData(0), b = ab.getChannelData(1);
+    var out = new Float32Array(a.length);
+    for (var i = 0; i < a.length; i++) out[i] = (a[i] + b[i]) * 0.5;
+    return out;
+  }
+  function resampleTo(samples, from, to) {
+    if (Math.abs(from - to) < 1) return samples;
+    var ratio = to / from;
+    var n = Math.max(1, Math.round(samples.length * ratio));
+    var out = new Float32Array(n);
+    for (var i = 0; i < n; i++) {
+      var pos = i / ratio;
+      var i0 = Math.floor(pos), i1 = Math.min(samples.length - 1, i0 + 1);
+      var frac = pos - i0;
+      out[i] = samples[i0] * (1 - frac) + samples[i1] * frac;
+    }
+    return out;
+  }
+  /* 录音 Blob → 16k 单声道 PCM16 WAV；超长/失败都给明确错误，不静默截断 */
+  function blobToWav(blob) {
+    return new Promise(function (resolve, reject) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return reject(new Error('这个浏览器不支持音频转码，请直接打字'));
+      var ctx;
+      try { ctx = new AC(); } catch (e) { return reject(new Error('音频转码初始化失败，请直接打字')); }
+      var settled = false, watchdog = null;
+      function done(err, out) {
+        if (settled) return;                    // 幂等：回调 / Promise / 超时只完成一次
+        settled = true;
+        if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+        try { ctx.close && ctx.close(); } catch (e) {}
+        if (err) reject(err); else resolve(out);
+      }
+      // decodeAudioData 在个别内核里可能既不回调也不 reject → 5 秒兜底
+      watchdog = setTimeout(function () {
+        done(new Error('音频解码超时，请再说一次，或直接打字'));
+      }, 5000);
+      var fr = new FileReader();
+      fr.onerror = function () { done(new Error('读取录音失败，请重试')); };
+      fr.onload = function () {
+        var arr = fr.result;
+        var maybe;
+        try {
+          maybe = ctx.decodeAudioData(arr.slice(0),
+            function (buf) {
+              if (buf.duration > maxSeconds + 2) {
+                return done(new Error('录音超过 ' + maxSeconds + ' 秒，请说短一点，或直接打字'));
+              }
+              var pcm = resampleTo(downmixMono(buf), buf.sampleRate, 16000);
+              var wav = pcmToWav(pcm, 16000);
+              if (wav.size > 8 * 1024 * 1024) return done(new Error('录音太大，请说短一点'));
+              done(null, { blob: wav, seconds: Math.round(pcm.length / 1600) / 10 });
+            },
+            function () { done(new Error('这个浏览器解不开当前录音格式，请直接打字')); });
+        } catch (e) {
+          return done(new Error('音频解码失败，请直接打字'));
+        }
+        if (maybe && maybe.catch) maybe.catch(function () { done(new Error('音频解码失败，请直接打字')); });
+      };
+      fr.readAsArrayBuffer(blob);
+    });
+  }
+
   function transcribe(blob){
     var url = asrUrl();
     if (!url) return Promise.reject(new Error('还没有配置语音识别服务（在设置里填代理地址）。可以直接打字。'));
-    return toB64(blob).then(function(b64){
+    if (xferBusy) return Promise.reject(new Error('上一段还在识别，请稍等一下'));
+    xferBusy = true;
+    var release = function(){ xferBusy = false; };
+    return blobToWav(blob).then(function(conv){
+      blob = conv.blob;                       // 16k 单声道 PCM16 WAV
+      return toB64(blob);
+    }).then(function(b64){
       var ctrl = null, timer = null;
       try { ctrl = new AbortController(); timer = setTimeout(function(){ ctrl.abort(); }, 45000); } catch(e){}
       return fetch(url, {
         method: 'POST',
         signal: ctrl ? ctrl.signal : undefined,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ audio: b64, mime: blob.type || 'audio/webm', lang: 'zh' })
+        body: JSON.stringify({ audio: b64, mime: 'audio/wav' })
       }).then(function(r){
         if (timer) { clearTimeout(timer); timer = null; }
         return r.json().catch(function(){ return null; });
@@ -8303,7 +8485,7 @@ try{
         }
         return String(j.text).trim();
       });
-    });
+    }).then(function(t){ release(); return t; }, function(e){ release(); throw e; });
   }
 
   /* ── 系统录音（微信里最稳，iOS/安卓都能调起） ── */
@@ -8318,6 +8500,7 @@ try{
       var f = inp.files && inp.files[0];
       inp.value = '';
       if (!f) { if (cbErr) cbErr('没有拿到录音'); return; }
+      if (xferBusy) return;                    // 上一段还在识别，忽略这次重复选择
       if (cbErr) cbErr('__pending__');
       transcribe(f).then(function(t){ if (cbOk) cbOk(t); })
         .catch(function(e){ if (cbErr) cbErr(e.message || '识别失败'); });
@@ -8333,6 +8516,8 @@ try{
 
   /* ── MediaRecorder 现场录 ── */
   function startRecorder(){
+    // 某些 WebView 根本没有 mediaDevices：直接走系统录音，避免同步抛错
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { recordViaInput(); return; }
     navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
       .then(function(st){
         stream = st; chunks = [];
@@ -8341,7 +8526,14 @@ try{
           try { if (MediaRecorder.isTypeSupported(m)) { mime = m; return true; } } catch(e){}
           return false;
         });
-        rec = new MediaRecorder(st, mime ? { mimeType: mime } : undefined);
+        try {
+          rec = new MediaRecorder(st, mime ? { mimeType: mime } : undefined);
+        } catch (e) {
+          // 某些 X5 / 旧内核不支持该 MIME：先关麦，再退回系统录音
+          stopTracks();
+          recordViaInput();
+          return;
+        }
         rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
         rec.onstop = function(){
           var blob = new Blob(chunks, { type: (rec && rec.mimeType) || 'audio/webm' });
@@ -8350,8 +8542,22 @@ try{
           transcribe(blob).then(function(t){ if (cbOk) cbOk(t); })
             .catch(function(e){ if (cbErr) cbErr(e.message || '识别失败'); });
         };
+      try {
         rec.start();
-        recording = true;
+      } catch (e) {
+        stopTracks();
+        recordViaInput();
+        return;
+      }
+      recording = true;
+        try {
+          clearTimeout(rec.__capTimer);
+          rec.__capTimer = setTimeout(function () {
+            if (!recording) return;
+            if (cbInfo) { try { cbInfo('已达到 ' + maxSeconds + ' 秒上限，正在识别这一段录音…'); } catch (e) {} }
+            stopRecorder();
+          }, maxSeconds * 1000);
+        } catch (e) {}
       })
       .catch(function(){
         /* 微信里常见：拿不到麦克风 → 退回系统录音 */
@@ -8375,9 +8581,10 @@ try{
     },
     recording: function(){ return recording; },
     /* 一次「开始 / 结束」切换 */
-    toggle: function(onText, onError){
+    toggle: function(onText, onError, onInfo){
       cbOk = onText || function(){};
       cbErr = onError || function(){};
+      cbInfo = onInfo || null;
       if (recording) { stopRecorder(); return 'stopping'; }
       if (hasRec) { startRecorder(); return 'recording'; }
       recordViaInput();
@@ -8385,10 +8592,27 @@ try{
     },
     /* 直接录一段（测试用） */
     _transcribeBlob: transcribe,
-    _asrUrl: asrUrl
+    _asrUrl: asrUrl,
+    _pcmToWav: pcmToWav,
+    _blobToWav: blobToWav,
+    _resample: resampleTo,
+    _downmix: downmixMono,
+    _maxSeconds: VOICE_MAX_SECONDS,
+    _setMaxSeconds: function(n){ maxSeconds = Math.max(1, +n || 60); try { window.VOICE_MAX_SECONDS = maxSeconds; } catch(e){} },
+    _busy: function(){ return xferBusy; }
   };
 })();
 </script>
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8942,7 +9166,24 @@ try{
 
   /* ── 语音 ─────────────────────────────────────────────── */
   function mic() {
-    if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+    // 微信里没配 AI 地址：只给指引，绝不退回 Web Speech
+    var _wxSetup = false;
+    try { _wxSetup = !!(window.wxNeedsSetup && window.wxNeedsSetup()); } catch (e) { _wxSetup = false; }
+    if (_wxSetup) {
+      say('微信里要先接上语音识别，请先在「设置 → AI 增强」里填写 AI 接口地址；也可以直接打字。');
+      return;
+    }
+    // 微信里（或宿主页面判断应优先录音）→ 直接走录音上传，不再用 Web Speech
+    var _preferRec = false;
+    try { _preferRec = !!(window.preferRecVoice && window.preferRecVoice()); } catch (e) { _preferRec = false; }
+    if (_preferRec || !(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+      if (!(window.XBVoice && window.XBVoice.canUse())) {
+        // 微信里没配 AI 地址：给指引，绝不退回 Web Speech
+        if (window.wxNeedsSetup && window.wxNeedsSetup()) {
+          say('微信里要先接上语音识别，请先在「设置 → AI 增强」里填写 AI 接口地址；也可以直接打字。');
+          return;
+        }
+      }
       if (window.XBVoice && window.XBVoice.canUse()) {
         window.XBVoice.toggle(function (text) {
           var qi = X$('xbText');
